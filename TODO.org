@@ -1,0 +1,7 @@
+#+title: Todo
+* yayo
+** TODO Port from C
+*** TODO Board representation
+*** TODO Move generation
+*** TODO Eval
+*** TODO Search
