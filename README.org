@@ -8,6 +8,7 @@ The C++ (and much improved) rewrite of my previous chess engine attempt. I'm aim
 4. =./yayo=
 ** Notes
 =yayo= is far from done, so bugs are to be expected. =yayo= can communicate with GUIs using the UCI protocol. You can also interact with =yayo= in the terminal by entering UCI commands manually.
+
 Documentation for the UCI protocol can be found here: http://wbec-ridderkerk.nl/html/UCIProtocol.html.
 ** TODO Features
 *** Board Representation
