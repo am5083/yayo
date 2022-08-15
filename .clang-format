@@ -1,0 +1,6 @@
+SeparateDefinitionBlocks: Leave
+BasedOnStyle: LLVM
+IndentWidth: 4
+ColumnLimit: 120
+SeparateDefinitionBlocks: Leave
+SortIncludes: CaseSensitive

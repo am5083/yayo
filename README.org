@@ -1,0 +1,16 @@
+#+title: Readme
+* Yayo
+The C++ (and much improved) rewrite of my previous chess engine attempt. I'm aiming for ~2000-2200 ELO in the beta release, which is when I'll release the source.
+** Building and running
+1. =git clone https://github.com/am5083/yayo=
+2. =mkdir build=
+3. =cmake -DCMAKE_BUILD_TYPE=Release .. && cmake --build .=
+4. =./yayo=
+** Notes
+=yayo= is far from done, so bugs are to be expected. =yayo= can communicate with GUIs using the UCI protocol. You can also interact with =yayo= in the terminal by entering UCI commands manually.
+Documentation for the UCI protocol can be found here: http://wbec-ridderkerk.nl/html/UCIProtocol.html.
+** TODO Features
+*** Board Representation
+*** Search
+*** Evaluation
+*** Extras
