@@ -1,0 +1,5 @@
+/build/
+/.projectile
+/.gdbinit
+/.dir-locals.el
+/.cache/
