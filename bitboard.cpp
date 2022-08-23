@@ -1,16 +1,13 @@
 #include "bitboard.h"
 #include "util.h"
+#include <array>
 #include <iostream>
 #include <stdio.h>
 
 namespace Yayo {
 Bitboard bishopAttacks[B_ATK_TBL_SIZE];
 Bitboard rookAttacks[R_ATK_TBL_SIZE];
-
-Bitboard rectArray[SQUARE_CT];
-Bitboard pawnAttacks[NUM_COLOR][SQUARE_CT];
-Bitboard knightAttacks[SQUARE_CT];
-Bitboard kingAttacks[SQUARE_CT];
+Bitboard LINE[SQUARE_CT][SQUARE_CT];
 
 Magic bishopMagics[SQUARE_CT];
 Magic rookMagics[SQUARE_CT];
@@ -20,22 +17,45 @@ constexpr Bitboard maskRookOccupancy(Square sq);
 constexpr Bitboard maskBishopOccupancy(Square sq);
 constexpr Bitboard genRookAttacks(Square square, Bitboard bb);
 constexpr Bitboard genBishopAttacks(Square square, Bitboard bb);
-void initMasks(PieceT pc, Bitboard attack_table[], Magic magic[]);
 } // namespace
 
-void Bitboards::init_arrays() {
-    for (Square square = A8; square < SQUARE_CT; square++) {
-        Bitboard sq = SQUARE_BB(square);
+void initMasks(const PieceT pc, Bitboard attack_table[], Magic mask[]) {
+    int size = 0;
+    for (int sq = 0; sq < 64; sq++) {
+        Magic *magic = &mask[sq];
+        magic->mask = (pc == ROOK) ? maskRookOccupancy(Square(sq)) : maskBishopOccupancy(Square(sq));
+        magic->attacks = (sq == SQUARE_0) ? attack_table : (mask[sq - 1].attacks + size);
 
-        pawnAttacks[WHITE][square] = pawnDblAttacks<WHITE>(sq);
-        pawnAttacks[BLACK][square] = pawnDblAttacks<BLACK>(sq);
-
-        knightAttacks[square] = knightAllAttacks(sq);
-        kingAttacks[square] = maskKingAttacks(square);
+        Bitboard b = size = 0;
+        do {
+            size++;
+            magic->attacks[magic->index(b)] =
+                (pc == ROOK) ? genRookAttacks(Square(sq), b) : genBishopAttacks(Square(sq), b);
+            b = (b - magic->mask) & magic->mask;
+        } while (b);
     }
+}
 
+void Bitboards::init_arrays() {
     initMasks(ROOK, rookAttacks, rookMagics);
     initMasks(BISHOP, bishopAttacks, bishopMagics);
+
+    for (int i = 0; i < 64; i++) {
+        for (int to = 0; to < 64; to++) {
+            Bitboard rookAtk = genRookAttacks(Square(i), 0);
+            Bitboard bishAtk = genBishopAttacks(Square(i), 0);
+
+            if (rookAtk & SQUARE_BB(Square(to))) {
+                LINE[i][to] = (rookAtk & genRookAttacks(Square(to), SQUARE_BB(Square(i)))) | SQUARE_BB(Square(i)) |
+                              SQUARE_BB(Square(to));
+            }
+
+            if (bishAtk & SQUARE_BB(Square(to))) {
+                LINE[i][to] = (bishAtk & genBishopAttacks(Square(to), SQUARE_BB(Square(i)))) | SQUARE_BB(Square(i)) |
+                              SQUARE_BB(Square(to));
+            }
+        }
+    }
 }
 
 void Bitboards::print_bitboard(Bitboard bitboard) {
@@ -173,22 +193,6 @@ constexpr Bitboard genBishopAttacks(Square sq, Bitboard blocks) {
     }
 
     return occ;
-}
-
-void initMasks(const PieceT pc, Bitboard attack_table[], Magic mask[]) {
-    int size = 0;
-    for (int sq = 0; sq < 64; sq++) {
-        Magic *magic = &mask[sq];
-        magic->mask = (pc == ROOK) ? maskRookOccupancy(Square(sq)) : maskBishopOccupancy(Square(sq));
-        magic->attacks = (sq == SQUARE_0) ? attack_table : (mask[sq - 1].attacks + size);
-
-        Bitboard b = size = 0;
-        do {
-            size++;
-            magic->attacks[magic->index(b)] = (pc == ROOK) ? genRookAttacks(Square(sq), b) : genBishopAttacks(Square(sq), b);
-            b = (b - magic->mask) & magic->mask;
-        } while (b);
-    }
 }
 } // namespace
 

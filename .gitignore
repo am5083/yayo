@@ -4,4 +4,7 @@
 /.dir-locals.el
 /.cache/
 /.ccls-cache/
-/.cmake-build-debug/
+/cmake-build-debug/
+/.idea/
+/test/
+compile_commands.json
