@@ -3,3 +3,8 @@
 /.gdbinit
 /.dir-locals.el
 /.cache/
+/.ccls-cache/
+/cmake-build-debug/
+/.idea/
+/test/
+compile_commands.json
