@@ -30,6 +30,17 @@ struct Hist {
 };
 
 struct Info {
+    Info() {
+        startTime = -1;
+        stopTime = -1;
+        depth = -1;
+        selDepth = -1;
+        timeset = -1;
+        movestogo = -1;
+        nodes = 0;
+        uciQuit = false;
+        uciStop = false;
+    }
     long double startTime, stopTime;
     long double timeControl;
     int depth;

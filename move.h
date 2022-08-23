@@ -81,7 +81,8 @@ struct moveList {
     }
 
     inline void addMove(int move, bool promo, bool cap) {
-        if (getCapture(move) >= CAPTURE) nTactical++;
+        if (getCapture(move) >= CAPTURE)
+            nTactical++;
         moves[nMoves].move = move;
         nMoves++;
     }
@@ -111,10 +112,6 @@ static inline void print_move(unsigned short move) {
         break;
     }
 }
-
-
-
-
 
 };     // namespace Yayo
 #endif // MOVE_H_
