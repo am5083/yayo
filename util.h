@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <immintrin.h>
 #include <string>
+#include <sys/time.h>
 
 typedef uint64_t Bitboard;
 
@@ -123,5 +124,11 @@ constexpr PieceT getPcType(Piece P) {
     return PieceT(P - 8);
 }
 
+static inline unsigned long long get_time() {
+    struct timeval te;
+    gettimeofday(&te, NULL);
+    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000;
+    return milliseconds;
+}
 
 #endif // UTIL_H_

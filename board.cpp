@@ -48,9 +48,11 @@ void Board::print() {
         printf(" %c ", 'A' + i);
     printf("\n\n");
 
+    int check = 0;
     if (__builtin_popcountll(checkPcs) >= 2)
         checkPcs = 0;
-    int check = board[Sq(checkPcs)];
+    if (checkPcs)
+        check = board[Sq(checkPcs)];
     if (check >= B_PAWN)
         check -= 2;
 
