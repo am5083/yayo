@@ -14,6 +14,7 @@ constexpr int MAX_MOVES = 256;
 constexpr int MAX_PLY = 246;
 
 #define START_POS "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+#define NO_MOVE 0
 
 // clang-format off
 enum Square : int {

@@ -280,6 +280,57 @@ constexpr moveList *generate(Board &board, moveList *mList) {
     return mList;
 }
 
+void makeNullMove(Board &board) {
+    int ply = board.gamePly;
+
+    (board.hist)[ply].checkPcs = board.checkPcs;
+    (board.hist)[ply].lastCapt = board.lastCapt;
+    (board.hist)[ply].castleStatus = board.castleRights;
+    (board.hist)[ply].enPass = board.enPass;
+    (board.hist)[ply].halfMoves = board.halfMoves;
+    (board.hist)[ply].fullMoves = board.fullMoves;
+    (board.hist)[ply].key = board.key;
+
+    board.lastCapt = NO_PC;
+    board.checkPcs = 0;
+    board.enPass = SQUARE_64;
+
+    board.key ^= (zobristBlackToMove * board.turn);
+    board.key ^= (board.enPass < 64) ? zobristEpFile[board.enPass % 8] : 0;
+
+    board.ply++;
+    board.gamePly++;
+    board.halfMoves++;
+    board.fullMoves++;
+
+    board.turn = ~board.turn;
+}
+
+void unmakeNullMove(Board &board) {
+    board.turn = ~board.turn;
+    board.ply--;
+    board.gamePly--;
+
+    int ply = board.gamePly;
+    board.checkPcs = (board.hist)[ply].checkPcs;
+    board.lastCapt = (board.hist)[ply].lastCapt;
+    board.castleRights = (board.hist)[ply].castleStatus;
+    board.enPass = (board.hist)[ply].enPass;
+    board.halfMoves = (board.hist)[ply].halfMoves;
+    board.fullMoves = (board.hist)[ply].fullMoves;
+    board.key = (board.hist)[ply].key;
+}
+
+bool isRepetition(Board &board) {
+    for (int i = board.gamePly - board.halfMoves; i < board.gamePly; ++i) {
+        if (board.key == board.hist[i].key)
+            return true;
+    }
+
+    return false;
+}
+
+static bool i = false;
 void make(Board &board, unsigned short move) {
     Square fromSq = getFrom(move);
     Square toSq = getTo(move);
@@ -549,6 +600,25 @@ void make(Board &board, unsigned short move) {
 
     board.ply++;
     board.gamePly++;
+
+    if (board.turn == WHITE)
+        board.fullMoves++;
+
+    std::cout << "turn: " << ((board.turn == WHITE) ? "WHITE" : "BLACK") << "\n";
+    std::cout << "gamePly: " << board.gamePly << "\n";
+    std::cout << "ply: " << board.ply << "\n";
+    std::cout << "halfMoves: " << board.halfMoves << "\n";
+    std::cout << "fullMoves: " << board.fullMoves << "\n";
+    std::cout << "key: " << board.key << "\n";
+    std::cout << "move: ";
+    print_move(move);
+    std::cout << "\n";
+
+    if (isRepetition(board)) {
+        std::cout << "REPETITION FOUND\n";
+    }
+
+    std::cout << "\n\n";
 }
 
 void unmake(Board &board, unsigned short move) {
