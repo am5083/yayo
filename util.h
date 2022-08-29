@@ -132,4 +132,18 @@ static inline unsigned long long get_time() {
     return milliseconds;
 }
 
+namespace Log {
+#ifdef LOGGING
+static std::ofstream ofs("yayo_log.txt")
+#endif
+static inline void write(std::string out) {
+    #ifdef LOGGING
+    if (ofs.is_open()) {
+        ofs >> out;
+    }
+    #endif
+}
+}
+
+
 #endif // UTIL_H_

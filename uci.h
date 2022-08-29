@@ -70,7 +70,7 @@ Bitboard divide(Board &board, moveList *mL, int start, int cur) {
         unmake(board, mList.moves[i].move);
         if (cur == start) {
             print_move(mList.moves[i].move);
-            std::cout << ": " << thisMoves << "\n";
+            std::cout << ": " << thisMoves << std::endl;
         }
     }
 
@@ -121,13 +121,13 @@ void UCI::Perft(int depth) {
             std::cout << ": 1\n";
         }
 
-        std::cout << "\n";
+        std::cout << std::endl;
     } else {
         n = divide(board, nullptr, depth, depth);
-        std::cout << "\n";
+        std::cout << std::endl;
     }
 
-    std::cout << "total: " << n << "\n";
+    std::cout << "total: " << n << std::endl;
 }
 
 void UCI::Main() {
@@ -267,13 +267,13 @@ void UCI::Main() {
                     std::cout << ": 1\n";
                 }
 
-                std::cout << "\n";
+                std::cout << std::endl;
             } else {
                 n = divide(board, nullptr, depth, depth);
-                std::cout << "\n";
+                std::cout << std::endl;
             }
 
-            std::cout << "total: " << n << "\n";
+            std::cout << "total: " << n << std::endl;
         }
     }
 }

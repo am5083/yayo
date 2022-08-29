@@ -309,7 +309,15 @@ class Board {
         return false;
     }
 
-  public:
+    constexpr bool isDraw() {
+        const int num = __builtin_popcountll(color[0] | color[1]);
+        const bool kvk = num == 2;
+        const bool kvbk = (num == 3) && (cPieceBB[BISHOP]);
+        const bool kvnk = (num == 3) && (cPieceBB[KNIGHT]);
+        const bool kvnnk = (num == 4) && (__builtin_popcountll(cPieceBB[KNIGHT]) == 2);
+
+        return kvk || kvbk || kvnk || kvnnk;
+    }
 };
 } // namespace Yayo
 #endif // BOARD_H_

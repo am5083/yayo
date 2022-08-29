@@ -6,6 +6,7 @@
 #include "util.h"
 #include "zobrist.h"
 #include <cassert>
+#include <thread>
 
 namespace Yayo {
 // MoveType
@@ -321,6 +322,15 @@ void unmakeNullMove(Board &board) {
     board.key = (board.hist)[ply].key;
 }
 
+int numRepetition(Board &board) {
+    int num_rep = 0;
+    for (int i = 0; i < board.gamePly; i++) {
+        if (board.key == board.hist[i].key)
+            num_rep++;
+    }
+    return num_rep;
+}
+
 bool isRepetition(Board &board) {
     for (int i = board.gamePly - board.halfMoves; i < board.gamePly; ++i) {
         if (board.key == board.hist[i].key)
@@ -604,21 +614,21 @@ void make(Board &board, unsigned short move) {
     if (board.turn == WHITE)
         board.fullMoves++;
 
-    std::cout << "turn: " << ((board.turn == WHITE) ? "WHITE" : "BLACK") << "\n";
-    std::cout << "gamePly: " << board.gamePly << "\n";
-    std::cout << "ply: " << board.ply << "\n";
-    std::cout << "halfMoves: " << board.halfMoves << "\n";
-    std::cout << "fullMoves: " << board.fullMoves << "\n";
-    std::cout << "key: " << board.key << "\n";
-    std::cout << "move: ";
-    print_move(move);
-    std::cout << "\n";
+    // std::cout << "turn: " << ((board.turn == WHITE) ? "WHITE" : "BLACK") << "\n";
+    // std::cout << "gamePly: " << board.gamePly << "\n";
+    // std::cout << "ply: " << board.ply << "\n";
+    // std::cout << "halfMoves: " << board.halfMoves << "\n";
+    // std::cout << "fullMoves: " << board.fullMoves << "\n";
+    // std::cout << "key: " << board.key << "\n";
+    // std::cout << "move: ";
+    // print_move(move);
+    // std::cout << "\n";
 
-    if (isRepetition(board)) {
-        std::cout << "REPETITION FOUND\n";
-    }
+    // if (isRepetition(board)) {
+    //     std::cout << "REPETITION FOUND\n";
+    // }
 
-    std::cout << "\n\n";
+    // std::cout << "\n\n";
 }
 
 void unmake(Board &board, unsigned short move) {

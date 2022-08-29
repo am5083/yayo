@@ -4,26 +4,146 @@
 #include "movegen.h"
 #include <thread>
 
+#define PAWN_VAL 100
+#define KNIGHT_VAL 300
+#define BISHOP_VAL 320
+#define ROOK_VAL 500
+#define QUEEN_VAL 910
+#define KING_VAL 12000
+
+#define mirror(sq) ((7 - (sq) / 8) * 8 + (sq) % 8)
+
 namespace Yayo {
 
+// clang-format off
+constexpr int pawn[SQUARE_CT] = {
+    0,  0,  0,  0,  0,  0,  0,  0,
+    50,50, 50, 50, 50, 50, 50, 50,
+    10,10, 20, 30, 30, 20, 10, 10,
+    5, 5,  10, 25, 25, 10, 5,  5,
+    0, 0,  0,  20, 20, 0,  0,  0,
+    5, -10,-10,0,  0,  -10,-10,5,
+    10,10, 10, -20,-20,10, 10, 10,
+    0, 0,  0,  0,  0,  0,  0,  0,
+};
+
+// clang-format off
+constexpr int knight[SQUARE_CT] = {
+    -50,-40,-30,-30,-30,-30,-40,-50,
+    -40,-20, 0,  0,  0,  0, -20,-40,
+    -30, 0,  10, 15, 15, 10, 0, -30,
+    -30, 5,  15, 20, 20, 15, 5, -30,
+    -30, 0,  15, 20, 20, 15, 0, -30,
+    -30, 5,  10, 15, 15, 10, 5, -30,
+    -40,-20, 0,  5,  5,  0, -20,-40,
+    -50,-40,-30,-30,-30,-30,-40,-50,
+};
+
+// clang-format off
+constexpr int bishop[SQUARE_CT] = {
+    -20,-10,-10,-10,-10,-10,-10,-20,
+    -10,  0,  0,  0,  0,  0,  0,-10,
+    -10,  0,  5, 10, 10,  5,  0,-10,
+    -10,  5,  5, 10, 10,  5,  5,-10,
+    -10,  0, 10, 10, 10, 10,  0,-10,
+    -10, 10, 10, 10, 10, 10, 10,-10,
+    -10,  5,  0,  0,  0,  0,  5,-10,
+    -20,-10,-10,-10,-10,-10,-10,-20,
+};
+
+// clang-format off
+constexpr int rook[SQUARE_CT] = {
+     0,  0,  0,  0,  0,  0,  0,  0,
+     5, 10, 10, 10, 10, 10, 10,  5,
+    -5,  0,  0,  0,  0,  0,  0, -5,
+    -5,  0,  0,  0,  0,  0,  0, -5,
+    -5,  0,  0,  0,  0,  0,  0, -5,
+    -5,  0,  0,  0,  0,  0,  0, -5,
+    -5,  0,  0,  0,  0,  0,  0, -5,
+     0,  0,  0,  5,  5,  0,  0,  0
+};
+
+// clang-format off
+constexpr int queen[SQUARE_CT] = {
+    -20,-10,-10, -5, -5,-10,-10,-20,
+    -10,  0,  0,  0,  0,  0,  0,-10,
+    -10,  0,  5,  5,  5,  5,  0,-10,
+     -5,  0,  5,  5,  5,  5,  0, -5,
+      0,  0,  5,  5,  5,  5,  0, -5,
+    -10,  5,  5,  5,  5,  5,  0,-10,
+    -10,  0,  5,  0,  0,  0,  0,-10,
+    -20,-10,-10, -5, -5,-10,-10,-20
+};
+
+// clang-format off
+constexpr int king[SQUARE_CT] = {
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -20,-30,-30,-40,-40,-30,-30,-20,
+    -10,-20,-20,-20,-20,-20,-20,-10,
+     20, 20,  0,  0,  0,  0, 20, 20,
+     20, 30, 10,  0,  0, 10, 30, 20
+};
+
+constexpr int egKing[SQUARE_CT] = {
+    -50,-40,-30,-20,-20,-30,-40,-50,
+    -30,-20,-10,  0,  0,-10,-20,-30,
+    -30,-10, 20, 30, 30, 20,-10,-30,
+    -30,-10, 30, 40, 40, 30,-10,-30,
+    -30,-10, 30, 40, 40, 30,-10,-30,
+    -30,-10, 20, 30, 30, 20,-10,-30,
+    -30,-30,  0,  0,  0,  0,-30,-30,
+    -50,-30,-30,-30,-30,-30,-30,-50
+};
+
+// clang-format on
+
+const int *pieceTbls[6] = {
+    pawn, knight, bishop, rook, queen, king,
+};
+
+template <Color C> inline int pieceSquare(Board &board) { return 0; }
+
+template <> inline int pieceSquare<WHITE>(Board &board) {
+    int eval = 0;
+    for (int i = 0; i < 64; i++) {
+        Piece p = board.board[i];
+        PieceT pt = getPcType(p);
+
+        if (p < B_PAWN && p != NO_PC) {
+            eval += pieceTbls[pt - 1][i];
+        }
+    }
+    return eval;
+}
+
+template <> inline int pieceSquare<BLACK>(Board &board) {
+    int eval = 0;
+    for (int i = 0; i < 64; i++) {
+        Piece p = board.board[i];
+        PieceT pt = getPcType(p);
+
+        if (p >= B_PAWN && p != NO_PC) {
+            eval += pieceTbls[pt - 1][mirror(i)];
+        }
+    }
+    return eval;
+}
+
 int eval(Board &board) {
-    const int _PAWN = 100;
-    const int _KNIGHT = 300;
-    const int _BISHOP = 330;
-    const int _ROOK = 500;
-    const int _QUEEN = 900;
+    const int wMaterial = (PAWN_VAL * __builtin_popcountll(board.pieces(PAWN, WHITE))) +
+                          (KNIGHT_VAL * __builtin_popcountll(board.pieces(KNIGHT, WHITE))) +
+                          (BISHOP_VAL * __builtin_popcountll(board.pieces(BISHOP, WHITE))) +
+                          (ROOK_VAL * __builtin_popcountll(board.pieces(ROOK, WHITE))) +
+                          (QUEEN_VAL * __builtin_popcountll(board.pieces(QUEEN, WHITE)));
 
-    const int wMaterial = (_PAWN * __builtin_popcountll(board.pieces(PAWN, WHITE))) +
-                          (_KNIGHT * __builtin_popcountll(board.pieces(KNIGHT, WHITE))) +
-                          (_BISHOP * __builtin_popcountll(board.pieces(BISHOP, WHITE))) +
-                          (_ROOK * __builtin_popcountll(board.pieces(ROOK, WHITE))) +
-                          (_QUEEN * __builtin_popcountll(board.pieces(QUEEN, WHITE)));
-
-    const int bMaterial = (_PAWN * __builtin_popcountll(board.pieces(PAWN, BLACK))) +
-                          (_KNIGHT * __builtin_popcountll(board.pieces(KNIGHT, BLACK))) +
-                          (_BISHOP * __builtin_popcountll(board.pieces(BISHOP, BLACK))) +
-                          (_ROOK * __builtin_popcountll(board.pieces(ROOK, BLACK))) +
-                          (_QUEEN * __builtin_popcountll(board.pieces(QUEEN, BLACK)));
+    const int bMaterial = (PAWN_VAL * __builtin_popcountll(board.pieces(PAWN, BLACK))) +
+                          (KNIGHT_VAL * __builtin_popcountll(board.pieces(KNIGHT, BLACK))) +
+                          (BISHOP_VAL * __builtin_popcountll(board.pieces(BISHOP, BLACK))) +
+                          (ROOK_VAL * __builtin_popcountll(board.pieces(ROOK, BLACK))) +
+                          (QUEEN_VAL * __builtin_popcountll(board.pieces(QUEEN, BLACK)));
 
     const auto color = (board.turn == WHITE) ? 1 : -1;
 
@@ -34,7 +154,9 @@ int eval(Board &board) {
     generate(board, &otherMoves);
     unmakeNullMove(board);
 
-    return ((0.10 * (mList.nMoves - otherMoves.nMoves)) + (wMaterial - bMaterial)) * color;
+    const auto pcSqEval = pieceSquare<WHITE>(board) - pieceSquare<BLACK>(board);
+
+    return ((0.10 * (mList.nMoves - otherMoves.nMoves)) + (wMaterial - bMaterial) + pcSqEval + 50) * color;
 }
 
 } // namespace Yayo

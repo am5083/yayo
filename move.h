@@ -86,6 +86,18 @@ struct moveList {
         moves[nMoves].move = move;
         nMoves++;
     }
+
+    moveList &operator+=(moveList m2) {
+        int j = 0;
+
+        const int tnMoves = this->nMoves, onMoves = m2.nMoves;
+        for (int i = tnMoves; i < (tnMoves + onMoves); i++) {
+            this->moves[i] = m2.moves[j];
+            this->nMoves++;
+            j++;
+        }
+        return *this;
+    }
 };
 
 static inline void print_move(unsigned short move) {
