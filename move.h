@@ -87,6 +87,27 @@ struct moveList {
         nMoves++;
     }
 
+    inline void addMove(int move, bool promo, bool cap, int score) {
+        if (getCapture(move) >= CAPTURE)
+            nTactical++;
+        moves[nMoves].move = move;
+        moves[nMoves].score = score;
+        nMoves++;
+    }
+
+    inline void swapBest(int index) {
+        int best_index = 0;
+        Move best = moves[index], cur = moves[index];
+        for (int i = index; i < nMoves; i++) {
+            if (moves[i].score > best.score) {
+                best_index = i;
+                best = moves[i];
+            }
+        }
+        moves[index] = best;
+        moves[best_index] = cur;
+    }
+
     moveList &operator+=(moveList m2) {
         int j = 0;
 

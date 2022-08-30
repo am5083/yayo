@@ -14,6 +14,8 @@ using namespace Yayo;
 int SEARCHED = 0;
 static std::ofstream ofs("log.yayo", std::ios::out);
 
+const int INF = 100000;
+
 class Search {
   public:
     Search() { info = nullptr; }
@@ -28,6 +30,9 @@ class Search {
         info = _info;
         for (int i = 0; i < MAX_PLY + 6; i++) {
             pvTableLen[i] = NO_MOVE;
+            killerMoves[i][0] = NO_MOVE;
+            killerMoves[i][1] = NO_MOVE;
+
             for (int j = 0; j < MAX_PLY + 6; j++) {
                 pvTable[i][j] = NO_MOVE;
             }
@@ -84,47 +89,38 @@ class Search {
         }
     }
 
-    int search() {
-        int depth = info->depth;
-
-        int score;
-        for (int j = 1; j <= depth; j++) {
-            if (checkForStop())
-                break;
-            score = negaMax(-5000000, 5000000, j);
-            std::cout << "info depth " << j << " cp " << score << " pv ";
-            printPv();
-            std::cout << std::endl;
-        }
-
-        std::cout << "bestmove ";
-        print_move(pvTable[0][0]);
-        std::cout << std::endl;
-
-        return 0;
-    }
-
     int negaMax(int alpha, int beta, int depth) {
         if (checkForStop())
-            return 1000000;
+            return 10000000;
 
         if (depth == 0)
             return eval(_board);
 
-        if (_board.ply > 0 && (_board.halfMoves >= 100 || _board.isDraw()))
-            return 1 - (nodes & 2);
+        nodes++;
+        pvTableLen[_board.ply] = 0;
 
-        if (_board.ply > 0 && isRepetition(_board)) {
-            if (numRepetition(_board) >= 2) {
+        if (_board.ply > 0) {
+            if (_board.halfMoves >= 100 || _board.isDraw())
                 return 1 - (nodes & 2);
+
+            if (isRepetition(_board)) {
+                if (numRepetition(_board) >= 2) {
+                    return 450;
+                }
             }
+
+            alpha = std::max(alpha, -INF + _board.ply);
+            beta = std::min(beta, INF - _board.ply - 1);
+
+            if (alpha >= beta)
+                return alpha;
         }
 
         moveList mList = {0};
         generate(_board, &mList);
 
         for (int i = 0; i < mList.nMoves; i++) {
-            nodes++;
+            mList.swapBest(i);
             make(_board, mList.moves[i].move);
             int score = -negaMax(-beta, -alpha, depth - 1);
             unmake(_board, mList.moves[i].move);
@@ -139,15 +135,38 @@ class Search {
 
         if (mList.nMoves == 0 && _board.checkPcs) {
             pvTableLen[0] = _board.ply;
-            return -200000 + _board.ply;
+            return -INF + _board.ply;
+        } else if (mList.nMoves == 0) { // stalemate
+            return 1 - (nodes & 2);
         }
 
         return alpha;
     }
 
+    int search() {
+        int depth = info->depth;
+
+        int score;
+        for (int j = 1; j <= depth; j++) {
+            if (checkForStop())
+                break;
+            score = negaMax(-INF, INF, j);
+            std::cout << "info depth " << j << " cp " << score << " pv ";
+            printPv();
+            std::cout << std::endl;
+        }
+
+        std::cout << "bestmove ";
+        print_move(pvTable[0][0]);
+        std::cout << std::endl;
+
+        return 0;
+    }
+
   private:
     int pvTable[MAX_PLY + 6][MAX_PLY + 6] = {0};
     int pvTableLen[MAX_PLY + 6] = {0};
+    int killerMoves[MAX_PLY + 6][2];
 
     void updatePv(int ply, int move) {
         pvTable[ply][0] = move;

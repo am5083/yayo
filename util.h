@@ -5,6 +5,18 @@
 #include <string>
 #include <sys/time.h>
 
+#define START_POS "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+#define NO_MOVE 0
+
+#define PAWN_VAL 100
+#define KNIGHT_VAL 300
+#define BISHOP_VAL 320
+#define ROOK_VAL 500
+#define QUEEN_VAL 910
+#define KING_VAL 12000
+
+#define mirror(sq) ((7 - (sq) / 8) * 8 + (sq) % 8)
+
 typedef uint64_t Bitboard;
 
 constexpr uint64_t B_ATK_TBL_SIZE = 0x1480;
@@ -12,9 +24,6 @@ constexpr uint64_t R_ATK_TBL_SIZE = 0x190000;
 
 constexpr int MAX_MOVES = 256;
 constexpr int MAX_PLY = 246;
-
-#define START_POS "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-#define NO_MOVE 0
 
 // clang-format off
 enum Square : int {

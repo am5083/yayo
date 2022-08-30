@@ -15,6 +15,18 @@ namespace Yayo {
 // CHECK_EVASION
 // CAP_QUIET
 // LEGAL
+
+const int victimScores[7] = {0, 100, 200, 300, 400, 500, 600};
+static int mvvLvaTable[7][7];
+
+void initMvvLva() {
+    for (int Atk = 0; Atk < 7; Atk++) {
+        for (int Vic = 0; Vic < 7; Vic++) {
+            mvvLvaTable[Vic][Atk] = victimScores[Vic] + 6 - (victimScores[Atk] / 100);
+        }
+    }
+}
+
 template <Color Turn, MoveType Type>
 constexpr moveList *generatePawnMoves(Board &board, moveList *mList, Bitboard targets) {
     constexpr Color enemy = ~Turn;
@@ -71,19 +83,29 @@ constexpr moveList *generatePawnMoves(Board &board, moveList *mList, Bitboard ta
         while (ePromoCapture) {
             const Square s = Square(__builtin_ctzll(ePromoCapture));
             ePromoCapture &= ePromoCapture - 1;
-            mList->addMove(encodeMove(Square(int(s) + int(wAttack)), s, CP_QUEEN), true, true);
-            mList->addMove(encodeMove(Square(int(s) + int(wAttack)), s, CP_ROOK), true, true);
-            mList->addMove(encodeMove(Square(int(s) + int(wAttack)), s, CP_BISHOP), true, true);
-            mList->addMove(encodeMove(Square(int(s) + int(wAttack)), s, CP_KNIGHT), true, true);
+
+            Square fromSq = Square(int(s) + int(wAttack));
+            PieceT fromPc = getPcType(board.board[fromSq]), toPc = getPcType(board.board[s]);
+
+            int score = mvvLvaTable[toPc][fromPc];
+            mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
+            mList->addMove(encodeMove(fromSq, s, CP_ROOK), true, true, score);
+            mList->addMove(encodeMove(fromSq, s, CP_BISHOP), true, true, score);
+            mList->addMove(encodeMove(fromSq, s, CP_KNIGHT), true, true, score);
         }
 
         while (wPromoCapture) {
             const Square s = Square(__builtin_ctzll(wPromoCapture));
             wPromoCapture &= wPromoCapture - 1;
-            mList->addMove(encodeMove(Square(int(s) + int(eAttack)), s, CP_QUEEN), true, true);
-            mList->addMove(encodeMove(Square(int(s) + int(eAttack)), s, CP_ROOK), true, true);
-            mList->addMove(encodeMove(Square(int(s) + int(eAttack)), s, CP_BISHOP), true, true);
-            mList->addMove(encodeMove(Square(int(s) + int(eAttack)), s, CP_KNIGHT), true, true);
+
+            Square fromSq = Square(int(s) + int(eAttack));
+            PieceT fromPc = getPcType(board.board[fromSq]), toPc = getPcType(board.board[s]);
+
+            int score = mvvLvaTable[toPc][fromPc];
+            mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
+            mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
+            mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
+            mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
         }
 
         while (pushPromo) {
@@ -108,13 +130,23 @@ constexpr moveList *generatePawnMoves(Board &board, moveList *mList, Bitboard ta
         while (eastAttacks) {
             const Square s = Square(__builtin_ctzll(eastAttacks));
             eastAttacks &= eastAttacks - 1;
-            mList->addMove(encodeMove(Square(int(s) + int(wAttack)), s, CAPTURE), false, true);
+
+            Square fromSq = Square(int(s) + int(wAttack));
+            PieceT fromPc = getPcType(board.board[fromSq]), toPc = getPcType(board.board[s]);
+
+            int score = mvvLvaTable[toPc][fromPc];
+            mList->addMove(encodeMove(fromSq, s, CAPTURE), false, true, score);
         }
 
         while (westAttacks) {
             const Square s = Square(__builtin_ctzll(westAttacks));
             westAttacks &= westAttacks - 1;
-            mList->addMove(encodeMove(Square(int(s) + int(eAttack)), s, CAPTURE), false, true);
+
+            Square fromSq = Square(int(s) + int(eAttack));
+            PieceT fromPc = getPcType(board.board[fromSq]), toPc = getPcType(board.board[s]);
+
+            int score = mvvLvaTable[toPc][fromPc];
+            mList->addMove(encodeMove(Square(int(s) + int(eAttack)), s, CAPTURE), false, true, score);
         }
 
         if (board.epSq() != SQUARE_64) {
@@ -129,7 +161,7 @@ constexpr moveList *generatePawnMoves(Board &board, moveList *mList, Bitboard ta
                 eastAttacks &= eastAttacks - 1;
                 if (board.isSqAttacked(Sq(board.pieces(KING, Turn)), board.pieces() ^ pawn, ~Turn))
                     continue;
-                mList->addMove(encodeMove(s, board.epSq(), EP_CAPTURE), false, true);
+                mList->addMove(encodeMove(s, board.epSq(), EP_CAPTURE), false, true, 105);
             }
         }
     }
@@ -147,7 +179,13 @@ constexpr moveList *generateMoves(Board &board, moveList *mList, Bitboard target
         while (b) {
             const Square t = Square(__builtin_ctzll(b));
             const MoveFlag mf = (SQUARE_BB(t) & board.pieces(~C)) ? CAPTURE : QUIET;
-            mList->addMove(encodeMove(s, t, mf), false, bool(mf));
+
+            int score = 0;
+            if (board.board[t] != NO_PC) {
+                PieceT toPc = getPcType(board.board[t]);
+                score = mvvLvaTable[toPc][P];
+            }
+            mList->addMove(encodeMove(s, t, mf), false, bool(mf), score);
             b &= b - 1;
         }
     }
@@ -216,8 +254,16 @@ template <Color C, MoveType T> constexpr moveList *generateLegal(Board &board, m
         if (board.isSqAttacked(s, board.pieces() ^ board.pieces(KING, C), ~C)) {
             continue;
         }
+
         const MoveFlag mf = (SQUARE_BB(s) & board.pieces(~C)) ? CAPTURE : QUIET;
-        temp.addMove(encodeMove(kingSq, s, mf), false, bool(mf));
+
+        int score = 0;
+        if (board.board[s] != NO_PC) {
+            PieceT toPc = getPcType(board.board[s]);
+            score = mvvLvaTable[toPc][KING];
+        }
+
+        temp.addMove(encodeMove(kingSq, s, mf), false, bool(mf), score);
     }
 
     if ((T == M_QUIET || T == CAP_QUIET) && board.canCastle(C)) {
@@ -258,17 +304,24 @@ template <Color C, MoveType T> constexpr moveList *generateLegal(Board &board, m
         }
     }
 
+    int j = 0;
     for (int i = 0; i < temp.nMoves; i++) {
         Square fromSq = getFrom(temp.moves[i]);
         Bitboard fromMsk = SQUARE_BB(fromSq);
         if (pinned && (pinned & fromMsk)) {
             if (LINE[kingSq][fromSq] & SQUARE_BB(getTo(temp.moves[i]))) {
-                mList->addMove(temp.moves[i].move, getCapture(temp.moves[i].move) >= P_KNIGHT,
-                               getCapture(temp.moves[i].move) == CAPTURE);
+                mList->moves[j] = temp.moves[i];
+                mList->nMoves++;
+                j++;
+                // mList->addMove(temp.moves[i].move, getCapture(temp.moves[i].move) >= P_KNIGHT,
+                //                getCapture(temp.moves[i].move) == CAPTURE);
             }
         } else {
-            mList->addMove(temp.moves[i].move, getCapture(temp.moves[i].move) >= P_KNIGHT,
-                           getCapture(temp.moves[i].move) == CAPTURE);
+            mList->moves[j] = temp.moves[i];
+            mList->nMoves++;
+            j++;
+            // mList->addMove(temp.moves[i].move, getCapture(temp.moves[i].move) >= P_KNIGHT,
+            //                getCapture(temp.moves[i].move) == CAPTURE);
         }
     }
 

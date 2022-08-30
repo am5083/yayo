@@ -132,6 +132,7 @@ void UCI::Perft(int depth) {
 
 void UCI::Main() {
     init_arrays();
+    initMvvLva();
 
     Board board;
     board.setFen(START_POS);

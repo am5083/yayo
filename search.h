@@ -2,16 +2,8 @@
 #define SEARCH_H_
 #include "board.h"
 #include "movegen.h"
+#include "util.h"
 #include <thread>
-
-#define PAWN_VAL 100
-#define KNIGHT_VAL 300
-#define BISHOP_VAL 320
-#define ROOK_VAL 500
-#define QUEEN_VAL 910
-#define KING_VAL 12000
-
-#define mirror(sq) ((7 - (sq) / 8) * 8 + (sq) % 8)
 
 namespace Yayo {
 
