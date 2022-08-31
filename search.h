@@ -148,7 +148,14 @@ int eval(Board &board) {
 
     const auto pcSqEval = pieceSquare<WHITE>(board) - pieceSquare<BLACK>(board);
 
-    return ((0.10 * (mList.nMoves - otherMoves.nMoves)) + (wMaterial - bMaterial) + pcSqEval + 50) * color;
+    int mobility = 0;
+    if (board.turn == WHITE) {
+        mobility = mList.nMoves - otherMoves.nMoves;
+    } else {
+        mobility = otherMoves.nMoves - mList.nMoves;
+    }
+
+    return ((0.10 * (mobility)) + (1.1 * (wMaterial - bMaterial)) + pcSqEval + 10) * color;
 }
 
 } // namespace Yayo

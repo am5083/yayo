@@ -96,7 +96,10 @@ struct moveList {
     }
 
     inline void swapBest(int index) {
-        int best_index = 0;
+        if (nMoves < 2)
+            return;
+
+        int best_index = -1;
         Move best = moves[index], cur = moves[index];
         for (int i = index; i < nMoves; i++) {
             if (moves[i].score > best.score) {
@@ -104,6 +107,10 @@ struct moveList {
                 best = moves[i];
             }
         }
+
+        if (best_index == -1)
+            return;
+
         moves[index] = best;
         moves[best_index] = cur;
     }

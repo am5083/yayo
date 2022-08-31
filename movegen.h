@@ -87,7 +87,7 @@ constexpr moveList *generatePawnMoves(Board &board, moveList *mList, Bitboard ta
             Square fromSq = Square(int(s) + int(wAttack));
             PieceT fromPc = getPcType(board.board[fromSq]), toPc = getPcType(board.board[s]);
 
-            int score = mvvLvaTable[toPc][fromPc];
+            int score = mvvLvaTable[toPc][fromPc] + 1000000;
             mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
             mList->addMove(encodeMove(fromSq, s, CP_ROOK), true, true, score);
             mList->addMove(encodeMove(fromSq, s, CP_BISHOP), true, true, score);
@@ -101,7 +101,7 @@ constexpr moveList *generatePawnMoves(Board &board, moveList *mList, Bitboard ta
             Square fromSq = Square(int(s) + int(eAttack));
             PieceT fromPc = getPcType(board.board[fromSq]), toPc = getPcType(board.board[s]);
 
-            int score = mvvLvaTable[toPc][fromPc];
+            int score = mvvLvaTable[toPc][fromPc] + 1000000;
             mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
             mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
             mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
@@ -134,7 +134,7 @@ constexpr moveList *generatePawnMoves(Board &board, moveList *mList, Bitboard ta
             Square fromSq = Square(int(s) + int(wAttack));
             PieceT fromPc = getPcType(board.board[fromSq]), toPc = getPcType(board.board[s]);
 
-            int score = mvvLvaTable[toPc][fromPc];
+            int score = mvvLvaTable[toPc][fromPc] + 1000000;
             mList->addMove(encodeMove(fromSq, s, CAPTURE), false, true, score);
         }
 
@@ -145,7 +145,7 @@ constexpr moveList *generatePawnMoves(Board &board, moveList *mList, Bitboard ta
             Square fromSq = Square(int(s) + int(eAttack));
             PieceT fromPc = getPcType(board.board[fromSq]), toPc = getPcType(board.board[s]);
 
-            int score = mvvLvaTable[toPc][fromPc];
+            int score = mvvLvaTable[toPc][fromPc] + 1000000;
             mList->addMove(encodeMove(Square(int(s) + int(eAttack)), s, CAPTURE), false, true, score);
         }
 
@@ -183,7 +183,7 @@ constexpr moveList *generateMoves(Board &board, moveList *mList, Bitboard target
             int score = 0;
             if (board.board[t] != NO_PC) {
                 PieceT toPc = getPcType(board.board[t]);
-                score = mvvLvaTable[toPc][P];
+                score = mvvLvaTable[toPc][P] + 1000000;
             }
             mList->addMove(encodeMove(s, t, mf), false, bool(mf), score);
             b &= b - 1;
@@ -260,7 +260,7 @@ template <Color C, MoveType T> constexpr moveList *generateLegal(Board &board, m
         int score = 0;
         if (board.board[s] != NO_PC) {
             PieceT toPc = getPcType(board.board[s]);
-            score = mvvLvaTable[toPc][KING];
+            score = mvvLvaTable[toPc][KING] + 1000000;
         }
 
         temp.addMove(encodeMove(kingSq, s, mf), false, bool(mf), score);
