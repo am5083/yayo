@@ -1,5 +1,7 @@
 #include "bitboard.h"
+#include "tt.h"
 #include "util.h"
+#include <algorithm>
 #include <array>
 #include <iostream>
 #include <stdio.h>
@@ -12,6 +14,11 @@ Bitboard LINE[SQUARE_CT][SQUARE_CT];
 Magic bishopMagics[SQUARE_CT];
 Magic rookMagics[SQUARE_CT];
 
+std::uint64_t zobristBlackToMove = random_u64();
+std::uint64_t zobristEpFile[8];
+std::uint64_t zobristCastleRights[16];
+std::uint64_t zobristPieceSq[16][64];
+
 namespace {
 constexpr Bitboard maskRookOccupancy(Square sq);
 constexpr Bitboard maskBishopOccupancy(Square sq);
@@ -22,8 +29,8 @@ constexpr Bitboard genBishopAttacks(Square square, Bitboard bb);
 void initMasks(const PieceT pc, Bitboard attack_table[], Magic mask[]) {
     int size = 0;
     for (int sq = 0; sq < 64; sq++) {
-        Magic *magic = &mask[sq];
-        magic->mask = (pc == ROOK) ? maskRookOccupancy(Square(sq)) : maskBishopOccupancy(Square(sq));
+        Magic *magic   = &mask[sq];
+        magic->mask    = (pc == ROOK) ? maskRookOccupancy(Square(sq)) : maskBishopOccupancy(Square(sq));
         magic->attacks = (sq == SQUARE_0) ? attack_table : (mask[sq - 1].attacks + size);
 
         Bitboard b = size = 0;
@@ -39,6 +46,39 @@ void initMasks(const PieceT pc, Bitboard attack_table[], Magic mask[]) {
 void Bitboards::init_arrays() {
     initMasks(ROOK, rookAttacks, rookMagics);
     initMasks(BISHOP, bishopAttacks, bishopMagics);
+
+    int temp[2][2];
+
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            temp[i][j] = random_u64();
+        }
+    }
+
+    for (int i = 0; i < 16; i++) {
+        for (int j = 0; j < 4; j++)
+            zobristCastleRights[i] = temp[j / 2][j % 2] * ((i >> j) & 1);
+        for (int j = 0; j < 64; j++) {
+            zobristPieceSq[i][j] = random_u64();
+        }
+
+        if (i < 8) {
+            zobristEpFile[i] = random_u64();
+        }
+    }
+
+    // std::sort(temp.begin(), temp.end());
+    // for (auto i : temp) {
+    //     int x = 0;
+    //     for (auto j : temp) {
+    //         if (i == j) {
+    //             x++;
+    //             if (x > 1) {
+    //                 std::cout << "DUP: " << i << ", " << j << "\n";
+    //             }
+    //         }
+    //     }
+    // }
 
     for (int i = 0; i < 64; i++) {
         for (int to = 0; to < 64; to++) {

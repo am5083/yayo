@@ -184,8 +184,20 @@ void UCI::Main() {
             }
         } else if (cmd == "ucinewgame") {
             NewGame();
+        } else if (cmd == "see") {
+            std::string move;
+            iss >> move;
+            int m = parseMove(board, move);
+            std::cout << "static exchange evaluation: "
+                      << board.see(getTo(m), board.board[getTo(m)], getFrom(m), board.board[getFrom(m)]);
+            std::cout << std::endl;
         } else if (cmd == "d") {
             search.printBoard();
+        } else if (cmd == "make") {
+            std::string move;
+            iss >> move;
+            int m = parseMove(board, move);
+            search._make(m);
         } else if (cmd == "go") {
             int depth = -1;
             int movestogo = 30;
@@ -199,6 +211,7 @@ void UCI::Main() {
 
             while (iss >> tc) {
                 if (tc == "infinite") {
+                    depth = MAX_PLY;
                     continue;
                 } else if (tc == "binc" && turn == BLACK) {
                     iss >> increment;
@@ -240,11 +253,15 @@ void UCI::Main() {
             }
 
             if (depth == -1) {
-                info->depth = 6;
+                info->depth = 12;
             }
+
+            info->uciStop = false;
+            info->uciQuit = false;
 
             Go(info);
         } else if (cmd == "quit") {
+            search.stopSearch();
             search.joinThread();
             break;
         } else if (cmd == "stop") {
@@ -253,7 +270,9 @@ void UCI::Main() {
             Uci();
         } else if (cmd == "setoption") {
         } else if (cmd == "eval") {
-            std::cout << eval(board) << std::endl;
+            moveList mList = {0};
+            generate(board, &mList);
+            std::cout << eval(board, mList) << std::endl;
         } else if (cmd == "perft") {
             int depth;
             iss >> depth;

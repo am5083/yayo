@@ -3,73 +3,63 @@
 #include "bitboard.h"
 #include "move.h"
 #include "util.h"
-#include "zobrist.h"
 #include <cassert>
 #include <cstdint>
 #include <string>
 
 namespace Yayo {
 
+// clang-format off
 struct Hist {
-    uint64_t key;
-    Bitboard checkPcs;
-    Piece lastCapt;
-    int castleStatus;
-    Square enPass;
-    int halfMoves, fullMoves;
+    uint64_t key      = 0;
 
-    Hist() {
-        key = 0;
-        checkPcs = 0;
-        lastCapt = NO_PC;
-        castleStatus = 0;
-        enPass = SQUARE_64;
-        halfMoves = 0;
-        fullMoves = 0;
-    }
+    Bitboard checkPcs = 0;
+    Piece lastCapt    = NO_PC;
+    Square enPass     = SQUARE_64;
+
+    int castleStatus  = 0;
+    int halfMoves     = 0;
+    int fullMoves     = 0;
 };
 
 struct Info {
-    Info() {
-        startTime = -1;
-        stopTime = -1;
-        timeControl = -1;
-        maxTimeControl = -1;
-        depth = -1;
-        selDepth = -1;
-        timeGiven = false;
-        movestogo = -1;
-        nodes = 0;
-        uciQuit = false;
-        uciStop = false;
-    }
-    long double startTime, stopTime;
-    long double timeControl, maxTimeControl;
-    int depth;
-    int selDepth;
-    bool timeGiven;
-    int movestogo;
-    unsigned long long nodes;
+    unsigned long long nodes   = 0;
 
-    bool uciQuit, uciStop;
+    long double startTime      = -1.0;
+    long double stopTime       = -1.0;
+    long double timeControl    = -1.0;
+    long double maxTimeControl = -1.0;
+
+    int depth                  = -1;
+    int selDepth               = -1;
+    int movestogo              = -1;
+
+    bool timeGiven             = false;
+    bool uciQuit               = false;
+    bool uciStop               = false;
 };
 
 enum CastleRights : int {
-    WHITE_KING = 1 << 3,
+    WHITE_KING  = 1 << 3,
     WHITE_QUEEN = 1 << 2,
-    BLACK_KING = 1 << 1,
+    BLACK_KING  = 1 << 1,
     BLACK_QUEEN = 1,
-    KING_SIDE = (1 << 3) | (1 << 1),
-    QUEEN_SIDE = 1 | (1 << 2),
+    KING_SIDE   = (1 << 3) | (1 << 1),
+    QUEEN_SIDE  = 1 | (1 << 2),
     NO_CASTLE_W = -1,
     NO_CASTLE_B = -1,
-    NO_CASTLE = 0,
+    NO_CASTLE   = 0,
 };
 
 static const int castleMod[64] = {
-    14, 15, 15, 15, 12, 15, 15, 13, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 11, 15, 15, 15, 3,  15, 15, 7,
+    14, 15, 15, 15, 12, 15, 15, 13,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    11, 15, 15, 15, 3,  15, 15, 7,
 };
 
 class Board {
@@ -80,8 +70,8 @@ class Board {
     Bitboard pieceBB[PC_MAX];
     Bitboard cPieceBB[7];
 
+    mutable Bitboard checkPcs;
     uint64_t key;
-    Bitboard checkPcs;
 
     Piece lastCapt;
     Color turn;
@@ -112,7 +102,7 @@ class Board {
             board[i] = NO_PC;
     }
 
-    Board(Board &other) {
+    Board(const Board &other) {
         for (int i = 0; hist[i].key; i++) {
             hist[i].castleStatus = other.hist[i].castleStatus;
             hist[i].checkPcs = other.hist[i].checkPcs;
@@ -150,7 +140,7 @@ class Board {
         castleRights = other.castleRights;
     }
 
-    inline bool operator==(Board &b1) {
+    constexpr bool operator==(const Board &b1) const {
         bool equal = true;
         for (int i = 0; hist[i].key; i++) {
             equal = equal && (hist[i].castleStatus == b1.hist[i].castleStatus);
@@ -236,33 +226,118 @@ class Board {
         return equal;
     }
 
-    void print();
+    constexpr int numRepetition() const {
+        int num_rep = 0;
+        for (int i = 0; i < gamePly; i++) {
+            if (this->key == hist[i].key)
+                num_rep++;
+        }
+        return num_rep;
+    }
+
+    constexpr bool isRepetition() const {
+        for (int i = gamePly - halfMoves; i < gamePly; ++i) {
+            if (this->key == hist[i].key)
+                return true;
+        }
+
+        return false;
+    }
+
+    void print() const;
     void setFen(const std::string fen);
-    std::string fen();
+    std::string fen() const;
 
-    Bitboard pieces() { return this->color[WHITE] | this->color[BLACK]; }
-    Bitboard pieces(PieceT p, Color c) { return this->color[c] & this->cPieceBB[p]; };
-    Bitboard pieces(Color c) { return color[c]; }
-    Bitboard pieces(PieceT p) { return cPieceBB[p]; }
+    constexpr Bitboard pieces() const { return this->color[WHITE] | this->color[BLACK]; }
+    constexpr Bitboard pieces(PieceT p, Color c) const { return this->color[c] & this->cPieceBB[p]; };
+    constexpr Bitboard pieces(Color c) const { return color[c]; }
+    constexpr Bitboard pieces(PieceT p) const { return cPieceBB[p]; }
 
-    Color side() { return turn; }
+    constexpr Color side() const { return turn; }
+    constexpr Bitboard bCheckPcs() const { return checkPcs; };
+    constexpr Square epSq() const { return enPass; };
+    constexpr Bitboard between(const Square s1, const Square s2) const { return rectArray[s1][s2]; };
 
-    inline Bitboard bCheckPcs() { return checkPcs; };
+    constexpr Bitboard xRayAtks(Square sq, Bitboard occ) {
+        Bitboard queenRooks = 0, queenBishops = 0;
 
-    inline Square epSq() { return enPass; };
+        queenBishops = pieces(QUEEN);
+        queenRooks = queenBishops;
+        queenBishops |= pieces(BISHOP);
+        queenRooks |= pieces(ROOK);
 
-    inline Bitboard between(Square s1, Square s2) { return rectArray[s1][s2]; };
+        queenRooks &= occ;
+        queenBishops &= occ;
 
-    CastleRights canCastle(Color c) {
-        int kingSide = castleRights & KING_SIDE;
-        int queenSide = castleRights & QUEEN_SIDE;
+        const Bitboard q_b = getBishopAttacks(sq, occ) & queenBishops;
+        const Bitboard q_r = getRookAttacks(sq, occ) & queenRooks;
+
+        return q_b | q_r;
+    }
+
+    constexpr Bitboard getLVA(Color side, Bitboard atkDefMap, Piece *p) {
+        for (PieceT pt = PAWN; pt <= KING; pt = pt + 1) {
+            *p = getCPiece(side, pt);
+            Bitboard atkMap = atkDefMap & pieces(pt, side);
+            if (atkMap)
+                return atkMap & -atkMap;
+        }
+
+        return 0;
+    }
+
+    constexpr int see(Square toSq, Piece toPc, Square from, Piece fromPc) {
+        int gain[32];
+        int ply = 0;
+
+        Bitboard occ = pieces();
+        Bitboard xRayPcs = pieces(PAWN) | pieces(BISHOP) | pieces(ROOK) | pieces(QUEEN);
+        Bitboard fromMap = SQUARE_BB(from);
+        Bitboard atkDefMap =
+            (turn == WHITE) ? attacksToKing<BLACK>(toSq, pieces()) : attacksToKing<WHITE>(toSq, pieces());
+
+        assert(toPc <= B_KING);
+        assert(getPcType(toPc) >= 0);
+        assert(getPcType(toPc) < 8);
+
+        int pcVal[] = {0, PAWN_VAL, KNIGHT_VAL, BISHOP_VAL, ROOK_VAL, QUEEN_VAL, KING_VAL, 0};
+        gain[ply] = pcVal[getPcType(toPc)];
+
+        do {
+            ply++;
+
+            gain[ply] = pcVal[getPcType(fromPc)] - gain[ply - 1];
+            if (std::max(-gain[ply - 1], ply) < 0)
+                break;
+
+            atkDefMap ^= fromMap;
+            occ ^= fromMap;
+
+            if (fromMap & xRayPcs) {
+                xRayPcs ^= fromMap;
+                atkDefMap |= xRayAtks(toSq, occ);
+            }
+
+            fromMap = getLVA(turn, atkDefMap, &fromPc);
+        } while (fromMap && ply < 32);
+
+        while (--ply && (ply - 1) >= 0) {
+            gain[ply - 1] = -std::max(-gain[ply - 1], gain[ply]);
+        }
+
+        return gain[0];
+    }
+
+    constexpr CastleRights canCastle(Color c) const {
+        const int kingSide = castleRights & KING_SIDE;
+        const int queenSide = castleRights & QUEEN_SIDE;
 
         return CastleRights((c == WHITE) ? ((kingSide & 8) | (queenSide & 4)) : ((kingSide & 2) | (queenSide & 1)));
     };
 
-    bool castleBlocked(CastleRights cr, Square sq) {
-        Bitboard queenOccupancy = (7 << (int(sq) - 3));
-        Bitboard kingOccupancy = (3 << (int(sq) + 1));
+    constexpr bool castleBlocked(CastleRights cr, Square sq) const {
+        const Bitboard queenOccupancy = (7 << (int(sq) - 3));
+        const Bitboard kingOccupancy = (3 << (int(sq) + 1));
 
         if (checkPcs)
             return true;
@@ -273,7 +348,7 @@ class Board {
         return false;
     };
 
-    template <Color C> Bitboard attacksToKing(Square sq, Bitboard occ) {
+    template <Color C> constexpr Bitboard attacksToKing(Square sq, Bitboard occ) const {
         Bitboard knights, kings, queenRooks, queenBishops;
         knights = pieces(KNIGHT, C);
         kings = pieces(KING, C);
@@ -287,7 +362,7 @@ class Board {
                (getBishopAttacks(sq, occ) & queenBishops) | (getRookAttacks(sq, occ) & queenRooks);
     };
 
-    bool isSqAttacked(Square sq, Bitboard occ, Color byColor) {
+    constexpr bool isSqAttacked(Square sq, Bitboard occ, Color byColor) const {
         Bitboard pawns, knights, kings, bishopQueens, rookQueens;
         pawns = pieces(PAWN, byColor);
         if (pawnAttacks[~byColor][sq] & pawns)
@@ -317,6 +392,23 @@ class Board {
         const bool kvnnk = (num == 4) && (__builtin_popcountll(cPieceBB[KNIGHT]) == 2);
 
         return kvk || kvbk || kvnk || kvnnk;
+    }
+
+    std::uint64_t hash() const {
+        std::uint64_t h = 0;
+        h ^= (turn * zobristBlackToMove);
+
+        for (int i = 0; i < 64; i++) {
+            if (board[i] != NO_PC)
+                h ^= zobristPieceSq[board[i]][i];
+        }
+
+        for (int i = 0; i < 4; i++)
+           h ^= zobristCastleRights[castleRights];
+
+        h ^= enPass != SQUARE_64 ? zobristEpFile[FILE_OF(enPass)] : 0;
+
+        return h;
     }
 };
 } // namespace Yayo

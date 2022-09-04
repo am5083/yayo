@@ -4,3 +4,4 @@ IndentWidth: 4
 ColumnLimit: 120
 SeparateDefinitionBlocks: Leave
 SortIncludes: CaseSensitive
+AlignConsecutiveAssignments: true

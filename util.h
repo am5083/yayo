@@ -15,6 +15,9 @@
 #define QUEEN_VAL 910
 #define KING_VAL 12000
 
+#define INF 100000
+#define ABORT_SCORE 10000000
+
 #define mirror(sq) ((7 - (sq) / 8) * 8 + (sq) % 8)
 
 typedef uint64_t Bitboard;
@@ -23,7 +26,25 @@ constexpr uint64_t B_ATK_TBL_SIZE = 0x1480;
 constexpr uint64_t R_ATK_TBL_SIZE = 0x190000;
 
 constexpr int MAX_MOVES = 256;
-constexpr int MAX_PLY = 246;
+constexpr int MAX_PLY   = 246;
+
+constexpr Bitboard A_FILEBB = 0x101010101010101;
+constexpr Bitboard B_FILEBB = 0x202020202020202;
+constexpr Bitboard C_FILEBB = 0x404040404040404;
+constexpr Bitboard D_FILEBB = 0x808080808080808;
+constexpr Bitboard E_FILEBB = 0x1010101010101010;
+constexpr Bitboard F_FILEBB = 0x2020202020202020;
+constexpr Bitboard G_FILEBB = 0x4040404040404040;
+constexpr Bitboard H_FILEBB = 0x8080808080808080;
+
+constexpr Bitboard RANK_1BB = 0xff00000000000000;
+constexpr Bitboard RANK_2BB = 0x00ff000000000000;
+constexpr Bitboard RANK_3BB = 0x0000ff0000000000;
+constexpr Bitboard RANK_4BB = 0x000000ff00000000;
+constexpr Bitboard RANK_5BB = 0x00000000ff000000;
+constexpr Bitboard RANK_6BB = 0x0000000000ff0000;
+constexpr Bitboard RANK_7BB = 0x000000000000ff00;
+constexpr Bitboard RANK_8BB = 0x00000000000000ff;
 
 // clang-format off
 enum Square : int {
@@ -132,6 +153,11 @@ constexpr Square GET_SQ(int r, int f) { return Square(int(r) * 8 + int(f));  };
 constexpr PieceT getPcType(Piece P) {
     if (std::uint8_t(P) <= W_KING) return PieceT(P);
     return PieceT(P - 8);
+}
+
+constexpr Piece getCPiece(Color C, PieceT P) {
+    if (C) { return Piece(P + 8); }
+    return Piece(P);
 }
 
 static inline unsigned long long get_time() {

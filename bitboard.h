@@ -1,30 +1,13 @@
 #ifndef BITBOARDS_H_
 #define BITBOARDS_H_
 #include "defs.h"
+#include "random.h"
 #include "util.h"
 #include <array>
 #include <cassert>
 #include <immintrin.h>
 
 namespace Yayo {
-
-constexpr Bitboard A_FILEBB = 0x101010101010101;
-constexpr Bitboard B_FILEBB = 0x202020202020202;
-constexpr Bitboard C_FILEBB = 0x404040404040404;
-constexpr Bitboard D_FILEBB = 0x808080808080808;
-constexpr Bitboard E_FILEBB = 0x1010101010101010;
-constexpr Bitboard F_FILEBB = 0x2020202020202020;
-constexpr Bitboard G_FILEBB = 0x4040404040404040;
-constexpr Bitboard H_FILEBB = 0x8080808080808080;
-
-constexpr Bitboard RANK_1BB = 0xff00000000000000;
-constexpr Bitboard RANK_2BB = 0x00ff000000000000;
-constexpr Bitboard RANK_3BB = 0x0000ff0000000000;
-constexpr Bitboard RANK_4BB = 0x000000ff00000000;
-constexpr Bitboard RANK_5BB = 0x00000000ff000000;
-constexpr Bitboard RANK_6BB = 0x0000000000ff0000;
-constexpr Bitboard RANK_7BB = 0x000000000000ff00;
-constexpr Bitboard RANK_8BB = 0x00000000000000ff;
 
 extern Bitboard bishopAttacks[B_ATK_TBL_SIZE];
 extern Bitboard rookAttacks[R_ATK_TBL_SIZE];
@@ -42,6 +25,11 @@ struct Magic {
 
 extern Magic bishopMagics[SQUARE_CT];
 extern Magic rookMagics[SQUARE_CT];
+
+extern std::uint64_t zobristBlackToMove;
+extern std::uint64_t zobristEpFile[8];
+extern std::uint64_t zobristCastleRights[16];
+extern std::uint64_t zobristPieceSq[16][64];
 
 constexpr Bitboard FILE_BB(File f) { return A_FILEBB << f; };
 
@@ -82,17 +70,17 @@ template <> constexpr Bitboard pawnSglAttacks<BLACK>(Bitboard b) { return shift<
 template <Color C> Bitboard pawnDblAttacks(Bitboard b) = delete;
 template <> constexpr Bitboard pawnDblAttacks<WHITE>(Bitboard b) {
     Bitboard attacks = shift<NORTH>(b);
-    attacks = shift<EAST>(attacks) | shift<WEST>(attacks);
+    attacks          = shift<EAST>(attacks) | shift<WEST>(attacks);
     return attacks;
 }
 template <> constexpr Bitboard pawnDblAttacks<BLACK>(Bitboard b) {
     Bitboard attacks = shift<SOUTH>(b);
-    attacks = shift<EAST>(attacks) | shift<WEST>(attacks);
+    attacks          = shift<EAST>(attacks) | shift<WEST>(attacks);
     return attacks;
 }
 
 constexpr Bitboard knightAllAttacks(Bitboard b) {
-    Bitboard bb = (shift<NORTH + NORTH>(b) | shift<SOUTH + SOUTH>(b));
+    Bitboard bb  = (shift<NORTH + NORTH>(b) | shift<SOUTH + SOUTH>(b));
     Bitboard bb1 = shift<EAST>(shift<EAST>(b)) | shift<WEST>(shift<WEST>(b));
     return shift<EAST>(bb) | shift<WEST>(bb) | shift<NORTH>(bb1) | shift<SOUTH>(bb1);
 }
@@ -101,14 +89,14 @@ constexpr Bitboard in_between(Square from, Square to) {
     int frInt = int(from);
     int toInt = int(to);
 
-    constexpr Bitboard m = -1ULL;
+    constexpr Bitboard m    = -1ULL;
     constexpr Bitboard a2a7 = 0x0001010101010100ULL;
     constexpr Bitboard b2g7 = 0x0040201008040200ULL;
     constexpr Bitboard h1b7 = 0x0002040810204080ULL;
 
     const Bitboard fd = (frInt & 7) - (toInt & 7);
     const Bitboard rd = (frInt >> 3) - (toInt >> 3);
-    const Bitboard b = (m << from) ^ (m << to);
+    const Bitboard b  = (m << from) ^ (m << to);
 
     Bitboard line;
     line = ((fd & 7) - 1) & a2a7;

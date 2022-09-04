@@ -1,16 +1,18 @@
 #include "board.h"
 #include "bitboard.h"
+#include "tt.h"
 #include <algorithm>
 #include <iostream>
 #include <string>
 #include <unordered_map>
 
 namespace Yayo {
+
 static std::string uncdPcs[12] = {
     "♙", "♘", "♗", "♖", "♕", "♔", "♟", "♞", "♝", "♜", "♛", "♚",
 };
 
-void Board::print() {
+void Board::print() const {
     for (int rank = 0; rank < 8; rank++) {
         // print all the file letters before the first rank
         if (rank == 0) {
@@ -50,8 +52,8 @@ void Board::print() {
 
     int check = 0;
     if (__builtin_popcountll(checkPcs) >= 2)
-        checkPcs = 0;
-    if (checkPcs)
+        check = 0;
+    else if (checkPcs)
         check = board[Sq(checkPcs)];
     if (check >= B_PAWN)
         check -= 2;
@@ -65,7 +67,7 @@ void Board::print() {
     printf("Position key: %llu\n\n", key);
 }
 
-std::string Board::fen() {
+std::string Board::fen() const {
     std::string fen = "";
     std::unordered_map<Piece, char> pieceToChar{
         {W_PAWN, 'P'}, {W_KNIGHT, 'N'}, {W_BISHOP, 'B'}, {W_ROOK, 'R'}, {W_QUEEN, 'Q'}, {W_KING, 'K'},
@@ -116,7 +118,7 @@ std::string Board::fen() {
 
     fen += " ";
     std::string nmoves = "";
-    int num = halfMoves;
+    int num            = halfMoves;
     while (num)
         nmoves += char('0' + num % 10), num /= 10;
     std::reverse(nmoves.begin(), nmoves.end());
@@ -139,10 +141,10 @@ std::string Board::fen() {
 }
 
 void Board::setFen(const std::string fen) {
-    key = 0;
-    ply = 0;
-    gamePly = 0;
-    lastCapt = NO_PC;
+    key          = 0;
+    ply          = 0;
+    gamePly      = 0;
+    lastCapt     = NO_PC;
     color[WHITE] = 0;
     color[BLACK] = 0;
 
@@ -173,21 +175,18 @@ void Board::setFen(const std::string fen) {
     int idx = 0;
     for (int rank = 0; rank < 8; rank++) {
         for (int file = 0; file < 8; file++) {
-            int sq = rank * 8 + file;
+            const int sq = rank * 8 + file;
             if (((fen[idx]) >= 'a' && (fen[idx]) <= 'z') || ((fen[idx]) >= 'A' && (fen[idx]) <= 'Z')) {
-                board[sq] = Piece(f_ctoi[fen[idx]]);
-                pieceBB[f_ctoi[fen[idx]]] = pieceBB[f_ctoi[fen[idx]]] | SQUARE_BB(Square(sq));
+                board[sq]                  = Piece(f_ctoi[fen[idx]]);
+                pieceBB[f_ctoi[fen[idx]]]  = pieceBB[f_ctoi[fen[idx]]] | SQUARE_BB(Square(sq));
                 cPieceBB[f_ctop[fen[idx]]] = cPieceBB[f_ctop[fen[idx]]] | SQUARE_BB(Square(sq));
-                int s = board[sq];
-                if (board[sq] >= B_PAWN)
-                    s -= 2;
-                key ^= zobristPieceSq[s - 1][sq];
+                key ^= zobristPieceSq[board[sq]][sq];
                 idx++;
             }
 
             if ((fen[idx]) > '0' && (fen[idx]) <= '9') {
                 int64_t p = -1;
-                int j = fen[idx] - '0';
+                int j     = fen[idx] - '0';
 
                 for (int i = 0; i < 7; i++)
                     if (GET(cPieceBB[i], sq))
@@ -212,8 +211,10 @@ void Board::setFen(const std::string fen) {
 
     if (fen[idx] == 'w')
         turn = WHITE;
-    else
-        turn = BLACK, key ^= zobristBlackToMove;
+    else {
+        turn = BLACK;
+        key ^= zobristBlackToMove;
+    }
 
     castleRights = 0;
     idx += 2;
@@ -230,17 +231,17 @@ void Board::setFen(const std::string fen) {
 
     idx++;
     if (fen[idx] != '-') {
-        int f = fen[idx] - 'a';
+        const int f = fen[idx] - 'a';
         idx++;
-        int r = 8 - (fen[idx] - '0');
-        enPass = Square(8 * r + f);
+        const int r = 8 - (fen[idx] - '0');
+        enPass      = Square(8 * r + f);
     } else {
         enPass = SQUARE_64;
         idx += 2;
     }
 
     const int len = fen.length();
-    int n = 0;
+    int n         = 0;
     while (idx < len && fen[idx] < '9' && fen[idx] > '0')
         n = n * 10 + fen[idx] - '0', idx++;
     halfMoves = n;
