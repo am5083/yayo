@@ -101,7 +101,7 @@ template <Color C> inline int pieceSquare(Board &board) { return 0; }
 template <> inline int pieceSquare<WHITE>(Board &board) {
     int eval = 0;
     for (int i = 0; i < 64; i++) {
-        Piece p = board.board[i];
+        Piece p   = board.board[i];
         PieceT pt = getPcType(p);
 
         if (p < B_PAWN && p != NO_PC) {
@@ -114,7 +114,7 @@ template <> inline int pieceSquare<WHITE>(Board &board) {
 template <> inline int pieceSquare<BLACK>(Board &board) {
     int eval = 0;
     for (int i = 0; i < 64; i++) {
-        Piece p = board.board[i];
+        Piece p   = board.board[i];
         PieceT pt = getPcType(p);
 
         if (p >= B_PAWN && p != NO_PC) {
@@ -124,7 +124,7 @@ template <> inline int pieceSquare<BLACK>(Board &board) {
     return eval;
 }
 
-int eval(Board &board) {
+int eval(Board &board, moveList &mList) {
     const int wMaterial = (PAWN_VAL * __builtin_popcountll(board.pieces(PAWN, WHITE))) +
                           (KNIGHT_VAL * __builtin_popcountll(board.pieces(KNIGHT, WHITE))) +
                           (BISHOP_VAL * __builtin_popcountll(board.pieces(BISHOP, WHITE))) +
@@ -139,14 +139,12 @@ int eval(Board &board) {
 
     const auto color = (board.turn == WHITE) ? 1 : -1;
 
-    moveList mList = {0};
-    generate(board, &mList);
     moveList otherMoves = {0};
     makeNullMove(board);
     generate(board, &otherMoves);
     unmakeNullMove(board);
 
-    const auto pcSqEval = pieceSquare<WHITE>(board) - pieceSquare<BLACK>(board);
+    const auto pcSqEval = 1.2 * (pieceSquare<WHITE>(board) - pieceSquare<BLACK>(board));
 
     int mobility = 0;
     if (board.turn == WHITE) {
@@ -155,7 +153,7 @@ int eval(Board &board) {
         mobility = otherMoves.nMoves - mList.nMoves;
     }
 
-    return ((0.10 * (mobility)) + (1.1 * (wMaterial - bMaterial)) + pcSqEval + 10) * color;
+    return ((0.10 * mobility) + (wMaterial - bMaterial) + pcSqEval + 10) * color;
 }
 
 } // namespace Yayo

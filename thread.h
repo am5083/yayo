@@ -6,32 +6,34 @@
 #include "search.h"
 #include "tt.h"
 #include "util.h"
+#include <cmath>
 #include <cstring>
 #include <fstream>
+#include <memory>
 #include <string>
+#include <utility>
 
 using namespace Yayo;
 
 int SEARCHED = 0;
-static std::ofstream ofs("log.yayo", std::ios::out);
-
-const int INF = 100000;
 
 class Search {
   public:
     Search() { info = nullptr; }
-    Search(const Search &) = delete;
+    Search(const Search &)            = delete;
     Search &operator=(const Search &) = delete;
 
   public:
     void startSearch(Info *_info) {
         if (SEARCHED)
-            searchThread.get()->join();
-        SEARCHED = 1;
-        info = _info;
-        numRep = 0;
+            searchThread->join();
+        SEARCHED      = 1;
+        info          = _info;
+        nodes         = 0;
+        info->uciStop = false;
+        info->uciQuit = false;
+        numRep        = 0;
         for (int i = 0; i < MAX_PLY + 6; i++) {
-            pvTableLen[i] = NO_MOVE;
             killerMoves[i][0] = NO_MOVE;
             killerMoves[i][1] = NO_MOVE;
 
@@ -41,14 +43,17 @@ class Search {
                     historyMoves[0][i][j] = 0;
                     historyMoves[1][i][j] = 0;
                 }
-                pvTable[i][j] = NO_MOVE;
             }
         }
-        searchThread.reset(new std::thread(&Search::search, this));
+        searchThread = std::make_unique<std::thread>(&Search::search, this);
     }
 
-    bool checkForStop() {
+    const bool checkForStop() const {
         if (info->stopTime <= get_time() && info->timeGiven) {
+            return true;
+        }
+
+        if (info->uciStop) {
             return true;
         }
 
@@ -57,15 +62,21 @@ class Search {
 
     void joinThread() {
         if (SEARCHED) {
-            searchThread.get()->join();
+            searchThread->join();
         }
     }
 
-    void stopSearch() { info->stopTime = 0; }
+    void stopSearch() {
+        if (info->timeGiven) {
+            info->stopTime = 0;
+        } else {
+            info->uciStop = true;
+        }
+    }
 
-    void printBoard() { _board.print(); }
+    void printBoard() const { _board.print(); }
 
-    void _setFen(std::string fen) { _board.setFen(fen); }
+    void _setFen(std::string fen) { _board.setFen(std::move(fen)); }
 
     void _make(std::uint16_t move) {
         make(_board, move);
@@ -74,10 +85,8 @@ class Search {
 
     void isReady() {
         if (SEARCHED) {
-            info = new Info;
-            info->stopTime = 0;
-            searchThread.get()->join();
-            free(info);
+            info->uciStop = true;
+            searchThread->join();
             SEARCHED = 0;
         }
         std::cout << "readyok" << std::endl;
@@ -129,16 +138,97 @@ class Search {
         }
     }
 
-    int negaMax(int alpha, int beta, int depth) {
-        if (checkForStop())
-            return 10000000;
-
-        nodes++;
-
+    int quiescent(int alpha, int beta) {
         int ply = _board.ply;
+        if (ply > selDepth)
+            selDepth = ply;
+
+        moveList mList = {0};
+        generate(_board, &mList);
+
+        // mate distance pruning
+        int mate_val = INF - ply;
+        if (mate_val <= beta) {
+            beta = mate_val;
+
+            if (alpha >= beta)
+                return alpha;
+        }
+
+        mate_val = -INF + ply;
+        if (mate_val >= alpha) {
+            alpha = mate_val;
+
+            if (beta <= mate_val)
+                return beta;
+        }
+
+        // if (_board.checkPcs) {
+        //     return negaMax(alpha, beta, 1);
+        // }
+
+        int standPat = eval(_board, mList);
+
+        if (standPat >= beta)
+            return beta;
+        if (alpha < standPat)
+            alpha = standPat;
+
+        pvTableLen[ply] = 0;
+
+        int score;
+        for (int i = 0; i < mList.nMoves; i++) {
+            if (mList.moves[i].score == 0)
+                continue;
+
+            const int c_move = mList.moves[i].move;
+
+            Square fromSq = getFrom(c_move), toSq = getTo(c_move);
+            Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
+
+            if (fromPc > toPc) {
+                mList.moves[i].score = _board.see(toSq, toPc, fromSq, fromPc) + 10000000;
+            }
+
+            make(_board, mList.moves[i].move);
+            score = -quiescent(-beta, -alpha);
+            unmake(_board, mList.moves[i].move);
+
+            if (score >= beta)
+                return beta;
+            if (score > alpha) {
+                updatePv(_board.ply, c_move);
+                alpha = score;
+            }
+        }
+
+        if (mList.nMoves == 0) {
+            if (__builtin_popcountll(_board.checkPcs) > 0) {
+                return -INF + _board.ply;
+            }
+        }
+
+        return alpha;
+    }
+
+    int negaMax(int alpha, int beta, int depth) {
+        int hashFlag  = TP_ALPHA;
+        const int ply = _board.ply;
+
+        if (ply > selDepth)
+            selDepth = ply;
+
+        if (checkForStop())
+            return ABORT_SCORE;
+
+        if (depth <= 0)
+            return quiescent(alpha, beta);
+
+        pvTableLen[ply] = 0;
+
         if (_board.ply > 0) {
             alpha = std::max(alpha, -INF + _board.ply);
-            beta = std::min(beta, INF - _board.ply - 1);
+            beta  = std::min(beta, INF - _board.ply);
 
             if (alpha >= beta) {
                 if (killerMates[ply][0] != pvTable[ply][0]) {
@@ -152,29 +242,48 @@ class Search {
             if (_board.halfMoves >= 100 || _board.isDraw())
                 return 1 - (nodes & 2);
 
-            if (isRepetition(_board)) {
+            if (_board.isRepetition()) {
                 numRep++;
-                if (numRepetition(_board) >= 2 || numRep > 2) {
+                if (_board.numRepetition() >= 2 || numRep > 2) {
                     return 1 - (nodes & 2);
                 }
             }
         }
 
-        if (depth == 0)
-            return eval(_board);
-
-        pvTableLen[_board.ply] = 0;
-
         moveList mList = {{{0}}};
         generate(_board, &mList);
         scoreMoves(&mList);
 
+        int score = 0;
+        int move  = mList.moves[0].move;
+
+        if (depth != abortDepth) {
+            if ((score = tpTbl.probeHash(_board.ply, _board.key, &move, depth, alpha, beta)) != TP_UNKNOWN) {
+                if (!(alpha < beta - 1))
+                    return score;
+            }
+        }
+
+        if (!_board.checkPcs && canNullMove) {
+            canNullMove = false;
+            makeNullMove(_board);
+            score = -negaMax(-beta, -beta + 1, depth - 1 - 2);
+            unmakeNullMove(_board);
+
+            if (checkForStop())
+                return ABORT_SCORE;
+
+            if (score >= beta)
+                return beta;
+        }
+
+        int bestMove      = move;
         int movesSearched = 0;
         for (int i = 0; i < mList.nMoves; i++) {
             mList.swapBest(i);
-            const int move = mList.moves[i].move;
+            const int curr_move = mList.moves[i].move;
+            nodes++;
 
-            int score;
             make(_board, mList.moves[i].move);
             movesSearched++;
             if (movesSearched == 1) {
@@ -190,47 +299,85 @@ class Search {
             unmake(_board, mList.moves[i].move);
 
             if (score >= beta) {
-                if (getCapture(move) < CAPTURE) {
+                if (getCapture(curr_move) < CAPTURE) {
                     killerMoves[ply][1] = killerMoves[ply][0];
                     killerMoves[ply][0] = mList.moves[i].move;
 
-                    historyMoves[_board.turn][getFrom(move)][getTo(move)] += depth * depth;
+                    historyMoves[_board.turn][getFrom(curr_move)][getTo(curr_move)] += depth * depth;
                 }
+
+                if (!checkForStop())
+                    tpTbl.recordHash(_board.fen(), _board.ply, _board.hash(), curr_move, depth, beta, TP_BETA);
+
                 return score;
             }
 
             if (score > alpha) {
                 updatePv(_board.ply, mList.moves[i].move);
-                alpha = score;
+                alpha    = score;
+                bestMove = curr_move;
+                hashFlag = TP_EXACT;
+                if (!checkForStop())
+                    tpTbl.recordHash(_board.fen(), _board.ply, _board.hash(), curr_move, depth, alpha, hashFlag);
             }
         }
 
-        if (mList.nMoves == 0 && _board.checkPcs) {
-            return -INF + _board.ply;
-        } else if (mList.nMoves == 0) { // stalemate
-            return 1 - (nodes & 2);
+        if (mList.nMoves == 0) {
+            if (_board.checkPcs) {
+                return -INF + _board.ply;
+            }
+
+            return 0;
+        }
+
+        if (!checkForStop()) {
+            tpTbl.recordHash(_board.fen(), _board.ply, _board.hash(), bestMove, depth, score, hashFlag);
         }
 
         return alpha;
     }
 
     int search() {
-        int depth = info->depth;
+        abortDepth = 0;
+        int depth  = info->depth;
 
         int score;
+        double start = get_time();
         for (int j = 1; j <= depth; j++) {
-            if (checkForStop())
-                break;
+            canNullMove = true;
+            score       = negaMax(-(INF * 2), INF * 2, j);
 
-            nodes = 0;
-            score = negaMax(-INF, INF, j);
-            std::cout << "info depth " << j << " score cp " << score << " nodes " << nodes << " pv ";
+            if (checkForStop()) {
+                abortDepth = j;
+                break;
+            }
+
+            double end      = ((get_time() - start) + 1) / 1000.0;
+            long double nps = (nodes / (end));
+
+            std::cout << std::fixed << "info depth " << j << " seldepth " << selDepth;
+            // std::cout << " hashfull " << tpTbl.hashfull() << " hashcoll " << tpTbl.collisions << " hashwrite "
+            //           << tpTbl.n << " hashrep " << tpTbl.overwrites;
+            std::cout << " score";
+
+            if (std::abs(score) > (INF - MAX_PLY)) {
+                int tscore = score;
+                if (score < 0)
+                    score = -1;
+                else
+                    score = 1;
+                std::cout << " mate " << score * ((INF - std::abs(tscore)) / 2);
+            } else {
+                std::cout << " cp " << score;
+            }
+            std::cout << " nodes " << nodes;
+            std::cout << " nps " << int(nps) << " time " << int(end * 1000) << " pv ";
             printPv();
             std::cout << std::endl;
         }
 
         std::cout << "bestmove ";
-        print_move(pvTable[0][0]);
+        print_move(pvTable[_board.ply][0]);
         std::cout << std::endl;
 
         return 0;
@@ -242,6 +389,8 @@ class Search {
     int killerMoves[MAX_PLY + 6][2];
     int killerMates[MAX_PLY + 6][2];
     int historyMoves[2][64][64];
+
+    TPTable tpTbl;
 
     void updatePv(int ply, int move) {
         pvTable[ply][0] = move;
@@ -262,8 +411,11 @@ class Search {
     }
 
   private:
-    std::uint64_t nodes;
+    int abortDepth;
     int numRep;
+    bool canNullMove;
+    int selDepth;
+    std::uint64_t nodes;
     std::unique_ptr<std::thread> searchThread;
     Board _board;
     Info *info;
