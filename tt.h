@@ -15,11 +15,10 @@ namespace Yayo {
 
 struct TPHash {
     std::uint64_t key;
-    int depth = 0;
-    int flag  = 0;
-    int move  = 0;
-    int score = 0;
-    std::string fen;
+    short depth = 0;
+    short move  = 0;
+    int flag    = 0;
+    int score   = 0;
 };
 
 struct TPTable {
@@ -75,7 +74,6 @@ struct TPTable {
         p.key   = key;
         p.move  = move;
         p.score = score;
-        p.fen   = fen;
     };
 
     constexpr int hashfull() const { return double(double(n - overwrites) / double(TP_INIT_SIZE)) * 1000; }

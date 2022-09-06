@@ -11,11 +11,16 @@ Bitboard bishopAttacks[B_ATK_TBL_SIZE];
 Bitboard rookAttacks[R_ATK_TBL_SIZE];
 Bitboard LINE[SQUARE_CT][SQUARE_CT];
 
+Bitboard northPassedPawns[SQUARE_CT];
+Bitboard southPassedPawns[SQUARE_CT];
+Bitboard isolatedPawnMasks[SQUARE_CT];
+
 Magic bishopMagics[SQUARE_CT];
 Magic rookMagics[SQUARE_CT];
 
 std::uint64_t zobristBlackToMove = random_u64();
 std::uint64_t zobristEpFile[8];
+std::uint64_t zobristCastle[2][2];
 std::uint64_t zobristCastleRights[16];
 std::uint64_t zobristPieceSq[16][64];
 
@@ -51,13 +56,14 @@ void Bitboards::init_arrays() {
 
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
-            temp[i][j] = random_u64();
+            zobristCastle[i][j] = random_u64();
         }
     }
 
     for (int i = 0; i < 16; i++) {
         for (int j = 0; j < 4; j++)
-            zobristCastleRights[i] = temp[j / 2][j % 2] * ((i >> j) & 1);
+            zobristCastleRights[i] ^= (zobristCastle[j / 2][j % 2] * ((i >> j) & 1));
+
         for (int j = 0; j < 64; j++) {
             zobristPieceSq[i][j] = random_u64();
         }
@@ -67,20 +73,22 @@ void Bitboards::init_arrays() {
         }
     }
 
-    // std::sort(temp.begin(), temp.end());
-    // for (auto i : temp) {
-    //     int x = 0;
-    //     for (auto j : temp) {
-    //         if (i == j) {
-    //             x++;
-    //             if (x > 1) {
-    //                 std::cout << "DUP: " << i << ", " << j << "\n";
-    //             }
-    //         }
-    //     }
-    // }
-
     for (int i = 0; i < 64; i++) {
+        northPassedPawns[i] = passedPawnMask<WHITE>(Square(i));
+        southPassedPawns[i] = passedPawnMask<BLACK>(Square(i));
+
+        File file        = FILE_OF(Square(i));
+        Bitboard rFileBB = FILE_BB(File(file + 1));
+        Bitboard lFileBB = FILE_BB(File(file - 1));
+
+        if (file == FILE_A) {
+            isolatedPawnMasks[i] = rFileBB;
+        } else if (file == FILE_H) {
+            isolatedPawnMasks[i] = lFileBB;
+        } else {
+            isolatedPawnMasks[i] = rFileBB | lFileBB;
+        }
+
         for (int to = 0; to < 64; to++) {
             Bitboard rookAtk = genRookAttacks(Square(i), 0);
             Bitboard bishAtk = genBishopAttacks(Square(i), 0);

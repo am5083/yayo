@@ -36,7 +36,7 @@ struct Info {
 
     bool timeGiven             = false;
     bool uciQuit               = false;
-    bool uciStop               = false;
+    bool uciStop = false;
 };
 
 enum CastleRights : int {
@@ -403,8 +403,7 @@ class Board {
                 h ^= zobristPieceSq[board[i]][i];
         }
 
-        for (int i = 0; i < 4; i++)
-           h ^= zobristCastleRights[castleRights];
+        h ^= zobristCastleRights[castleRights];
 
         h ^= enPass != SQUARE_64 ? zobristEpFile[FILE_OF(enPass)] : 0;
 

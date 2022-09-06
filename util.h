@@ -46,6 +46,10 @@ constexpr Bitboard RANK_6BB = 0x0000000000ff0000;
 constexpr Bitboard RANK_7BB = 0x000000000000ff00;
 constexpr Bitboard RANK_8BB = 0x00000000000000ff;
 
+constexpr std::uint64_t popcount(std::uint64_t n) { return __builtin_popcountll(n); }
+constexpr std::uint64_t lsb_index(std::uint64_t n) { return __builtin_ffsll(n) - 1; }
+constexpr std::uint64_t pop_lsb(std::uint64_t n) { return (1 << lsb_index(n)); }
+
 // clang-format off
 enum Square : int {
     A8 = 0, B8, C8, D8, E8, F8, G8, H8,
@@ -158,6 +162,10 @@ constexpr PieceT getPcType(Piece P) {
 constexpr Piece getCPiece(Color C, PieceT P) {
     if (C) { return Piece(P + 8); }
     return Piece(P);
+}
+
+constexpr Direction pushDirection(Color C) {
+    return (C == WHITE) ? NORTH : SOUTH;
 }
 
 static inline unsigned long long get_time() {

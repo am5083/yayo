@@ -13,6 +13,9 @@ extern Bitboard bishopAttacks[B_ATK_TBL_SIZE];
 extern Bitboard rookAttacks[R_ATK_TBL_SIZE];
 extern Bitboard LINE[SQUARE_CT][SQUARE_CT];
 
+extern Bitboard northPassedPawns[SQUARE_CT];
+extern Bitboard southPassedPawns[SQUARE_CT];
+
 struct Magic {
     Bitboard mask;
     Bitboard magic;
@@ -35,27 +38,60 @@ constexpr Bitboard FILE_BB(File f) { return A_FILEBB << f; };
 
 constexpr Bitboard RANK_BB(Rank r) { return RANK_1BB >> (r * 8); };
 
-constexpr Bitboard SQUARE_BB(Square n) { return 1ULL << int(n); };
+constexpr Bitboard SQUARE_BB(Square n) { return 1ULL << n; };
 
 template <Direction D> constexpr Bitboard shift(Bitboard b) {
-    return D == NORTH                ? b >> 8
-           : D == SOUTH              ? b << 8
-           : D == NORTH + NORTH      ? b >> 16
-           : D == SOUTH + SOUTH      ? b << 16
-           : D == EAST               ? (b << 1) & ~A_FILEBB
-           : D == WEST               ? (b >> 1) & ~H_FILEBB
-           : D == NORTH + EAST       ? (b >> 7) & ~A_FILEBB
-           : D == NORTH + WEST       ? (b >> 9) & ~H_FILEBB
-           : D == SOUTH + EAST       ? (b << 9) & ~A_FILEBB
-           : D == SOUTH + WEST       ? (b << 7) & ~H_FILEBB
-           : D == NORTH + NORTH_EAST ? (b >> 15) & ~A_FILEBB
-           : D == NORTH + NORTH_WEST ? (b >> 17) & ~H_FILEBB
-           : D == SOUTH + SOUTH_EAST ? (b << 15) & ~A_FILEBB
-           : D == SOUTH + SOUTH_WEST ? (b << 17) & ~H_FILEBB
-                                     : 0;
+    return D == NORTH                   ? b >> 8
+           : D == SOUTH                 ? b << 8
+           : D == NORTH + NORTH         ? b >> 16
+           : D == SOUTH + SOUTH + SOUTH ? b << 32
+           : D == NORTH + NORTH + NORTH ? b >> 32
+           : D == SOUTH + SOUTH         ? b << 16
+           : D == EAST                  ? (b << 1) & ~A_FILEBB
+           : D == WEST                  ? (b >> 1) & ~H_FILEBB
+           : D == NORTH + EAST          ? (b >> 7) & ~A_FILEBB
+           : D == NORTH + WEST          ? (b >> 9) & ~H_FILEBB
+           : D == SOUTH + EAST          ? (b << 9) & ~A_FILEBB
+           : D == SOUTH + WEST          ? (b << 7) & ~H_FILEBB
+           : D == NORTH + NORTH_EAST    ? (b >> 15) & ~A_FILEBB
+           : D == NORTH + NORTH_WEST    ? (b >> 17) & ~H_FILEBB
+           : D == SOUTH + SOUTH_EAST    ? (b << 15) & ~A_FILEBB
+           : D == SOUTH + SOUTH_WEST    ? (b << 17) & ~H_FILEBB
+                                        : 0;
 }
 
 template <Direction D> constexpr Bitboard shift(Square s) { return shift<D>(SQUARE_BB(s)); }
+
+template <Direction D> constexpr Bitboard fill(Square s) {
+    Bitboard sq = SQUARE_BB(s);
+    sq |= shift<D>(sq);
+    sq |= shift<D + D>(sq);
+    sq |= shift<D + D + D>(sq);
+    return sq;
+}
+
+template <Direction D> constexpr Bitboard fill(Bitboard sq) {
+    sq |= shift<D>(sq);
+    sq |= shift<D + D>(sq);
+    sq |= shift<D + D + D>(sq);
+    return sq;
+}
+
+template <Color C> constexpr Bitboard passedPawnMask(Bitboard sq) {
+    constexpr Direction D = (C == WHITE) ? NORTH : SOUTH;
+    sq                    = shift<D>(sq);
+    return fill<D>(shift<WEST>(sq)) | fill<D>(sq) | fill<D>(shift<EAST>(sq));
+}
+
+template <Color C> constexpr Bitboard passedPawnMask(Square s) {
+    constexpr Direction D = (C == WHITE) ? NORTH : SOUTH;
+    const Bitboard sq     = shift<D>(SQUARE_BB(s));
+
+    if (C == WHITE)
+        return fill<NORTH>(shift<WEST>(sq)) | fill<NORTH>(sq) | fill<NORTH>(shift<EAST>(sq));
+
+    return fill<SOUTH>(shift<WEST>(sq)) | fill<SOUTH>(sq) | fill<SOUTH>(shift<EAST>(sq));
+}
 
 constexpr Bitboard maskKingAttacks(Bitboard b) {
     b |= shift<EAST>(b) | shift<WEST>(b);
@@ -162,6 +198,10 @@ constexpr Bitboard getBishopAttacks(Square s, Bitboard b) {
     return bishopMagics[s].c_attacks(b);
 }
 constexpr Bitboard getPawnAttacks(Color c, Square s) { return pawnAttacks[c][s]; }
+
+template <Color C> constexpr Bitboard getPassMask(int s) {
+    return (C == WHITE) ? northPassedPawns[s] : southPassedPawns[s];
+}
 
 template <PieceT P> constexpr Bitboard getAttacks(Square s) { return 0; }
 template <> constexpr Bitboard getAttacks<KNIGHT>(Square s) { return knightAttacks[s]; }

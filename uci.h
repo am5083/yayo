@@ -18,7 +18,7 @@ static inline int parseMove(Board &board, std::string move) {
     generate(board, &mList);
 
     int fromSq = (move[0] - 'a') + (8 - (move[1] - '0')) * 8;
-    int toSq = (move[2] - 'a') + (8 - (move[3] - '0')) * 8;
+    int toSq   = (move[2] - 'a') + (8 - (move[3] - '0')) * 8;
     int promPc = 0;
 
     for (int i = 0; i < mList.nMoves; i++) {
@@ -95,7 +95,7 @@ class UCI {
 };
 
 void UCI::Uci() {
-    std::cout << "id name Yayo 0.0.1" << std::endl;
+    std::cout << "id name Yayo" << std::endl;
     std::cout << "id author am5083" << std::endl;
     std::cout << "uciok" << std::endl;
 }
@@ -114,7 +114,7 @@ void UCI::Perft(int depth) {
     unsigned long long n;
     if (depth == 1) {
         moveList mList = {0};
-        n = divide(board, &mList, depth, depth);
+        n              = divide(board, &mList, depth, depth);
 
         for (int i = 0; i < mList.nMoves; i++) {
             print_move(mList.moves[i].move);
@@ -140,9 +140,8 @@ void UCI::Main() {
 
     Info info[1];
 
-    std::cout << "id name Yayo 0.0.1" << std::endl;
-    std::cout << "id author am5083" << std::endl;
-    std::cout << "uciok" << std::endl;
+    std::cout << "id name Yayo" << std::endl;
+    // std::cout << "uciok" << std::endl;
 
     while (1) {
         std::string input;
@@ -199,19 +198,19 @@ void UCI::Main() {
             int m = parseMove(board, move);
             search._make(m);
         } else if (cmd == "go") {
-            int depth = -1;
-            int movestogo = 30;
-            int movetime = -1;
-            int time = -1;
-            int increment = 0;
-            bool turn = board.turn;
+            int depth       = -1;
+            int movestogo   = 30;
+            int movetime    = -1;
+            int time        = -1;
+            int increment   = 0;
+            bool turn       = board.turn;
             info->timeGiven = false;
 
             std::string tc;
 
             while (iss >> tc) {
                 if (tc == "infinite") {
-                    depth = MAX_PLY;
+                    depth = 100;
                     continue;
                 } else if (tc == "binc" && turn == BLACK) {
                     iss >> increment;
@@ -236,7 +235,7 @@ void UCI::Main() {
             }
 
             info->startTime = get_time();
-            info->depth = depth;
+            info->depth     = depth;
 
             int cStopTime, hStopTime;
 
@@ -244,12 +243,12 @@ void UCI::Main() {
                 cStopTime = time / (movestogo + 1) + increment;
                 hStopTime = std::min(cStopTime * 5, time / std::min(4, movestogo));
 
-                hStopTime = std::max(10, std::min(hStopTime, time));
-                cStopTime = std::max(1, std::min(cStopTime, hStopTime));
-                info->timeControl = cStopTime;
+                hStopTime            = std::max(10, std::min(hStopTime, time));
+                cStopTime            = std::max(1, std::min(cStopTime, hStopTime));
+                info->timeControl    = cStopTime;
                 info->maxTimeControl = hStopTime;
-                info->stopTime = info->startTime + cStopTime;
-                info->timeGiven = true;
+                info->stopTime       = info->startTime + cStopTime;
+                info->timeGiven      = true;
             }
 
             if (depth == -1) {
@@ -280,7 +279,7 @@ void UCI::Main() {
             unsigned long long n;
             if (depth == 1) {
                 moveList mList = {0};
-                n = divide(board, &mList, depth, depth);
+                n              = divide(board, &mList, depth, depth);
 
                 for (int i = 0; i < mList.nMoves; i++) {
                     print_move(mList.moves[i].move);

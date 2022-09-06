@@ -45,6 +45,7 @@ class Search {
                 }
             }
         }
+
         searchThread = std::make_unique<std::thread>(&Search::search, this);
     }
 
@@ -89,20 +90,8 @@ class Search {
             searchThread->join();
             SEARCHED = 0;
         }
+
         std::cout << "readyok" << std::endl;
-    }
-
-    void pvCheck() {
-        updatePv(0, encodeMove(E2, E4, DOUBLE_PAWN));
-        updatePv(1, encodeMove(E7, E5, DOUBLE_PAWN));
-        updatePv(2, encodeMove(C7, C5, DOUBLE_PAWN));
-
-        for (int i = 0; i < 3; i++) {
-            std::cout << "pvTableLen[" << i << "] = " << pvTableLen[i] << std::endl;
-            std::cout << "pvTable[0][" << i << "] = ";
-            print_move(pvTable[0][i]);
-            std::cout << std::endl;
-        }
     }
 
     void scoreMoves(moveList *mList) {
@@ -163,9 +152,9 @@ class Search {
                 return beta;
         }
 
-        // if (_board.checkPcs) {
-        //     return negaMax(alpha, beta, 1);
-        // }
+        if (_board.checkPcs) {
+            return negaMax(alpha, beta, 1);
+        }
 
         int standPat = eval(_board, mList);
 
@@ -209,6 +198,19 @@ class Search {
         }
 
         return alpha;
+    }
+
+    constexpr bool canReduce(int alpha, int move, moveList &mList) {
+        if (_board.checkPcs)
+            return false;
+        if (getCapture(move) >= CAPTURE)
+            return false;
+        // if (historyMoves[_board.turn][getFrom(move)][getTo(move)] > 1500)
+        //     return false;
+        // if (eval(_board, mList) > alpha)
+        //     return false;
+
+        return true;
     }
 
     int negaMax(int alpha, int beta, int depth) {
@@ -289,10 +291,17 @@ class Search {
             if (movesSearched == 1) {
                 score = -negaMax(-beta, -alpha, depth - 1);
             } else {
-                score = -negaMax(-alpha - 1, -alpha, depth - 1);
+                if (movesSearched >= 5 && depth >= 3 && canReduce(alpha, curr_move, mList)) {
+                    score = -negaMax(-alpha - 1, -alpha, depth - 2);
+                } else {
+                    score = alpha + 1;
+                }
 
                 if (score > alpha) {
-                    score = -negaMax(-beta, -alpha, depth - 1);
+                    score = -negaMax(-alpha - 1, -alpha, depth - 1);
+                    if (score > alpha && score < beta) {
+                        score = -negaMax(-beta, -alpha, depth - 1);
+                    }
                 }
             }
 
@@ -356,8 +365,7 @@ class Search {
             long double nps = (nodes / (end));
 
             std::cout << std::fixed << "info depth " << j << " seldepth " << selDepth;
-            // std::cout << " hashfull " << tpTbl.hashfull() << " hashcoll " << tpTbl.collisions << " hashwrite "
-            //           << tpTbl.n << " hashrep " << tpTbl.overwrites;
+            std::cout << " hashfull " << tpTbl.hashfull();
             std::cout << " score";
 
             if (std::abs(score) > (INF - MAX_PLY)) {
@@ -375,6 +383,8 @@ class Search {
             printPv();
             std::cout << std::endl;
         }
+
+        ponderMove = pvTable[_board.ply][1];
 
         std::cout << "bestmove ";
         print_move(pvTable[_board.ply][0]);
@@ -413,8 +423,12 @@ class Search {
   private:
     int abortDepth;
     int numRep;
-    bool canNullMove;
     int selDepth;
+    int quiescentDepth;
+
+    bool canNullMove;
+    int ponderMove;
+
     std::uint64_t nodes;
     std::unique_ptr<std::thread> searchThread;
     Board _board;
