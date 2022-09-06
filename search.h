@@ -6,7 +6,9 @@
 #include <thread>
 
 namespace Yayo {
-
+namespace { // penalties
+constexpr int UNMOVED_PASSED = -20;
+}
 // clang-format off
 constexpr int pawn[SQUARE_CT] = {
     0,  0,  0,  0,  0,  0,  0,  0,
@@ -96,6 +98,92 @@ const int *pieceTbls[6] = {
     pawn, knight, bishop, rook, queen, king,
 };
 
+template <Color C> constexpr int passedBlockBonus(Bitboard passedPawns, Board &board) {
+    constexpr Direction Up    = pushDirection(C);
+    constexpr Direction Down  = pushDirection(~C);
+    constexpr Rank startRank  = (C == WHITE) ? RANK_2 : RANK_7;
+    constexpr Rank singlePush = startRank + Up;
+
+    int score = 0;
+    while (passedPawns) {
+        Square psq      = Square(lsb_index(passedPawns));
+        Square pushSq   = psq + Up;
+        Bitboard pushBB = SQUARE_BB(pushSq);
+        passedPawns &= passedPawns - 1;
+
+        if (RANK_OF(psq) == startRank || RANK_OF(psq) == singlePush)
+            continue;
+
+        if (pushBB & board.pieces())
+            continue;
+
+        if (board.isSqAttacked(pushSq, board.pieces(), ~C))
+            continue;
+
+        int nAtk = 0, nDef = 0;
+        bool pathAttacked     = false;
+        const int rankBonus[] = {0, 0, 0, 40, 200, 260, 400, 0};
+
+        Bitboard pushToQueen = fill<Up>(pushBB);
+        while (pushToQueen) {
+            Square sq     = Square(lsb_index(pushToQueen));
+            bool attacked = board.isSqAttacked(sq, board.pieces(), ~C);
+            bool defended = board.isSqAttacked(sq, board.pieces(), C);
+
+            if (attacked && !defended) {
+                score += rankBonus[RANK_OF(sq)] / 4;
+                nAtk++;
+            }
+
+            if (attacked && defended) {
+                score += rankBonus[RANK_OF(sq)] / 2;
+                nDef++;
+            }
+
+            pushToQueen &= pushToQueen - 1;
+        }
+
+        if (nAtk || nDef) {
+            continue;
+        }
+
+        score += rankBonus[RANK_OF(psq)];
+    }
+
+    return score;
+}
+
+template <Color C> constexpr int passedPawnScore(Board &board) {
+    constexpr Direction Up   = pushDirection(C);
+    constexpr Direction Down = pushDirection(~C);
+    Bitboard ourPawns        = board.pieces(PAWN, C);
+    Bitboard enemyPawns      = board.pieces(PAWN, ~C);
+
+    Bitboard opponentPawnSpan = fill<Down>(shift<Down>(enemyPawns));
+    opponentPawnSpan |= shift<WEST>(opponentPawnSpan) | shift<EAST>(opponentPawnSpan);
+
+    Bitboard passedPawns = board.pieces(PAWN, C) & ~opponentPawnSpan;
+
+    Rank startRank       = (C == WHITE) ? RANK_2 : RANK_7;
+    Bitboard startPassed = passedPawns & startRank;
+
+    int score = 0;
+
+    score += passedBlockBonus<C>(passedPawns, board);
+
+    const int rankBonuses[] = {0, -20, 17, 15, 35, 175, 400};
+    // const int rankBonuses[] = {0, 10, 17, 15, 62, 168, 278};
+    while (passedPawns) {
+        Square psq = Square(lsb_index(passedPawns));
+        psq        = (C == WHITE) ? psq : Square(mirror(psq));
+
+        score += rankBonuses[RANK_OF(psq)];
+        passedPawns &= passedPawns - 1;
+    }
+
+    return score;
+}
+
 template <Color C> inline int pieceSquare(Board &board) { return 0; }
 
 template <> inline int pieceSquare<WHITE>(Board &board) {
@@ -124,18 +212,17 @@ template <> inline int pieceSquare<BLACK>(Board &board) {
     return eval;
 }
 
+// clang-format off
 int eval(Board &board, moveList &mList) {
-    const int wMaterial = (PAWN_VAL * __builtin_popcountll(board.pieces(PAWN, WHITE))) +
-                          (KNIGHT_VAL * __builtin_popcountll(board.pieces(KNIGHT, WHITE))) +
-                          (BISHOP_VAL * __builtin_popcountll(board.pieces(BISHOP, WHITE))) +
-                          (ROOK_VAL * __builtin_popcountll(board.pieces(ROOK, WHITE))) +
-                          (QUEEN_VAL * __builtin_popcountll(board.pieces(QUEEN, WHITE)));
+    const int wMaterial =
+        (PAWN_VAL * popcount(board.pieces(PAWN, WHITE)))     + (KNIGHT_VAL * popcount(board.pieces(KNIGHT, WHITE))) +
+        (BISHOP_VAL * popcount(board.pieces(BISHOP, WHITE))) + (ROOK_VAL * popcount(board.pieces(ROOK, WHITE)))     +
+        (QUEEN_VAL * popcount(board.pieces(QUEEN, WHITE)));
 
-    const int bMaterial = (PAWN_VAL * __builtin_popcountll(board.pieces(PAWN, BLACK))) +
-                          (KNIGHT_VAL * __builtin_popcountll(board.pieces(KNIGHT, BLACK))) +
-                          (BISHOP_VAL * __builtin_popcountll(board.pieces(BISHOP, BLACK))) +
-                          (ROOK_VAL * __builtin_popcountll(board.pieces(ROOK, BLACK))) +
-                          (QUEEN_VAL * __builtin_popcountll(board.pieces(QUEEN, BLACK)));
+    const int bMaterial =
+        (PAWN_VAL * popcount(board.pieces(PAWN, BLACK)))     + (KNIGHT_VAL * popcount(board.pieces(KNIGHT, BLACK))) +
+        (BISHOP_VAL * popcount(board.pieces(BISHOP, BLACK))) + (ROOK_VAL * popcount(board.pieces(ROOK, BLACK)))     +
+        (QUEEN_VAL * popcount(board.pieces(QUEEN, BLACK)));
 
     const auto color = (board.turn == WHITE) ? 1 : -1;
 
@@ -145,6 +232,7 @@ int eval(Board &board, moveList &mList) {
     unmakeNullMove(board);
 
     const auto pcSqEval = 1.2 * (pieceSquare<WHITE>(board) - pieceSquare<BLACK>(board));
+    const auto passed = passedPawnScore<WHITE>(board) - passedPawnScore<BLACK>(board);
 
     int mobility = 0;
     if (board.turn == WHITE) {
@@ -153,7 +241,8 @@ int eval(Board &board, moveList &mList) {
         mobility = otherMoves.nMoves - mList.nMoves;
     }
 
-    return ((0.10 * mobility) + (wMaterial - bMaterial) + pcSqEval + 10) * color;
+
+    return ((0.10 * mobility) + (wMaterial - bMaterial) + pcSqEval + (0.3 * passed) + 10) * color;
 }
 
 } // namespace Yayo
