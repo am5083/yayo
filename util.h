@@ -126,8 +126,8 @@ constexpr Square Sq(Bitboard bb) {
 constexpr Direction operator+(Direction d1, int d2) { return Direction(int(d1) + int(d2)); }
 constexpr Direction operator-(Direction d1, int d2) { return Direction(int(d1) - int(d2)); }
 constexpr Direction operator-(Direction d) { return Direction(0) - Direction(int(d)); }
-inline Direction& operator+=(Direction& d1, int d2) { return d1 = d1 + Direction(d2); }
-inline Direction& operator-=(Direction& d1, int d2) { return d1 = d1 - Direction(d2); }
+constexpr Direction& operator+=(Direction& d1, int d2) { return d1 = d1 + Direction(d2); }
+constexpr Direction& operator-=(Direction& d1, int d2) { return d1 = d1 - Direction(d2); }
 
 constexpr Piece operator-(Piece p1, int p2) { return Piece(std::uint8_t(p1) - p2); }
 constexpr Piece operator+(Piece p1, int p2) { return Piece(std::uint8_t(p1) + p2); }
@@ -135,20 +135,25 @@ constexpr Piece operator+(Piece p1, int p2) { return Piece(std::uint8_t(p1) + p2
 constexpr PieceT operator-(PieceT p1, int p2) { return PieceT(std::uint8_t(p1) - p2); }
 constexpr PieceT operator+(PieceT p1, int p2) { return PieceT(std::uint8_t(p1) + p2); }
 
-inline Square& operator++(Square& sq) { return sq = Square(int(sq) + 1); }
-inline Square& operator--(Square& sq) { return sq = Square(int(sq) - 1); }
-inline Square& operator++(Square& sq, int) { ++sq; return sq = Square(int(sq)); }
-inline Square& operator--(Square& sq, int) { --sq; return sq = Square(int(sq)); }
+constexpr Square& operator++(Square& sq) { return sq = Square(int(sq) + 1); }
+constexpr Square& operator--(Square& sq) { return sq = Square(int(sq) - 1); }
+constexpr Square& operator++(Square& sq, int) { ++sq; return sq = Square(int(sq)); }
+constexpr Square& operator--(Square& sq, int) { --sq; return sq = Square(int(sq)); }
 
-inline Rank& operator++(Rank& sq) { return sq = Rank(int(sq) + 1); }
-inline Rank& operator--(Rank& sq) { return sq = Rank(int(sq) - 1); }
-inline Rank& operator++(Rank& sq, int) { ++sq; return sq = Rank(int(sq)); }
-inline Rank& operator--(Rank& sq, int) { --sq; return sq = Rank(int(sq)); }
+constexpr Square operator+(Direction d, Square s) { return Square(int(s) + int(d)); }
+constexpr Square operator+(Square s, Direction d) { return Square(int(s) + int(d)); }
 
-inline File& operator++(File& sq) { return sq = File(int(sq) + 1); }
-inline File& operator--(File& sq) { return sq = File(int(sq) - 1); }
-inline File& operator++(File& sq, int) { ++sq; return sq = File(int(sq)); }
-inline File& operator--(File& sq, int) { --sq; return sq = File(int(sq)); }
+constexpr Rank& operator++(Rank& sq) { return sq = Rank(int(sq) + 1); }
+constexpr Rank& operator--(Rank& sq) { return sq = Rank(int(sq) - 1); }
+constexpr Rank& operator++(Rank& sq, int) { ++sq; return sq = Rank(int(sq)); }
+constexpr Rank& operator--(Rank& sq, int) { --sq; return sq = Rank(int(sq)); }
+
+constexpr Rank operator+(Rank r, Direction d) { return Rank(int(r) + int(d/8)); }
+
+constexpr File& operator++(File& sq) { return sq = File(int(sq) + 1); }
+constexpr File& operator--(File& sq) { return sq = File(int(sq) - 1); }
+constexpr File& operator++(File& sq, int) { ++sq; return sq = File(int(sq)); }
+constexpr File& operator--(File& sq, int) { --sq; return sq = File(int(sq)); }
 
 constexpr Square GET_SQ(Rank r, File f) { return Square((int(r) * 8) + int(f));  }
 constexpr Square GET_SQ(int r, int f) { return Square(int(r) * 8 + int(f));  };

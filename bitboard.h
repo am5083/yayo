@@ -40,6 +40,8 @@ constexpr Bitboard RANK_BB(Rank r) { return RANK_1BB >> (r * 8); };
 
 constexpr Bitboard SQUARE_BB(Square n) { return 1ULL << n; };
 
+constexpr Bitboard operator&(Bitboard b, Rank r) { return b & RANK_BB(r); }
+
 template <Direction D> constexpr Bitboard shift(Bitboard b) {
     return D == NORTH                   ? b >> 8
            : D == SOUTH                 ? b << 8
