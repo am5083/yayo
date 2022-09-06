@@ -1,9 +1,9 @@
 #ifndef UCI_H_
 #define UCI_H_
 #include "board.h"
+#include "eval.h"
 #include "move.h"
 #include "movegen.h"
-#include "search.h"
 #include "thread.h"
 #include "util.h"
 #include <iostream>

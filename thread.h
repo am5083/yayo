@@ -1,9 +1,9 @@
 #ifndef THREAD_H_
 #define THREAD_H_
 #include "board.h"
+#include "eval.h"
 #include "move.h"
 #include "movegen.h"
-#include "search.h"
 #include "tt.h"
 #include "util.h"
 #include <cmath>
