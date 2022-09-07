@@ -160,12 +160,15 @@ void UCI::Bench() {
         search._setFen(fen);
 
         info->timeGiven = false;
-        info->depth     = 12;
+        info->depth     = 7;
         info->startTime = start_time;
         search.startSearch(info);
 
         total_nodes += search.get_nodes();
     }
+
+    search.joinThread();
+    total_nodes += search.get_nodes();
 
     std::uint64_t end_time = get_time();
     long double total_time = 1.0 * (end_time - start_time) / 1000.0;
@@ -175,9 +178,12 @@ void UCI::Bench() {
 
 void UCI::Uci() {
     std::cout << "id name Yayo" << std::endl;
-    std::cout << "id author am5083" << std::endl;
-    std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
-    std::cout << "option name Hash type spin default 400 min 400 max 1024" << std::endl;
+    std::cout << "id author kv3732" << std::endl;
+    std::cout << std::endl;
+
+    // std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
+    // std::cout << "option name Hash type spin default 400 min 400 max 1024" << std::endl;
+    // std::cout << "option name Ponder type check default False" << std::endl;
     std::cout << "uciok" << std::endl;
 }
 
@@ -221,8 +227,8 @@ void UCI::Main() {
 
     Info info[1];
 
-    std::cout << "id name Yayo" << std::endl;
-    std::cout << "id author kv3732" << std::endl;
+    std::cout << "Yayo Engine - Verision 0.1.0" << std::endl;
+    std::cout << std::endl;
 
     // std::cout << "uciok" << std::endl;
 

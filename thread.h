@@ -389,6 +389,7 @@ class Search {
         std::cout << "bestmove ";
         print_move(pvTable[_board.ply][0]);
         std::cout << std::endl;
+        bench_nodes += nodes;
 
         return 0;
     }
@@ -421,7 +422,8 @@ class Search {
     }
 
   public:
-    std::uint64_t get_nodes() const { return this->nodes; }
+    std::uint64_t get_nodes() const { return this->bench_nodes; }
+    std::uint64_t bench_nodes = 0;
 
   private:
     int abortDepth;
