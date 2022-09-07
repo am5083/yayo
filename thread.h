@@ -420,6 +420,9 @@ class Search {
         }
     }
 
+  public:
+    std::uint64_t get_nodes() const { return this->nodes; }
+
   private:
     int abortDepth;
     int numRep;
