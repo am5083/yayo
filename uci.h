@@ -151,20 +151,22 @@ class UCI {
 void UCI::Bench() {
     Info info[1];
 
-    NewGame();
-
     std::uint64_t start_time  = get_time();
     std::uint64_t total_nodes = 0;
 
     for (auto &fen : benchPos) {
-        search._setFen(fen);
+        std::unique_ptr<Search> searcher(new Search);
+        searcher->_setFen(fen);
 
         info->timeGiven = false;
         info->depth     = 12;
         info->startTime = start_time;
-        search.startSearch(info);
+        searcher->startSearch(info);
 
-        total_nodes += search.get_nodes();
+        total_nodes += searcher->get_nodes();
+        searcher->joinThread();
+
+        delete searcher.get();
     }
 
     std::uint64_t end_time = get_time();
