@@ -8,7 +8,7 @@
 namespace Yayo {
 namespace { // penalties
 constexpr int UNMOVED_PASSED  = -20;
-constexpr int DOUBLED_PENALTY = -5;
+constexpr int DOUBLED_PENALTY = 0;
 constexpr int TEMPO           = 10;
 } // namespace
 // clang-format off
@@ -206,7 +206,7 @@ template <Color C> constexpr int passedPawnScore(Board &board) {
 }
 
 template <Color C> constexpr int doubledPawnPenalty(Board &board) {
-    return popcount(doubledPawns<C>(board)) * DOUBLED_PENALTY;
+    return 0; // popcount(doubledPawns<C>(board)) * DOUBLED_PENALTY;
 }
 
 template <Color C> inline int pieceSquare(Board &board) { return 0; }
