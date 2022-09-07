@@ -163,7 +163,7 @@ void UCI::Bench() {
         search._setFen(fen);
 
         info->timeGiven = false;
-        info->depth     = 7;
+        info->depth     = 5;
         info->startTime = start_time;
         search.startSearch(info);
 
