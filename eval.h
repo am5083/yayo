@@ -8,7 +8,7 @@
 namespace Yayo {
 namespace { // penalties
 constexpr int UNMOVED_PASSED  = -20;
-constexpr int DOUBLED_PENALTY = 0;
+constexpr int DOUBLED_PENALTY = -5;
 constexpr int TEMPO           = 10;
 } // namespace
 // clang-format off
