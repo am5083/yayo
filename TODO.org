@@ -4,4 +4,13 @@
 *** TODO Board representation
 *** TODO Move generation
 *** TODO Eval
+**** TODO Pawn Structure
+***** DONE Doubled Pawns
+***** DONE Passed Pawns
+***** PROJ Backwards Pawns
+***** PROJ Isolated Pawns
+**** TODO Mobility
+**** TODO Texel Tuning
+**** TODO Tapered Evaluation
+
 *** TODO Search
