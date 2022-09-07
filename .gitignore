@@ -1,4 +1,7 @@
 /build/
+/.DS_STORE
+/.vscode
+yayo
 /.projectile
 /.gdbinit
 /.dir-locals.el
