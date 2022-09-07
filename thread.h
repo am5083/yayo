@@ -384,8 +384,6 @@ class Search {
             std::cout << std::endl;
         }
 
-        ponderMove = pvTable[_board.ply][1];
-
         std::cout << "bestmove ";
         print_move(pvTable[_board.ply][0]);
         std::cout << std::endl;
@@ -430,7 +428,6 @@ class Search {
     int quiescentDepth;
 
     bool canNullMove;
-    int ponderMove;
 
     std::uint64_t nodes;
     std::unique_ptr<std::thread> searchThread;
