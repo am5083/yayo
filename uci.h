@@ -134,6 +134,7 @@ class UCI {
   public:
     UCI(Search &searcher) : search(searcher){};
     void Main();
+    void Bench();
 
   private:
     void Uci();
@@ -142,13 +143,15 @@ class UCI {
     void Go(Info *info);
     void Stop();
     void Perft(int depth);
-    void Bench();
 
   private:
     Search &search;
 };
 
 void UCI::Bench() {
+    init_arrays();
+    initMvvLva();
+
     Info info[1];
 
     std::uint64_t start_time  = get_time();
