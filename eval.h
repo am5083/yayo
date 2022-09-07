@@ -7,8 +7,10 @@
 
 namespace Yayo {
 namespace { // penalties
-constexpr int UNMOVED_PASSED = -20;
-}
+constexpr int UNMOVED_PASSED  = -20;
+constexpr int DOUBLED_PENALTY = -10;
+constexpr int TEMPO           = 10;
+} // namespace
 // clang-format off
 constexpr int pawn[SQUARE_CT] = {
     0,  0,  0,  0,  0,  0,  0,  0,
@@ -98,6 +100,24 @@ const int *pieceTbls[6] = {
     pawn, knight, bishop, rook, queen, king,
 };
 
+template <Color C> constexpr Bitboard doubledPawns(Board &board) {
+    Bitboard pawns        = board.pieces(PAWN, C);
+    Bitboard blockedPawns = 0;
+
+    while (pawns) {
+        Bitboard b      = SQUARE_BB(Square(lsb_index(pawns)));
+        Bitboard pushes = fill<pushDirection(C)>(shift<pushDirection(C)>(b));
+
+        if (pushes & board.pieces(PAWN, C)) {
+            blockedPawns |= b;
+        }
+
+        pawns &= pawns - 1;
+    }
+
+    return blockedPawns;
+}
+
 template <Color C> constexpr int passedBlockBonus(Bitboard passedPawns, Board &board) {
     constexpr Direction Up    = pushDirection(C);
     constexpr Direction Down  = pushDirection(~C);
@@ -110,6 +130,7 @@ template <Color C> constexpr int passedBlockBonus(Bitboard passedPawns, Board &b
         Square pushSq   = psq + Up;
         Bitboard pushBB = SQUARE_BB(pushSq);
         passedPawns &= passedPawns - 1;
+        passedPawns &= ~doubledPawns<C>(board);
 
         if (RANK_OF(psq) == startRank || RANK_OF(psq) == singlePush)
             continue;
@@ -184,6 +205,8 @@ template <Color C> constexpr int passedPawnScore(Board &board) {
     return score;
 }
 
+template <Color C> constexpr int doubledPawnPenalty(Board &board) { return doubledPawns<C>(board) * DOUBLED_PENALTY; }
+
 template <Color C> inline int pieceSquare(Board &board) { return 0; }
 
 template <> inline int pieceSquare<WHITE>(Board &board) {
@@ -231,8 +254,10 @@ int eval(Board &board, moveList &mList) {
     generate(board, &otherMoves);
     unmakeNullMove(board);
 
-    const auto pcSqEval = 1.2 * (pieceSquare<WHITE>(board) - pieceSquare<BLACK>(board));
+    const auto pcSqEval = (pieceSquare<WHITE>(board) - pieceSquare<BLACK>(board));
     const auto passed = passedPawnScore<WHITE>(board) - passedPawnScore<BLACK>(board);
+    const auto doubledPenalty = doubledPawnPenalty<WHITE>(board) - doubledPawnPenalty<BLACK>(board);
+    const auto pawnStructureScore = passed + doubledPenalty;
 
     int mobility = 0;
     if (board.turn == WHITE) {
@@ -241,8 +266,7 @@ int eval(Board &board, moveList &mList) {
         mobility = otherMoves.nMoves - mList.nMoves;
     }
 
-
-    return ((0.10 * mobility) + (wMaterial - bMaterial) + pcSqEval + (0.3 * passed) + 10) * color;
+    return ((0.10 * mobility) + (wMaterial - bMaterial) + (1.2 * pcSqEval) + (0.3 * pawnStructureScore) + TEMPO) * color;
 }
 
 } // namespace Yayo
