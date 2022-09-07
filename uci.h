@@ -165,6 +165,7 @@ void UCI::Bench() {
         info->startTime = start_time;
         search.startSearch(info);
 
+        search.wait();
         total_nodes += search.get_nodes();
     }
 
@@ -182,9 +183,9 @@ void UCI::Uci() {
     std::cout << "id author kv3732" << std::endl;
     std::cout << std::endl;
 
-    // std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
-    // std::cout << "option name Hash type spin default 400 min 400 max 1024" << std::endl;
-    // std::cout << "option name Ponder type check default False" << std::endl;
+    std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
+    std::cout << "option name Hash type spin default 400 min 400 max 1024" << std::endl;
+    std::cout << "option name Ponder type check default False" << std::endl;
     std::cout << "uciok" << std::endl;
 }
 
