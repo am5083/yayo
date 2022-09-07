@@ -84,6 +84,13 @@ class Search {
         _board.ply = 0;
     }
 
+    void wait() {
+        if (SEARCHED) {
+            searchThread->join();
+            SEARCHED = 0;
+        }
+    }
+
     void isReady() {
         if (SEARCHED) {
             info->uciStop = true;
