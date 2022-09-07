@@ -155,18 +155,14 @@ void UCI::Bench() {
     std::uint64_t total_nodes = 0;
 
     for (auto &fen : benchPos) {
-        std::unique_ptr<Search> searcher(new Search);
-        searcher->_setFen(fen);
+        search._setFen(fen);
 
         info->timeGiven = false;
         info->depth     = 7;
         info->startTime = start_time;
-        searcher->startSearch(info);
+        search.startSearch(info);
 
-        total_nodes += searcher->get_nodes();
-        searcher->joinThread();
-
-        delete searcher.get();
+        total_nodes += search.get_nodes();
     }
 
     search.joinThread();
