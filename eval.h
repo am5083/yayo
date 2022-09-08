@@ -271,6 +271,65 @@ template <> inline int pieceSquare<BLACK>(Board &board) {
     return eval;
 }
 
+constexpr int dotProduct(Bitboard moves, const int weights[64]) {
+    int res      = 0;
+    Bitboard bit = 1;
+
+    for (int sq = 0; sq < 64; sq++, bit += bit) {
+        if (moves & bit)
+            res += weights[sq];
+    }
+
+    return res;
+}
+
+template <Color C> constexpr int mobilityScore(Board &board) {
+    Bitboard knights = board.pieces(KNIGHT, C);
+    Bitboard bishops = board.pieces(BISHOP, C);
+    Bitboard rooks   = board.pieces(ROOK, C);
+    Bitboard queens  = board.pieces(QUEEN, C);
+
+    int knightMobility = 0;
+    while (knights) {
+        Square knightSq = Square(lsb_index(knights));
+        Bitboard knightMoves =
+            knightAttacks[knightSq] & ~pawnDblAttacks<~C>(board.pieces(PAWN, ~C)) & ~board.pieces(KING, C);
+        knightMobility += dotProduct(knightMoves, knight);
+        knights &= knights - 1;
+    }
+
+    int bishopMobility = 0;
+    while (bishops) {
+        Square bishopSq      = Square(lsb_index(bishops));
+        Bitboard bishopMoves = getBishopAttacks(bishopSq, board.pieces()) & ~board.pieces(KING, C);
+        bishopMobility += dotProduct(bishopMoves, bishop);
+        bishops &= bishops - 1;
+    }
+
+    int rookMobility = 0;
+    while (rooks) {
+        Square rookSq      = Square(lsb_index(rooks));
+        Bitboard rookMoves = getRookAttacks(rookSq, board.pieces()) & ~board.pieces(KING, C);
+        rookMobility += dotProduct(rookMoves, rook);
+        rooks &= rooks - 1;
+    }
+
+    int queenMobility = 0;
+    while (queens) {
+        Square queenSq      = Square(lsb_index(queens));
+        Bitboard queenMoves = getRookAttacks(queenSq, board.pieces()) | getBishopAttacks(queenSq, board.pieces());
+        queenMoves &= ~board.pieces(KING, C);
+        queenMobility += dotProduct(queenMoves, queen);
+        queens &= queens - 1;
+    }
+
+    int mobilityScore = knightMobility + bishopMobility + rookMobility + queenMobility;
+
+    std::cout << "Mobility Score: " << mobilityScore << std::endl;
+
+    return mobilityScore / 2;
+}
+
 // clang-format off
 int eval(Board &board, moveList &mList) {
     const int wMaterial =
@@ -285,35 +344,16 @@ int eval(Board &board, moveList &mList) {
 
     const auto color = (board.turn == WHITE) ? 1 : -1;
 
-    // moveList otherMoves = {0};
-    // makeNullMove(board);
-    // generate(board, &otherMoves);
-    // unmakeNullMove(board);
-
     const auto pcSqEval = (pieceSquare<WHITE>(board) - pieceSquare<BLACK>(board));
     const auto passed = passedPawnScore<WHITE>(board) - passedPawnScore<BLACK>(board);
     const auto doubledPenalty = doubledPawnPenalty<WHITE>(board) - doubledPawnPenalty<BLACK>(board);
     const auto isolatedPenalty = (ISOLATED_PENALTY * isolatedPawnCount<WHITE>(board)) - (ISOLATED_PENALTY * isolatedPawnCount<BLACK>(board));
     const auto backwardPenalty = backwardPawnScore<WHITE>(board) - backwardPawnScore<BLACK>(board);
     const auto pawnStructureScore = passed + doubledPenalty + (1.25 * isolatedPenalty) + backwardPenalty;
+    const auto mobility = mobilityScore<WHITE>(board) - mobilityScore<BLACK>(board);
 
-    // int mobility = 0;
-    // if (board.turn == WHITE) {
-    //     mobility = mList.nMoves - otherMoves.nMoves;
-    // } else {
-    //     mobility = otherMoves.nMoves - mList.nMoves;
-    // }
 
-    // int mobility = 0;
-    // if (board.turn == WHITE) {
-    //     mobility = mList.nMoves - otherMoves.nMoves;
-    // } else {
-    //     mobility = otherMoves.nMoves - mList.nMoves;
-    // }
-
-    int mobility = 0;
-
-    return ((0.10 * mobility) + (wMaterial - bMaterial) + (1.2 * pcSqEval) + (0.3 * pawnStructureScore) + TEMPO) * color;
+    return ((mobility) + (wMaterial - bMaterial) + (1.2 * pcSqEval) + (0.3 * pawnStructureScore) + TEMPO) * color;
 }
 
 } // namespace Yayo
