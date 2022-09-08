@@ -240,7 +240,7 @@ template <Color C> constexpr int passedPawnScore(Board &board) {
 }
 
 template <Color C> constexpr int doubledPawnPenalty(Board &board) {
-    return 0; // popcount(doubledPawns<C>(board)) * DOUBLED_PENALTY;
+    return popcount(doubledPawns<C>(board)) * DOUBLED_PENALTY;
 }
 
 template <Color C> inline int pieceSquare(Board &board) { return 0; }
