@@ -7,9 +7,10 @@
 
 namespace Yayo {
 namespace { // penalties
-constexpr int UNMOVED_PASSED  = -20;
-constexpr int DOUBLED_PENALTY = -10;
-constexpr int TEMPO           = 10;
+constexpr int UNMOVED_PASSED   = -20;
+constexpr int DOUBLED_PENALTY  = -10;
+constexpr int ISOLATED_PENALTY = -5;
+constexpr int TEMPO            = 10;
 } // namespace
 // clang-format off
 constexpr int pawn[SQUARE_CT] = {
@@ -275,7 +276,8 @@ int eval(Board &board, moveList &mList) {
     const auto pcSqEval = (pieceSquare<WHITE>(board) - pieceSquare<BLACK>(board));
     const auto passed = passedPawnScore<WHITE>(board) - passedPawnScore<BLACK>(board);
     const auto doubledPenalty = doubledPawnPenalty<WHITE>(board) - doubledPawnPenalty<BLACK>(board);
-    const auto pawnStructureScore = passed + doubledPenalty;
+    const auto isolatedPenalty = (ISOLATED_PENALTY * isolatedPawnCount<WHITE>(board)) - (ISOLATED_PENALTY * isolatedPawnCount<BLACK>(board));
+    const auto pawnStructureScore = passed + doubledPenalty + isolatedPenalty;
 
     int mobility = 0;
     if (board.turn == WHITE) {

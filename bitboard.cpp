@@ -1,4 +1,4 @@
-#include "bitboard.h"
+#include "bitboard.hf"
 #include "tt.h"
 #include "util.h"
 #include <algorithm>
@@ -91,10 +91,6 @@ void Bitboards::init_arrays() {
             isolatedPawnMasks[i] = lFileBB;
         } else {
             isolatedPawnMasks[i] = rFileBB | lFileBB;
-        }
-
-        for (int i = 0; i < 64; i++) {
-            print_bitboard(isolatedPawnMasks[i]);
         }
 
         for (int to = 0; to < 64; to++) {
