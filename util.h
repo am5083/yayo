@@ -120,6 +120,7 @@ constexpr Rank RANK_OF(Square sq) {
 }
 
 constexpr Square Sq(Bitboard bb) {
+    if (bb == 0) return Square(A1);
     return Square(63 - __builtin_clzll(bb));
 }
 

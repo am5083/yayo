@@ -78,8 +78,12 @@ void Bitboards::init_arrays() {
         southPassedPawns[i] = passedPawnMask<BLACK>(Square(i));
 
         File file        = FILE_OF(Square(i));
-        Bitboard rFileBB = FILE_BB(File(file + 1));
-        Bitboard lFileBB = FILE_BB(File(file - 1));
+        Bitboard rFileBB = 0;
+        Bitboard lFileBB = 0;
+        if (file < FILE_H)
+            rFileBB = FILE_BB(File(file + 1));
+        if (file > FILE_A)
+            lFileBB = FILE_BB(File(file - 1));
 
         if (file == FILE_A) {
             isolatedPawnMasks[i] = rFileBB;
@@ -87,6 +91,10 @@ void Bitboards::init_arrays() {
             isolatedPawnMasks[i] = lFileBB;
         } else {
             isolatedPawnMasks[i] = rFileBB | lFileBB;
+        }
+
+        for (int i = 0; i < 64; i++) {
+            print_bitboard(isolatedPawnMasks[i]);
         }
 
         for (int to = 0; to < 64; to++) {
