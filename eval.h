@@ -325,8 +325,6 @@ template <Color C> constexpr int mobilityScore(Board &board) {
 
     int mobilityScore = knightMobility + bishopMobility + rookMobility + queenMobility;
 
-    std::cout << "Mobility Score: " << mobilityScore << std::endl;
-
     return mobilityScore / 2;
 }
 
