@@ -103,6 +103,7 @@ const int *pieceTbls[6] = {
 
 template <Color C> constexpr Bitboard backwardPawns(Board &board) {
 <<<<<<< HEAD
+<<<<<<< HEAD
     constexpr Direction Up        = pushDirection(C);
     constexpr Direction Down      = pushDirection(~C);
     constexpr Bitboard pawns      = board.pieces(PAWN, C);
@@ -113,8 +114,10 @@ template <Color C> constexpr Bitboard backwardPawns(Board &board) {
     constexpr Bitboard defendedStopSquares    = pawnDblAttacks<C>(pawns) & stopSquare;
     constexpr Bitboard backwardPawns          = candidateBackwardPawns & ~shift<Down>(defendedStopSquares);
 =======
-    constexpr Direction Up   = pushDirection(C);
-    constexpr Direction Down = pushDirection(~C);
+=======
+>>>>>>> 058189a (fix constexpr errors)
+    constexpr Direction Up                    = pushDirection(C);
+    constexpr Direction Down                  = pushDirection(~C);
 
     const Bitboard pawns      = board.pieces(PAWN, C);
     const Bitboard enemyPawns = board.pieces(PAWN, ~C);
@@ -123,7 +126,10 @@ template <Color C> constexpr Bitboard backwardPawns(Board &board) {
     const Bitboard candidateBackwardPawns = shift<Down>(pawnDblAttacks<~C>(enemyPawns) & stopSquare) & pawns;
     const Bitboard defendedStopSquares    = pawnDblAttacks<C>(pawns) & stopSquare;
     const Bitboard backwardPawns          = candidateBackwardPawns & ~shift<Down>(defendedStopSquares);
+<<<<<<< HEAD
 >>>>>>> 0ea7fa6 (add backwards pawn penalty)
+=======
+>>>>>>> 058189a (fix constexpr errors)
 
     return backwardPawns;
 }
@@ -308,9 +314,6 @@ int eval(Board &board, moveList &mList) {
     const auto isolatedPenalty = (ISOLATED_PENALTY * isolatedPawnCount<WHITE>(board)) - (ISOLATED_PENALTY * isolatedPawnCount<BLACK>(board));
     const auto backwardPenalty = backwardPawnScore<WHITE>(board) - backwardPawnScore<BLACK>(board);
     const auto pawnStructureScore = passed + doubledPenalty + (1.25 * isolatedPenalty) + backwardPenalty;
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
 
     // int mobility = 0;
     // if (board.turn == WHITE) {
@@ -318,9 +321,6 @@ int eval(Board &board, moveList &mList) {
     // } else {
     //     mobility = otherMoves.nMoves - mList.nMoves;
     // }
-=======
->>>>>>> 749ff88 (add backwards pawn penalty)
->>>>>>> 0ea7fa6 (add backwards pawn penalty)
 
     // int mobility = 0;
     // if (board.turn == WHITE) {
@@ -330,15 +330,7 @@ int eval(Board &board, moveList &mList) {
     // }
 
     int mobility = 0;
-<<<<<<< HEAD
-=======
 
->>>>>>> 3e7ebca (remove mobility considerations)
-
-<<<<<<< HEAD
-
-=======
->>>>>>> e176997 (remove debug print statements)
     return ((0.10 * mobility) + (wMaterial - bMaterial) + (1.2 * pcSqEval) + (0.3 * pawnStructureScore) + TEMPO) * color;
 }
 
