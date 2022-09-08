@@ -100,6 +100,22 @@ const int *pieceTbls[6] = {
     pawn, knight, bishop, rook, queen, king,
 };
 
+template <Color C> constexpr int isolatedPawnCount(Board &board) {
+    int count = 0;
+
+    Bitboard pawns = board.pieces(PAWN, C);
+    while (pawns) {
+        Square psq = Square(lsb_index(pawns));
+        if (!(isolatedPawnMasks[psq] & board.pieces(PAWN, C))) {
+            count++;
+        }
+
+        pawns &= -pawns;
+    }
+
+    return count;
+}
+
 template <Color C> constexpr Bitboard doubledPawns(Board &board) {
     Bitboard pawns        = board.pieces(PAWN, C);
     Bitboard blockedPawns = 0;
@@ -267,6 +283,8 @@ int eval(Board &board, moveList &mList) {
     } else {
         mobility = otherMoves.nMoves - mList.nMoves;
     }
+
+    std::cout << "isolated pawn count: " << isolatedPawnCount<WHITE>(board) << std::endl;
 
     return ((0.10 * mobility) + (wMaterial - bMaterial) + (1.2 * pcSqEval) + (0.3 * pawnStructureScore) + TEMPO) * color;
 }

@@ -15,6 +15,7 @@ extern Bitboard LINE[SQUARE_CT][SQUARE_CT];
 
 extern Bitboard northPassedPawns[SQUARE_CT];
 extern Bitboard southPassedPawns[SQUARE_CT];
+extern Bitboard isolatedPawnMasks[SQUARE_CT];
 
 struct Magic {
     Bitboard mask;
