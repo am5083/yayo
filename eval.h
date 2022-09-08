@@ -286,9 +286,6 @@ int eval(Board &board, moveList &mList) {
         mobility = otherMoves.nMoves - mList.nMoves;
     }
 
-    std::cout << "isolated pawn count: " << isolatedPawnCount<WHITE>(board) << std::endl;
-    std::cout << "isolated pawn count: " << isolatedPenalty << std::endl;
-
     return ((0.10 * mobility) + (wMaterial - bMaterial) + (1.2 * pcSqEval) + (0.3 * pawnStructureScore) + TEMPO) * color;
 }
 
