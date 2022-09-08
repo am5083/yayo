@@ -102,22 +102,8 @@ const int *pieceTbls[6] = {
 };
 
 template <Color C> constexpr Bitboard backwardPawns(Board &board) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    constexpr Direction Up        = pushDirection(C);
-    constexpr Direction Down      = pushDirection(~C);
-    constexpr Bitboard pawns      = board.pieces(PAWN, C);
-    constexpr Bitboard enemyPawns = board.pieces(PAWN, ~C);
-    constexpr Bitboard stopSquare = push<Up>(pawns);
-
-    constexpr Bitboard candidateBackwardPawns = shift<Down>(pawnDblAttacks<~C>(enemyPawns) & stopSquare) & pawns;
-    constexpr Bitboard defendedStopSquares    = pawnDblAttacks<C>(pawns) & stopSquare;
-    constexpr Bitboard backwardPawns          = candidateBackwardPawns & ~shift<Down>(defendedStopSquares);
-=======
-=======
->>>>>>> 058189a (fix constexpr errors)
-    constexpr Direction Up                    = pushDirection(C);
-    constexpr Direction Down                  = pushDirection(~C);
+    constexpr Direction Up   = pushDirection(C);
+    constexpr Direction Down = pushDirection(~C);
 
     const Bitboard pawns      = board.pieces(PAWN, C);
     const Bitboard enemyPawns = board.pieces(PAWN, ~C);
@@ -126,10 +112,6 @@ template <Color C> constexpr Bitboard backwardPawns(Board &board) {
     const Bitboard candidateBackwardPawns = shift<Down>(pawnDblAttacks<~C>(enemyPawns) & stopSquare) & pawns;
     const Bitboard defendedStopSquares    = pawnDblAttacks<C>(pawns) & stopSquare;
     const Bitboard backwardPawns          = candidateBackwardPawns & ~shift<Down>(defendedStopSquares);
-<<<<<<< HEAD
->>>>>>> 0ea7fa6 (add backwards pawn penalty)
-=======
->>>>>>> 058189a (fix constexpr errors)
 
     return backwardPawns;
 }
