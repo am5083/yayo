@@ -268,10 +268,10 @@ int eval(Board &board, moveList &mList) {
 
     const auto color = (board.turn == WHITE) ? 1 : -1;
 
-    moveList otherMoves = {0};
-    makeNullMove(board);
-    generate(board, &otherMoves);
-    unmakeNullMove(board);
+    // moveList otherMoves = {0};
+    // makeNullMove(board);
+    // generate(board, &otherMoves);
+    // unmakeNullMove(board);
 
     const auto pcSqEval = (pieceSquare<WHITE>(board) - pieceSquare<BLACK>(board));
     const auto passed = passedPawnScore<WHITE>(board) - passedPawnScore<BLACK>(board);
@@ -279,12 +279,15 @@ int eval(Board &board, moveList &mList) {
     const auto isolatedPenalty = (ISOLATED_PENALTY * isolatedPawnCount<WHITE>(board)) - (ISOLATED_PENALTY * isolatedPawnCount<BLACK>(board));
     const auto pawnStructureScore = passed + doubledPenalty + (1.25 * isolatedPenalty);
 
+    // int mobility = 0;
+    // if (board.turn == WHITE) {
+    //     mobility = mList.nMoves - otherMoves.nMoves;
+    // } else {
+    //     mobility = otherMoves.nMoves - mList.nMoves;
+    // }
+
     int mobility = 0;
-    if (board.turn == WHITE) {
-        mobility = mList.nMoves - otherMoves.nMoves;
-    } else {
-        mobility = otherMoves.nMoves - mList.nMoves;
-    }
+
 
     return ((0.10 * mobility) + (wMaterial - bMaterial) + (1.2 * pcSqEval) + (0.3 * pawnStructureScore) + TEMPO) * color;
 }
