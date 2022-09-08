@@ -276,7 +276,7 @@ constexpr int dotProduct(Bitboard moves, const int weights[64]) {
     Bitboard bit = 1;
 
     for (int sq = 0; sq < 64; sq++, bit += bit) {
-        if (moves & bit)
+        if ((moves & bit) && (weights[sq] > 0))
             res += weights[sq];
     }
 
