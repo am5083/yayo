@@ -101,6 +101,22 @@ const int *pieceTbls[6] = {
     pawn, knight, bishop, rook, queen, king,
 };
 
+template <Color C> constexpr Bitboard backwardPawns(Board &board) {
+    constexpr Direction Up        = pushDirection(C);
+    constexpr Direction Down      = pushDirection(~C);
+    constexpr Bitboard pawns      = board.pieces(PAWN, C);
+    constexpr Bitboard enemyPawns = board.pieces(PAWN, ~C);
+    constexpr Bitboard stopSquare = push<Up>(pawns);
+
+    constexpr Bitboard candidateBackwardPawns = shift<Down>(pawnDblAttacks<~C>(enemyPawns) & stopSquare) & pawns;
+    constexpr Bitboard defendedStopSquares    = pawnDblAttacks<C>(pawns) & stopSquare;
+    constexpr Bitboard backwardPawns          = candidateBackwardPawns & ~shift<Down>(defendedStopSquares);
+
+    return backwardPawns;
+}
+
+template <Color C> constexpr int backwardPawnScore(Board &board) { return -1 * popcount(backwardPawns<C>(board)); }
+
 template <Color C> constexpr int isolatedPawnCount(Board &board) {
     int count = 0;
 
@@ -277,7 +293,8 @@ int eval(Board &board, moveList &mList) {
     const auto passed = passedPawnScore<WHITE>(board) - passedPawnScore<BLACK>(board);
     const auto doubledPenalty = doubledPawnPenalty<WHITE>(board) - doubledPawnPenalty<BLACK>(board);
     const auto isolatedPenalty = (ISOLATED_PENALTY * isolatedPawnCount<WHITE>(board)) - (ISOLATED_PENALTY * isolatedPawnCount<BLACK>(board));
-    const auto pawnStructureScore = passed + doubledPenalty + (1.25 * isolatedPenalty);
+    const auto backwardPenalty = backwardPawnScore<WHITE>(board) - backwardPawnScore<BLACK>(board);
+    const auto pawnStructureScore = passed + doubledPenalty + (1.25 * isolatedPenalty) + backwardPenalty;
 
     // int mobility = 0;
     // if (board.turn == WHITE) {
