@@ -111,7 +111,7 @@ template <Color C> constexpr int isolatedPawnCount(Board &board) {
             count++;
         }
 
-        pawns &= -pawns;
+        pawns &= pawns - 1;
     }
 
     return count;
@@ -277,7 +277,7 @@ int eval(Board &board, moveList &mList) {
     const auto passed = passedPawnScore<WHITE>(board) - passedPawnScore<BLACK>(board);
     const auto doubledPenalty = doubledPawnPenalty<WHITE>(board) - doubledPawnPenalty<BLACK>(board);
     const auto isolatedPenalty = (ISOLATED_PENALTY * isolatedPawnCount<WHITE>(board)) - (ISOLATED_PENALTY * isolatedPawnCount<BLACK>(board));
-    const auto pawnStructureScore = passed + doubledPenalty + isolatedPenalty;
+    const auto pawnStructureScore = passed + doubledPenalty + (1.25 * isolatedPenalty);
 
     int mobility = 0;
     if (board.turn == WHITE) {
@@ -287,6 +287,7 @@ int eval(Board &board, moveList &mList) {
     }
 
     std::cout << "isolated pawn count: " << isolatedPawnCount<WHITE>(board) << std::endl;
+    std::cout << "isolated pawn count: " << isolatedPenalty << std::endl;
 
     return ((0.10 * mobility) + (wMaterial - bMaterial) + (1.2 * pcSqEval) + (0.3 * pawnStructureScore) + TEMPO) * color;
 }

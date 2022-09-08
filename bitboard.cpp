@@ -1,4 +1,4 @@
-#include "bitboard.hf"
+#include "bitboard.h"
 #include "tt.h"
 #include "util.h"
 #include <algorithm>
