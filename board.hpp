@@ -308,6 +308,7 @@ constexpr CastleRights Board::canCastle(Color c) const {
 
 constexpr bool Board::isRepetition() const {
     for (int i = gamePly - halfMoves; i < gamePly; ++i) {
+        if (i < 0) continue;
         if (this->key == hist[i].key)
             return true;
     }
