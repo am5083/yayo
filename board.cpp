@@ -1,6 +1,6 @@
-#include "board.h"
-#include "bitboard.h"
-#include "tt.h"
+#include "board.hpp"
+#include "bitboard.hpp"
+#include "tt.hpp"
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -51,7 +51,7 @@ void Board::print() const {
     printf("\n\n");
 
     int check = 0;
-    if (__builtin_popcountll(checkPcs) >= 2)
+    if (popcount(checkPcs) >= 2)
         check = 0;
     else if (checkPcs)
         check = board[Sq(checkPcs)];
@@ -263,4 +263,21 @@ void Board::setFen(const std::string fen) {
     checkPcs = (turn == WHITE) ? attacksToKing<BLACK>(Sq(pieces(KING, WHITE)), color[WHITE] | color[BLACK])
                                : attacksToKing<WHITE>(Sq(pieces(KING, BLACK)), color[WHITE] | color[BLACK]);
 }
+
+std::uint64_t Board::hash() const {
+    std::uint64_t h = 0;
+    h ^= (turn * zobristBlackToMove);
+
+    for (int i = 0; i < 64; i++) {
+        if (board[i] != NO_PC)
+            h ^= zobristPieceSq[board[i]][i];
+    }
+
+    h ^= zobristCastleRights[castleRights];
+
+    h ^= enPass != SQUARE_64 ? zobristEpFile[FILE_OF(enPass)] : 0;
+
+    return h;
+}
+
 } // namespace Yayo

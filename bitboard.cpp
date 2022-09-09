@@ -1,6 +1,6 @@
-#include "bitboard.h"
-#include "tt.h"
-#include "util.h"
+#include "bitboard.hpp"
+#include "tt.hpp"
+#include "util.hpp"
 #include <algorithm>
 #include <array>
 #include <iostream>

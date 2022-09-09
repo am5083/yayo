@@ -1,8 +1,8 @@
 #ifndef BOARD_H_
 #define BOARD_H_
-#include "bitboard.h"
-#include "move.h"
-#include "util.h"
+#include "bitboard.hpp"
+#include "move.hpp"
+#include "util.hpp"
 #include <cassert>
 #include <cstdint>
 #include <string>
@@ -226,23 +226,8 @@ class Board {
         return equal;
     }
 
-    constexpr int numRepetition() const {
-        int num_rep = 0;
-        for (int i = 0; i < gamePly; i++) {
-            if (this->key == hist[i].key)
-                num_rep++;
-        }
-        return num_rep;
-    }
-
-    constexpr bool isRepetition() const {
-        for (int i = gamePly - halfMoves; i < gamePly; ++i) {
-            if (this->key == hist[i].key)
-                return true;
-        }
-
-        return false;
-    }
+    constexpr int numRepetition() const ;
+    constexpr bool isRepetition() const;
 
     void print() const;
     void setFen(const std::string fen);
@@ -254,99 +239,18 @@ class Board {
     constexpr Bitboard pieces(PieceT p) const { return cPieceBB[p]; }
 
     constexpr Color side() const { return turn; }
-    constexpr Bitboard bCheckPcs() const { return checkPcs; };
+
+    constexpr CastleRights canCastle(Color c) const;
     constexpr Square epSq() const { return enPass; };
+    constexpr Bitboard bCheckPcs() const { return checkPcs; };
     constexpr Bitboard between(const Square s1, const Square s2) const { return rectArray[s1][s2]; };
-
-    constexpr Bitboard xRayAtks(Square sq, Bitboard occ) {
-        Bitboard queenRooks = 0, queenBishops = 0;
-
-        queenBishops = pieces(QUEEN);
-        queenRooks = queenBishops;
-        queenBishops |= pieces(BISHOP);
-        queenRooks |= pieces(ROOK);
-
-        queenRooks &= occ;
-        queenBishops &= occ;
-
-        const Bitboard q_b = getBishopAttacks(sq, occ) & queenBishops;
-        const Bitboard q_r = getRookAttacks(sq, occ) & queenRooks;
-
-        return q_b | q_r;
-    }
-
-    constexpr Bitboard getLVA(Color side, Bitboard atkDefMap, Piece *p) {
-        for (PieceT pt = PAWN; pt <= KING; pt = pt + 1) {
-            *p = getCPiece(side, pt);
-            Bitboard atkMap = atkDefMap & pieces(pt, side);
-            if (atkMap)
-                return atkMap & -atkMap;
-        }
-
-        return 0;
-    }
-
-    constexpr int see(Square toSq, Piece toPc, Square from, Piece fromPc) {
-        int gain[32];
-        int ply = 0;
-
-        Bitboard occ = pieces();
-        Bitboard xRayPcs = pieces(PAWN) | pieces(BISHOP) | pieces(ROOK) | pieces(QUEEN);
-        Bitboard fromMap = SQUARE_BB(from);
-        Bitboard atkDefMap =
-            (turn == WHITE) ? attacksToKing<BLACK>(toSq, pieces()) : attacksToKing<WHITE>(toSq, pieces());
-
-        assert(toPc <= B_KING);
-        assert(getPcType(toPc) >= 0);
-        assert(getPcType(toPc) < 8);
-
-        int pcVal[] = {0, PAWN_VAL, KNIGHT_VAL, BISHOP_VAL, ROOK_VAL, QUEEN_VAL, KING_VAL, 0};
-        gain[ply] = pcVal[getPcType(toPc)];
-
-        do {
-            ply++;
-
-            gain[ply] = pcVal[getPcType(fromPc)] - gain[ply - 1];
-            if (std::max(-gain[ply - 1], ply) < 0)
-                break;
-
-            atkDefMap ^= fromMap;
-            occ ^= fromMap;
-
-            if (fromMap & xRayPcs) {
-                xRayPcs ^= fromMap;
-                atkDefMap |= xRayAtks(toSq, occ);
-            }
-
-            fromMap = getLVA(turn, atkDefMap, &fromPc);
-        } while (fromMap && ply < 32);
-
-        while (--ply && (ply - 1) >= 0) {
-            gain[ply - 1] = -std::max(-gain[ply - 1], gain[ply]);
-        }
-
-        return gain[0];
-    }
-
-    constexpr CastleRights canCastle(Color c) const {
-        const int kingSide = castleRights & KING_SIDE;
-        const int queenSide = castleRights & QUEEN_SIDE;
-
-        return CastleRights((c == WHITE) ? ((kingSide & 8) | (queenSide & 4)) : ((kingSide & 2) | (queenSide & 1)));
-    };
-
-    constexpr bool castleBlocked(CastleRights cr, Square sq) const {
-        const Bitboard queenOccupancy = (7 << (int(sq) - 3));
-        const Bitboard kingOccupancy = (3 << (int(sq) + 1));
-
-        if (checkPcs)
-            return true;
-        if (cr & QUEEN_SIDE)
-            return !(queenOccupancy & pieces());
-        if (cr & KING_SIDE)
-            return !(kingOccupancy & pieces());
-        return false;
-    };
+    constexpr Bitboard xRayAtks(Square sq, Bitboard occ);
+    constexpr Bitboard getLVA(Color side, Bitboard atkDefMap, Piece *p);
+    constexpr int see(Square toSq, Piece toPc, Square from, Piece fromPc);
+    constexpr bool castleBlocked(CastleRights cr, Square sq) const;
+    constexpr bool isSqAttacked(Square sq, Bitboard occ, Color byColor) const;
+    constexpr bool isDraw();
+    std::uint64_t hash() const;
 
     template <Color C> constexpr Bitboard attacksToKing(Square sq, Bitboard occ) const {
         Bitboard knights, kings, queenRooks, queenBishops;
@@ -361,54 +265,147 @@ class Board {
         return (pawnAttacks[~C][sq] & pieces(PAWN, C)) | (knightAttacks[sq] & knights) | (kingAttacks[sq] & kings) |
                (getBishopAttacks(sq, occ) & queenBishops) | (getRookAttacks(sq, occ) & queenRooks);
     };
+};
 
-    constexpr bool isSqAttacked(Square sq, Bitboard occ, Color byColor) const {
-        Bitboard pawns, knights, kings, bishopQueens, rookQueens;
-        pawns = pieces(PAWN, byColor);
-        if (pawnAttacks[~byColor][sq] & pawns)
-            return true;
-        knights = pieces(KNIGHT, byColor);
-        if (knightAttacks[sq] & knights)
-            return true;
-        kings = pieces(KING, byColor);
-        if (kingAttacks[sq] & kings)
-            return true;
-        rookQueens = pieces(QUEEN, byColor);
-        bishopQueens = rookQueens | pieces(BISHOP, byColor);
-        if (getBishopAttacks(sq, occ) & bishopQueens)
-            return true;
-        rookQueens |= pieces(ROOK, byColor);
-        if (getRookAttacks(sq, occ) & rookQueens)
-            return true;
+constexpr bool Board::isDraw() {
+    const int num    = popcount(color[0] | color[1]);
+    const bool kvk   = num == 2;
+    const bool kvbk  = (num == 3) && (cPieceBB[BISHOP]);
+    const bool kvnk  = (num == 3) && (cPieceBB[KNIGHT]);
+    const bool kvnnk = (num == 4) && (popcount(cPieceBB[KNIGHT]) == 2);
 
-        return false;
+    return kvk || kvbk || kvnk || kvnnk;
+}
+
+constexpr bool Board::isSqAttacked(Square sq, Bitboard occ, Color byColor) const {
+    Bitboard pawns, knights, kings, bishopQueens, rookQueens;
+    pawns = pieces(PAWN, byColor);
+    if (pawnAttacks[~byColor][sq] & pawns)
+        return true;
+    knights = pieces(KNIGHT, byColor);
+    if (knightAttacks[sq] & knights)
+        return true;
+    kings = pieces(KING, byColor);
+    if (kingAttacks[sq] & kings)
+        return true;
+    rookQueens   = pieces(QUEEN, byColor);
+    bishopQueens = rookQueens | pieces(BISHOP, byColor);
+    if (getBishopAttacks(sq, occ) & bishopQueens)
+        return true;
+    rookQueens |= pieces(ROOK, byColor);
+    if (getRookAttacks(sq, occ) & rookQueens)
+        return true;
+
+    return false;
+}
+
+constexpr CastleRights Board::canCastle(Color c) const {
+    const int kingSide  = castleRights & KING_SIDE;
+    const int queenSide = castleRights & QUEEN_SIDE;
+
+    return CastleRights((c == WHITE) ? ((kingSide & 8) | (queenSide & 4)) : ((kingSide & 2) | (queenSide & 1)));
+};
+
+constexpr bool Board::isRepetition() const {
+    for (int i = gamePly - halfMoves; i < gamePly; ++i) {
+        if (this->key == hist[i].key)
+            return true;
     }
 
-    constexpr bool isDraw() {
-        const int num = __builtin_popcountll(color[0] | color[1]);
-        const bool kvk = num == 2;
-        const bool kvbk = (num == 3) && (cPieceBB[BISHOP]);
-        const bool kvnk = (num == 3) && (cPieceBB[KNIGHT]);
-        const bool kvnnk = (num == 4) && (__builtin_popcountll(cPieceBB[KNIGHT]) == 2);
+    return false;
+}
 
-        return kvk || kvbk || kvnk || kvnnk;
+constexpr int Board::numRepetition() const {
+    int num_rep = 0;
+    for (int i = 0; i < gamePly; i++) {
+        if (this->key == hist[i].key)
+            num_rep++;
+    }
+    return num_rep;
+}
+
+constexpr Bitboard Board::xRayAtks(Square sq, Bitboard occ) {
+    Bitboard queenRooks = 0, queenBishops = 0;
+
+    queenBishops = pieces(QUEEN);
+    queenRooks   = queenBishops;
+    queenBishops |= pieces(BISHOP);
+    queenRooks |= pieces(ROOK);
+
+    queenRooks &= occ;
+    queenBishops &= occ;
+
+    const Bitboard q_b = getBishopAttacks(sq, occ) & queenBishops;
+    const Bitboard q_r = getRookAttacks(sq, occ) & queenRooks;
+
+    return q_b | q_r;
+}
+
+constexpr Bitboard Board::getLVA(Color side, Bitboard atkDefMap, Piece *p) {
+    for (PieceT pt = PAWN; pt <= KING; pt = pt + 1) {
+        *p              = getCPiece(side, pt);
+        Bitboard atkMap = atkDefMap & pieces(pt, side);
+        if (atkMap)
+            return atkMap & -atkMap;
     }
 
-    std::uint64_t hash() const {
-        std::uint64_t h = 0;
-        h ^= (turn * zobristBlackToMove);
+    return 0;
+}
 
-        for (int i = 0; i < 64; i++) {
-            if (board[i] != NO_PC)
-                h ^= zobristPieceSq[board[i]][i];
+constexpr int Board::see(Square toSq, Piece toPc, Square from, Piece fromPc) {
+    int gain[32];
+    int ply = 0;
+
+    Bitboard occ       = pieces();
+    Bitboard xRayPcs   = pieces(PAWN) | pieces(BISHOP) | pieces(ROOK) | pieces(QUEEN);
+    Bitboard fromMap   = SQUARE_BB(from);
+    Bitboard atkDefMap = (turn == WHITE) ? attacksToKing<BLACK>(toSq, pieces()) : attacksToKing<WHITE>(toSq, pieces());
+
+    assert(toPc <= B_KING);
+    assert(getPcType(toPc) >= 0);
+    assert(getPcType(toPc) < 8);
+
+    int pcVal[] = {0, PAWN_VAL, KNIGHT_VAL, BISHOP_VAL, ROOK_VAL, QUEEN_VAL, KING_VAL, 0};
+    gain[ply]   = pcVal[getPcType(toPc)];
+
+    do {
+        ply++;
+
+        gain[ply] = pcVal[getPcType(fromPc)] - gain[ply - 1];
+        if (std::max(-gain[ply - 1], ply) < 0)
+            break;
+
+        atkDefMap ^= fromMap;
+        occ ^= fromMap;
+
+        if (fromMap & xRayPcs) {
+            xRayPcs ^= fromMap;
+            atkDefMap |= xRayAtks(toSq, occ);
         }
 
-        h ^= zobristCastleRights[castleRights];
+        fromMap = getLVA(turn, atkDefMap, &fromPc);
+    } while (fromMap && ply < 32);
 
-        h ^= enPass != SQUARE_64 ? zobristEpFile[FILE_OF(enPass)] : 0;
-
-        return h;
+    while (--ply && (ply - 1) >= 0) {
+        gain[ply - 1] = -std::max(-gain[ply - 1], gain[ply]);
     }
+
+    return gain[0];
+}
+
+constexpr bool Board::castleBlocked(CastleRights cr, Square sq) const {
+    const Bitboard queenOccupancy = (7 << (int(sq) - 3));
+    const Bitboard kingOccupancy  = (3 << (int(sq) + 1));
+
+    if (checkPcs)
+        return true;
+    if (cr & QUEEN_SIDE)
+        return !(queenOccupancy & pieces());
+    if (cr & KING_SIDE)
+        return !(kingOccupancy & pieces());
+    return false;
 };
+
+
 } // namespace Yayo
 #endif // BOARD_H_

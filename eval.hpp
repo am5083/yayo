@@ -1,8 +1,8 @@
 #ifndef SEARCH_H_
 #define SEARCH_H_
-#include "board.h"
-#include "movegen.h"
-#include "util.h"
+#include "board.hpp"
+#include "move.hpp"
+#include "util.hpp"
 #include <thread>
 
 namespace Yayo {
@@ -97,9 +97,26 @@ constexpr int egKing[SQUARE_CT] = {
 
 // clang-format on
 
-const int *pieceTbls[6] = {
+static const int *pieceTbls[6] = {
     pawn, knight, bishop, rook, queen, king,
 };
+
+template <Color C> constexpr Bitboard doubledPawns(Board &board);
+template <Color C> constexpr Bitboard backwardPawns(Board &board);
+template <Color C> constexpr int backwardPawnScore(Board &board);
+template <Color C> constexpr int passedPawnScore(Board &board);
+template <Color C> constexpr int isolatedPawnCount(Board &board);
+template <Color C> constexpr int passedBlockBonus(Bitboard passedPawns, Board &board);
+template <Color C> constexpr int doubledPawnPenalty(Board &board);
+
+template <Color C> constexpr int pieceSquare(Board &board);
+template <> constexpr int pieceSquare<WHITE>(Board &board);
+template <> constexpr int pieceSquare<BLACK>(Board &board);
+
+template <Color C> constexpr int dotProduct(Bitboard moves, const int weights[64]);
+template <Color C> constexpr int mobilityScore(Board &board);
+
+int eval(Board &board, moveList &mList);
 
 template <Color C> constexpr Bitboard backwardPawns(Board &board) {
     constexpr Direction Up   = pushDirection(C);
@@ -243,9 +260,9 @@ template <Color C> constexpr int doubledPawnPenalty(Board &board) {
     return popcount(doubledPawns<C>(board)) * DOUBLED_PENALTY;
 }
 
-template <Color C> inline int pieceSquare(Board &board) { return 0; }
+template <Color C> constexpr int pieceSquare(Board &board) { return 0; }
 
-template <> inline int pieceSquare<WHITE>(Board &board) {
+template <> constexpr int pieceSquare<WHITE>(Board &board) {
     int eval = 0;
     for (int i = 0; i < 64; i++) {
         Piece p   = board.board[i];
@@ -258,7 +275,7 @@ template <> inline int pieceSquare<WHITE>(Board &board) {
     return eval;
 }
 
-template <> inline int pieceSquare<BLACK>(Board &board) {
+template <> constexpr int pieceSquare<BLACK>(Board &board) {
     int eval = 0;
     for (int i = 0; i < 64; i++) {
         Piece p   = board.board[i];
@@ -348,46 +365,6 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     // std::cout << std::endl;
 
     return mobilityScore / 2;
-}
-
-// clang-format off
-int eval(Board &board, moveList &mList) {
-    const int wMaterial =
-        (PAWN_VAL * popcount(board.pieces(PAWN, WHITE)))     + (KNIGHT_VAL * popcount(board.pieces(KNIGHT, WHITE))) +
-        (BISHOP_VAL * popcount(board.pieces(BISHOP, WHITE))) + (ROOK_VAL * popcount(board.pieces(ROOK, WHITE)))     +
-        (QUEEN_VAL * popcount(board.pieces(QUEEN, WHITE)));
-
-    const int bMaterial =
-        (PAWN_VAL * popcount(board.pieces(PAWN, BLACK)))     + (KNIGHT_VAL * popcount(board.pieces(KNIGHT, BLACK))) +
-        (BISHOP_VAL * popcount(board.pieces(BISHOP, BLACK))) + (ROOK_VAL * popcount(board.pieces(ROOK, BLACK)))     +
-        (QUEEN_VAL * popcount(board.pieces(QUEEN, BLACK)));
-
-    const auto color = (board.turn == WHITE) ? 1 : -1;
-
-    const auto pcSqEval = (pieceSquare<WHITE>(board) - pieceSquare<BLACK>(board));
-    const auto passed = passedPawnScore<WHITE>(board) - passedPawnScore<BLACK>(board);
-    const auto doubledPenalty = doubledPawnPenalty<WHITE>(board) - doubledPawnPenalty<BLACK>(board);
-    const auto isolatedPenalty = (ISOLATED_PENALTY * isolatedPawnCount<WHITE>(board)) - (ISOLATED_PENALTY * isolatedPawnCount<BLACK>(board));
-    const auto backwardPenalty = backwardPawnScore<WHITE>(board) - backwardPawnScore<BLACK>(board);
-    const auto pawnStructureScore = passed + doubledPenalty + (1.25 * isolatedPenalty) + backwardPenalty;
-    const auto mobility = mobilityScore<WHITE>(board) - mobilityScore<BLACK>(board);
-
-    // std::cout << "material: " << (wMaterial - bMaterial) << std::endl;
-    // std::cout << "pcSqEval: " << pcSqEval << std::endl;
-    // std::cout << "passed: " << passed << std::endl;
-    // std::cout << "doubledPenalty: " << doubledPenalty << std::endl;
-    // std::cout << "isolatedPenalty: " << isolatedPenalty << std::endl;
-    // std::cout << "backwardPenalty: " << backwardPenalty << std::endl;
-    // std::cout << "pawnStructureScore: " << pawnStructureScore << std::endl;
-    // std::cout << "mobility: " << mobility << std::endl;
-
-    int eval = TEMPO;
-    eval += mobility;
-    eval += (wMaterial - bMaterial);
-    eval += (1.2 * pcSqEval);
-    eval += (0.3 * pawnStructureScore);
-
-    return  eval * color;
 }
 
 } // namespace Yayo

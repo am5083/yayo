@@ -1,8 +1,8 @@
 #ifndef BITBOARDS_H_
 #define BITBOARDS_H_
-#include "defs.h"
+#include "defs.hpp"
 #include "random.h"
-#include "util.h"
+#include "util.hpp"
 #include <array>
 #include <cassert>
 #include <immintrin.h>
@@ -195,11 +195,13 @@ constexpr Bitboard getRookAttacks(Square s, Bitboard b) {
     assert(rookMagics[s].index(b) >= 0);
     return rookMagics[s].c_attacks(b);
 }
+
 constexpr Bitboard getBishopAttacks(Square s, Bitboard b) {
     assert(bishopMagics[s].index(b) < B_ATK_TBL_SIZE);
     assert(bishopMagics[s].index(b) >= 0);
     return bishopMagics[s].c_attacks(b);
 }
+
 constexpr Bitboard getPawnAttacks(Color c, Square s) { return pawnAttacks[c][s]; }
 
 template <Color C> constexpr Bitboard getPassMask(int s) {

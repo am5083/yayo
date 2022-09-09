@@ -1,5 +1,5 @@
-#include "thread.h"
-#include "uci.h"
+#include "thread.hpp"
+#include "uci.hpp"
 
 int main(int argc, char *argv[]) {
     using namespace Yayo;

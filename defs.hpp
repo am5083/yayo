@@ -1,6 +1,6 @@
 #ifndef DEFS_H_
 #define DEFS_H_
-#include "util.h"
+#include "util.hpp"
 
 namespace Yayo {
 const Bitboard g_rookMagics[64] = {
