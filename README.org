@@ -1,4 +1,4 @@
-#+title: Readme
+#+title: README
 * Yayo
 The C++ (and much improved) rewrite of my previous chess engine attempt. I'm aiming for ~2000-2200 ELO in the beta release, which is when I'll release the source.
 ** Building and running
