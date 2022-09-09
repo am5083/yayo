@@ -346,7 +346,12 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     while (knights) {
         Square knightSq      = Square(lsb_index(knights));
         Bitboard knightMoves = knightAttacks[knightSq] & ~excludedSquares;
-        knightMobility += KnightBonus[popcount(knightMoves) - 1];
+
+        int numMoves = popcount(knightMoves) - 1;
+        if (numMoves < 0)
+            numMoves = 0;
+
+        knightMobility += KnightBonus[numMoves];
         knights &= knights - 1;
     }
 
@@ -354,7 +359,12 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     while (bishops) {
         Square bishopSq      = Square(lsb_index(bishops));
         Bitboard bishopMoves = getBishopAttacks(bishopSq, board.pieces()) & ~excludedSquares;
-        bishopMobility += BishopBonus[popcount(bishopMoves) - 1];
+
+        int numMoves = popcount(bishopMoves) - 1;
+        if (numMoves < 0)
+            numMoves = 0;
+
+        bishopMobility += BishopBonus[numMoves];
         bishops &= bishops - 1;
     }
 
@@ -362,7 +372,12 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     while (rooks) {
         Square rookSq      = Square(lsb_index(rooks));
         Bitboard rookMoves = getRookAttacks(rookSq, board.pieces()) & ~excludedSquares;
-        rookMobility += RookBonus[popcount(rookMoves) - 1];
+
+        int numMoves = popcount(rookMoves) - 1;
+        if (numMoves < 0)
+            numMoves = 0;
+
+        rookMobility += RookBonus[numMoves];
         rooks &= rooks - 1;
     }
 
@@ -371,7 +386,12 @@ template <Color C> constexpr int mobilityScore(Board &board) {
         Square queenSq      = Square(lsb_index(queens));
         Bitboard queenMoves = getRookAttacks(queenSq, board.pieces()) | getBishopAttacks(queenSq, board.pieces());
         queenMoves &= ~excludedSquares;
-        queenMobility += QueenBonus[popcount(queenMoves) - 1];
+
+        int numMoves = popcount(queenMoves) - 1;
+        if (numMoves < 0)
+            numMoves = 0;
+
+        queenMobility += QueenBonus[numMoves];
         queens &= queens - 1;
     }
 
