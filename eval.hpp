@@ -301,6 +301,12 @@ constexpr int dotProduct(Bitboard moves, const int weights[64]) {
 }
 
 template <Color C> constexpr int mobilityScore(Board &board) {
+    constexpr int KnightBonus[] = {-60, -50, -10, -5, 5, 15};
+    constexpr int BishopBonus[] = {-50, -20, 15, 30, 40, 55};
+    constexpr int RookBonus[]   = {-60, -25, 0, 3, 4, 15, 20, 30, 40, 40, 40, 45, 60, 61, 70};
+    constexpr int QueenBonus[]  = {-30, -15, -10, -10, 20, 25, 23, 35,  40,  55,  65,  68,  69,  70,
+                                   70,  70,  71,  72,  74, 76, 90, 104, 105, 106, 112, 114, 114, 119};
+
     constexpr Direction Up   = pushDirection(C);
     constexpr Direction Down = pushDirection(~C);
 
@@ -325,7 +331,7 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     while (knights) {
         Square knightSq      = Square(lsb_index(knights));
         Bitboard knightMoves = knightAttacks[knightSq] & ~excludedSquares;
-        knightMobility += dotProduct(knightMoves, knight);
+        knightMobility += KnightBonus[popcount(knightMoves)];
         knights &= knights - 1;
     }
 
@@ -333,7 +339,7 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     while (bishops) {
         Square bishopSq      = Square(lsb_index(bishops));
         Bitboard bishopMoves = getBishopAttacks(bishopSq, board.pieces()) & ~excludedSquares;
-        bishopMobility += dotProduct(bishopMoves, bishop);
+        bishopMobility += BishopBonus[popcount(bishopMoves)];
         bishops &= bishops - 1;
     }
 
@@ -341,7 +347,7 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     while (rooks) {
         Square rookSq      = Square(lsb_index(rooks));
         Bitboard rookMoves = getRookAttacks(rookSq, board.pieces()) & ~excludedSquares;
-        rookMobility += dotProduct(rookMoves, rook);
+        rookMobility += RookBonus[popcount(rookMoves)];
         rooks &= rooks - 1;
     }
 
@@ -350,11 +356,11 @@ template <Color C> constexpr int mobilityScore(Board &board) {
         Square queenSq      = Square(lsb_index(queens));
         Bitboard queenMoves = getRookAttacks(queenSq, board.pieces()) | getBishopAttacks(queenSq, board.pieces());
         queenMoves &= ~excludedSquares;
-        queenMobility += dotProduct(queenMoves, queen);
+        queenMobility += QueenBonus[popcount(queenMoves)];
         queens &= queens - 1;
     }
 
-    int mobilityScore = knightMobility + bishopMobility + rookMobility + queenMobility;
+    const int mobilityScore = knightMobility + bishopMobility + rookMobility + queenMobility;
 
     // std::cout << ((C == WHITE) ? "WHITE: " : "BLACK: ") << std::endl;
     // std::cout << "knight mobility evaluation: " << knightMobility << std::endl;
@@ -364,7 +370,7 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     // std::cout << "total mobility evaluation: " << mobilityScore / 2 << std::endl;
     // std::cout << std::endl;
 
-    return mobilityScore / 2;
+    return mobilityScore;
 }
 
 } // namespace Yayo
