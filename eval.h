@@ -284,16 +284,30 @@ constexpr int dotProduct(Bitboard moves, const int weights[64]) {
 }
 
 template <Color C> constexpr int mobilityScore(Board &board) {
+    constexpr Direction Up   = pushDirection(C);
+    constexpr Direction Down = pushDirection(~C);
+
     Bitboard knights = board.pieces(KNIGHT, C);
     Bitboard bishops = board.pieces(BISHOP, C);
     Bitboard rooks   = board.pieces(ROOK, C);
     Bitboard queens  = board.pieces(QUEEN, C);
 
+    const Bitboard friendlyPawns = board.pieces(PAWN, C);
+    const Bitboard enemyPawns    = board.pieces(PAWN, ~C);
+
+    const Bitboard enemyPawnAttacks     = pawnDblAttacks<~C>(enemyPawns);
+    const Bitboard secondThirdRankPawns = friendlyPawns & (RANK_2BB | RANK_3BB);
+    const Bitboard blockedPawns         = shift<Down>(enemyPawns) & friendlyPawns;
+    const Bitboard friendlyKing         = board.pieces(KING, C);
+    const Bitboard friendlyQueens       = board.pieces(QUEEN, C);
+
+    const Bitboard excludedSquares =
+        enemyPawnAttacks | secondThirdRankPawns | blockedPawns | friendlyKing | friendlyQueens;
+
     int knightMobility = 0;
     while (knights) {
-        Square knightSq = Square(lsb_index(knights));
-        Bitboard knightMoves =
-            knightAttacks[knightSq] & ~pawnDblAttacks<~C>(board.pieces(PAWN, ~C)) & ~board.pieces(KING, C);
+        Square knightSq      = Square(lsb_index(knights));
+        Bitboard knightMoves = knightAttacks[knightSq] & ~excludedSquares;
         knightMobility += dotProduct(knightMoves, knight);
         knights &= knights - 1;
     }
@@ -301,7 +315,7 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     int bishopMobility = 0;
     while (bishops) {
         Square bishopSq      = Square(lsb_index(bishops));
-        Bitboard bishopMoves = getBishopAttacks(bishopSq, board.pieces()) & ~board.pieces(KING, C);
+        Bitboard bishopMoves = getBishopAttacks(bishopSq, board.pieces()) & ~excludedSquares;
         bishopMobility += dotProduct(bishopMoves, bishop);
         bishops &= bishops - 1;
     }
@@ -309,7 +323,7 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     int rookMobility = 0;
     while (rooks) {
         Square rookSq      = Square(lsb_index(rooks));
-        Bitboard rookMoves = getRookAttacks(rookSq, board.pieces()) & ~board.pieces(KING, C);
+        Bitboard rookMoves = getRookAttacks(rookSq, board.pieces()) & ~excludedSquares;
         rookMobility += dotProduct(rookMoves, rook);
         rooks &= rooks - 1;
     }
@@ -318,14 +332,22 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     while (queens) {
         Square queenSq      = Square(lsb_index(queens));
         Bitboard queenMoves = getRookAttacks(queenSq, board.pieces()) | getBishopAttacks(queenSq, board.pieces());
-        queenMoves &= ~board.pieces(KING, C);
+        queenMoves &= ~excludedSquares;
         queenMobility += dotProduct(queenMoves, queen);
         queens &= queens - 1;
     }
 
     int mobilityScore = knightMobility + bishopMobility + rookMobility + queenMobility;
 
-    return mobilityScore / 2;
+    // std::cout << ((C == WHITE) ? "WHITE: " : "BLACK: ") << std::endl;
+    // std::cout << "knight mobility evaluation: " << knightMobility << std::endl;
+    // std::cout << "bishop mobility evaluation: " << bishopMobility << std::endl;
+    // std::cout << "rook mobility evaluation: " << rookMobility << std::endl;
+    // std::cout << "queen mobility evaluation: " << queenMobility << std::endl;
+    // std::cout << "total mobility evaluation: " << mobilityScore / 2 << std::endl;
+    // std::cout << std::endl;
+
+    return mobilityScore;
 }
 
 // clang-format off
@@ -350,8 +372,22 @@ int eval(Board &board, moveList &mList) {
     const auto pawnStructureScore = passed + doubledPenalty + (1.25 * isolatedPenalty) + backwardPenalty;
     const auto mobility = mobilityScore<WHITE>(board) - mobilityScore<BLACK>(board);
 
+    // std::cout << "material: " << (wMaterial - bMaterial) << std::endl;
+    // std::cout << "pcSqEval: " << pcSqEval << std::endl;
+    // std::cout << "passed: " << passed << std::endl;
+    // std::cout << "doubledPenalty: " << doubledPenalty << std::endl;
+    // std::cout << "isolatedPenalty: " << isolatedPenalty << std::endl;
+    // std::cout << "backwardPenalty: " << backwardPenalty << std::endl;
+    // std::cout << "pawnStructureScore: " << pawnStructureScore << std::endl;
+    // std::cout << "mobility: " << mobility << std::endl;
 
-    return ((mobility) + (wMaterial - bMaterial) + (1.2 * pcSqEval) + (0.3 * pawnStructureScore) + TEMPO) * color;
+    int eval = TEMPO;
+    eval += mobility;
+    eval += (wMaterial - bMaterial);
+    eval += (1.2 * pcSqEval);
+    eval += (0.3 * pawnStructureScore);
+
+    return  eval * color;
 }
 
 } // namespace Yayo

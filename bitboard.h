@@ -106,7 +106,7 @@ template <Color C> Bitboard pawnSglAttacks(Bitboard b) = delete;
 template <> constexpr Bitboard pawnSglAttacks<WHITE>(Bitboard b) { return shift<NORTH_EAST>(b) & shift<NORTH_WEST>(b); }
 template <> constexpr Bitboard pawnSglAttacks<BLACK>(Bitboard b) { return shift<SOUTH_EAST>(b) & shift<SOUTH_WEST>(b); }
 
-template <Color C> Bitboard pawnDblAttacks(Bitboard b) = delete;
+template <Color C> constexpr Bitboard pawnDblAttacks(Bitboard b) = delete;
 template <> constexpr Bitboard pawnDblAttacks<WHITE>(Bitboard b) {
     Bitboard attacks = shift<NORTH>(b);
     attacks          = shift<EAST>(attacks) | shift<WEST>(attacks);
