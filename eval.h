@@ -347,7 +347,7 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     // std::cout << "total mobility evaluation: " << mobilityScore / 2 << std::endl;
     // std::cout << std::endl;
 
-    return mobilityScore;
+    return mobilityScore / 2;
 }
 
 // clang-format off
