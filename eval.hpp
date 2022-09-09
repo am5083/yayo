@@ -331,7 +331,7 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     while (knights) {
         Square knightSq      = Square(lsb_index(knights));
         Bitboard knightMoves = knightAttacks[knightSq] & ~excludedSquares;
-        knightMobility += KnightBonus[popcount(knightMoves)];
+        knightMobility += KnightBonus[popcount(knightMoves) - 1];
         knights &= knights - 1;
     }
 
@@ -339,7 +339,7 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     while (bishops) {
         Square bishopSq      = Square(lsb_index(bishops));
         Bitboard bishopMoves = getBishopAttacks(bishopSq, board.pieces()) & ~excludedSquares;
-        bishopMobility += BishopBonus[popcount(bishopMoves)];
+        bishopMobility += BishopBonus[popcount(bishopMoves) - 1];
         bishops &= bishops - 1;
     }
 
@@ -347,7 +347,7 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     while (rooks) {
         Square rookSq      = Square(lsb_index(rooks));
         Bitboard rookMoves = getRookAttacks(rookSq, board.pieces()) & ~excludedSquares;
-        rookMobility += RookBonus[popcount(rookMoves)];
+        rookMobility += RookBonus[popcount(rookMoves) - 1];
         rooks &= rooks - 1;
     }
 
@@ -356,7 +356,7 @@ template <Color C> constexpr int mobilityScore(Board &board) {
         Square queenSq      = Square(lsb_index(queens));
         Bitboard queenMoves = getRookAttacks(queenSq, board.pieces()) | getBishopAttacks(queenSq, board.pieces());
         queenMoves &= ~excludedSquares;
-        queenMobility += QueenBonus[popcount(queenMoves)];
+        queenMobility += QueenBonus[popcount(queenMoves) - 1];
         queens &= queens - 1;
     }
 
