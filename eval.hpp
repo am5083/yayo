@@ -101,6 +101,20 @@ static const int *pieceTbls[6] = {
     pawn, knight, bishop, rook, queen, king,
 };
 
+class Trace {
+    int pawnCount;
+    int knightCount;
+    int bishopCount;
+    int rookCount;
+    int queenCount;
+
+    int pawnPieceSq[64];
+    int knightPieceSq[64];
+    int bishopPieceSq[64];
+    int rookPieceSq[64];
+    int queenPieceSq[64];
+};
+
 template <Color C> constexpr Bitboard doubledPawns(Board &board);
 template <Color C> constexpr Bitboard backwardPawns(Board &board);
 template <Color C> constexpr int backwardPawnScore(Board &board);
@@ -199,6 +213,7 @@ template <Color C> constexpr int passedBlockBonus(Bitboard passedPawns, Board &b
         Bitboard pushToQueen = fill<Up>(pushBB);
         while (pushToQueen) {
             Square sq     = Square(lsb_index(pushToQueen));
+            sq            = (C == BLACK) ? sq : Square(mirror(sq));
             bool attacked = board.isSqAttacked(sq, board.pieces(), ~C);
             bool defended = board.isSqAttacked(sq, board.pieces(), C);
 
@@ -247,7 +262,7 @@ template <Color C> constexpr int passedPawnScore(Board &board) {
     // const int rankBonuses[] = {0, 10, 17, 15, 62, 168, 278};
     while (passedPawns) {
         Square psq = Square(lsb_index(passedPawns));
-        psq        = (C == WHITE) ? psq : Square(mirror(psq));
+        psq        = (C == BLACK) ? psq : Square(mirror(psq));
 
         score += rankBonuses[RANK_OF(psq)];
         passedPawns &= passedPawns - 1;
@@ -301,8 +316,8 @@ constexpr int dotProduct(Bitboard moves, const int weights[64]) {
 }
 
 template <Color C> constexpr int mobilityScore(Board &board) {
-    constexpr int KnightBonus[] = {-60, -50, -10, -5, 5, 15};
-    constexpr int BishopBonus[] = {-50, -20, 15, 30, 40, 55};
+    constexpr int KnightBonus[] = {-60, -50, -10, -5, 5, 15, 21, 30, 40};
+    constexpr int BishopBonus[] = {-50, -20, 15, 30, 40, 55, 55, 60, 62, 70, 80, 83, 91, 96};
     constexpr int RookBonus[]   = {-60, -25, 0, 3, 4, 15, 20, 30, 40, 40, 40, 45, 60, 61, 70};
     constexpr int QueenBonus[]  = {-30, -15, -10, -10, 20, 25, 23, 35,  40,  55,  65,  68,  69,  70,
                                    70,  70,  71,  72,  74, 76, 90, 104, 105, 106, 112, 114, 114, 119};
@@ -331,7 +346,12 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     while (knights) {
         Square knightSq      = Square(lsb_index(knights));
         Bitboard knightMoves = knightAttacks[knightSq] & ~excludedSquares;
-        knightMobility += KnightBonus[popcount(knightMoves)];
+
+        int numMoves = popcount(knightMoves) - 1;
+        if (numMoves < 0)
+            numMoves = 0;
+
+        knightMobility += KnightBonus[numMoves];
         knights &= knights - 1;
     }
 
@@ -339,7 +359,12 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     while (bishops) {
         Square bishopSq      = Square(lsb_index(bishops));
         Bitboard bishopMoves = getBishopAttacks(bishopSq, board.pieces()) & ~excludedSquares;
-        bishopMobility += BishopBonus[popcount(bishopMoves)];
+
+        int numMoves = popcount(bishopMoves) - 1;
+        if (numMoves < 0)
+            numMoves = 0;
+
+        bishopMobility += BishopBonus[numMoves];
         bishops &= bishops - 1;
     }
 
@@ -347,7 +372,12 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     while (rooks) {
         Square rookSq      = Square(lsb_index(rooks));
         Bitboard rookMoves = getRookAttacks(rookSq, board.pieces()) & ~excludedSquares;
-        rookMobility += RookBonus[popcount(rookMoves)];
+
+        int numMoves = popcount(rookMoves) - 1;
+        if (numMoves < 0)
+            numMoves = 0;
+
+        rookMobility += RookBonus[numMoves];
         rooks &= rooks - 1;
     }
 
@@ -356,19 +386,16 @@ template <Color C> constexpr int mobilityScore(Board &board) {
         Square queenSq      = Square(lsb_index(queens));
         Bitboard queenMoves = getRookAttacks(queenSq, board.pieces()) | getBishopAttacks(queenSq, board.pieces());
         queenMoves &= ~excludedSquares;
-        queenMobility += QueenBonus[popcount(queenMoves)];
+
+        int numMoves = popcount(queenMoves) - 1;
+        if (numMoves < 0)
+            numMoves = 0;
+
+        queenMobility += QueenBonus[numMoves];
         queens &= queens - 1;
     }
 
     const int mobilityScore = knightMobility + bishopMobility + rookMobility + queenMobility;
-
-    // std::cout << ((C == WHITE) ? "WHITE: " : "BLACK: ") << std::endl;
-    // std::cout << "knight mobility evaluation: " << knightMobility << std::endl;
-    // std::cout << "bishop mobility evaluation: " << bishopMobility << std::endl;
-    // std::cout << "rook mobility evaluation: " << rookMobility << std::endl;
-    // std::cout << "queen mobility evaluation: " << queenMobility << std::endl;
-    // std::cout << "total mobility evaluation: " << mobilityScore / 2 << std::endl;
-    // std::cout << std::endl;
 
     return mobilityScore;
 }

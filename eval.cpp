@@ -36,7 +36,7 @@ int eval(Board &board, moveList &mList) {
     // std::cout << "mobility: " << mobility << std::endl;
 
     int eval = TEMPO;
-    eval += mobility;
+    eval += (mobility / 2);
     eval += (wMaterial - bMaterial);
     eval += (1.2 * pcSqEval);
     eval += (0.3 * pawnStructureScore);

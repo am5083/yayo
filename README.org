@@ -1,4 +1,4 @@
-#+title: Readme
+#+title: README
 * Yayo
 The C++ (and much improved) rewrite of my previous chess engine attempt. I'm aiming for ~2000-2200 ELO in the beta release, which is when I'll release the source.
 ** Building and running
@@ -12,6 +12,31 @@ The C++ (and much improved) rewrite of my previous chess engine attempt. I'm aim
 Documentation for the UCI protocol can be found here: http://wbec-ridderkerk.nl/html/UCIProtocol.html.
 ** TODO Features
 *** Board Representation
+- Bitboards
 *** Search
+- Alpha-Beta Pruning
+- Quiescence Search
+- Null Move Pruning
+- Check Extensions
+- Iterative Deepening
+- Killer Heuristic
+- History Heuristic
+- Transposition Table
+  - Zobrist Hashing
+- (TODO) Parallel Search
+- Late Move Reductions
+- Move Ordering/Sorting
 *** Evaluation
+- Piece/Square Tables
+- Mobility
+- Pawn Structure
+    - Passed Pawns
+    - Doubled Pawns
+    - Backwards Pawns
+    - Isolated Pawns
+- Tempo
+- (TODO) Tapered Evaluation
+- (TODO) King Safety
+- (TODO) Texel Tuning
 *** Extras
+=yayo= has support for OpenBench SPRT testing. I use a locally hosted version of OpenBench to test patches and to determine what changes make it into the =master= branch.
