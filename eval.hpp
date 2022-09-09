@@ -101,6 +101,20 @@ static const int *pieceTbls[6] = {
     pawn, knight, bishop, rook, queen, king,
 };
 
+class Trace {
+    int pawnCount;
+    int knightCount;
+    int bishopCount;
+    int rookCount;
+    int queenCount;
+
+    int pawnPieceSq[64];
+    int knightPieceSq[64];
+    int bishopPieceSq[64];
+    int rookPieceSq[64];
+    int queenPieceSq[64];
+};
+
 template <Color C> constexpr Bitboard doubledPawns(Board &board);
 template <Color C> constexpr Bitboard backwardPawns(Board &board);
 template <Color C> constexpr int backwardPawnScore(Board &board);
@@ -199,6 +213,7 @@ template <Color C> constexpr int passedBlockBonus(Bitboard passedPawns, Board &b
         Bitboard pushToQueen = fill<Up>(pushBB);
         while (pushToQueen) {
             Square sq     = Square(lsb_index(pushToQueen));
+            sq            = (C == BLACK) ? sq : Square(mirror(sq));
             bool attacked = board.isSqAttacked(sq, board.pieces(), ~C);
             bool defended = board.isSqAttacked(sq, board.pieces(), C);
 
@@ -247,7 +262,7 @@ template <Color C> constexpr int passedPawnScore(Board &board) {
     // const int rankBonuses[] = {0, 10, 17, 15, 62, 168, 278};
     while (passedPawns) {
         Square psq = Square(lsb_index(passedPawns));
-        psq        = (C == WHITE) ? psq : Square(mirror(psq));
+        psq        = (C == BLACK) ? psq : Square(mirror(psq));
 
         score += rankBonuses[RANK_OF(psq)];
         passedPawns &= passedPawns - 1;
@@ -361,14 +376,6 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     }
 
     const int mobilityScore = knightMobility + bishopMobility + rookMobility + queenMobility;
-
-    // std::cout << ((C == WHITE) ? "WHITE: " : "BLACK: ") << std::endl;
-    // std::cout << "knight mobility evaluation: " << knightMobility << std::endl;
-    // std::cout << "bishop mobility evaluation: " << bishopMobility << std::endl;
-    // std::cout << "rook mobility evaluation: " << rookMobility << std::endl;
-    // std::cout << "queen mobility evaluation: " << queenMobility << std::endl;
-    // std::cout << "total mobility evaluation: " << mobilityScore / 2 << std::endl;
-    // std::cout << std::endl;
 
     return mobilityScore;
 }
