@@ -149,7 +149,7 @@ constexpr Rank& operator--(Rank& sq) { return sq = Rank(int(sq) - 1); }
 constexpr Rank& operator++(Rank& sq, int) { ++sq; return sq = Rank(int(sq)); }
 constexpr Rank& operator--(Rank& sq, int) { --sq; return sq = Rank(int(sq)); }
 
-constexpr Rank operator+(Rank r, Direction d) { return Rank(int(r) - int(d/8)); }
+constexpr Rank operator+(Rank r, Direction d) { return Rank(int(r) + int(d/8)); }
 
 constexpr File& operator++(File& sq) { return sq = File(int(sq) + 1); }
 constexpr File& operator--(File& sq) { return sq = File(int(sq) - 1); }
