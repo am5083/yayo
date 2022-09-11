@@ -37,6 +37,8 @@ class Search {
     void scoreMoves(moveList *mList);
     int quiescent(int alpha, int beta);
     int negaMax(int alpha, int beta, int depth);
+    moveList generateMoves();
+    Board getBoard();
 
     int search();
 

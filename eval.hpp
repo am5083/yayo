@@ -6,6 +6,7 @@
 #include <thread>
 
 namespace Yayo {
+
 namespace { // penalties
 constexpr int UNMOVED_PASSED   = -20;
 constexpr int DOUBLED_PENALTY  = -10;
@@ -101,6 +102,144 @@ static const int *pieceTbls[6] = {
     pawn, knight, bishop, rook, queen, king,
 };
 
+struct Trace {
+    int pawnScore[NUM_COLOR]                    = {0};
+    int knightScore[NUM_COLOR]                  = {0};
+    int bishopScore[NUM_COLOR]                  = {0};
+    int rookScore[NUM_COLOR]                    = {0};
+    int queenScore[NUM_COLOR]                   = {0};
+    int pawnPcSq[NUM_COLOR][SQUARE_CT]          = {{0}};
+    int knightPcSq[NUM_COLOR][SQUARE_CT]        = {{0}};
+    int bishopPcSq[NUM_COLOR][SQUARE_CT]        = {{0}};
+    int rookPcSq[NUM_COLOR][SQUARE_CT]          = {{0}};
+    int queenPcSq[NUM_COLOR][SQUARE_CT]         = {{0}};
+    int kingPcSq[NUM_COLOR][SQUARE_CT]          = {{0}};
+    int passedPawn[8][NUM_COLOR]                = {{0}};
+    int passedPawnBlockedAttacked[8][NUM_COLOR] = {{0}};
+    int passedPawnBlockedDefended[8][NUM_COLOR] = {{0}};
+    int passedPawnBlocked[8][NUM_COLOR]         = {{0}};
+    int doubledPawns[NUM_COLOR]                 = {0};
+    int isolatedPawns[NUM_COLOR]                = {0};
+    int backwardPawns[NUM_COLOR]                = {0};
+    int knightMobility[NUM_COLOR][9]            = {{0}};
+    int bishopMobility[NUM_COLOR][14]           = {{0}};
+    int rookMobility[NUM_COLOR][15]             = {{0}};
+    int queenMobility[NUM_COLOR][28]            = {{0}};
+    int kingMobility[NUM_COLOR]                 = {0};
+
+    void print() {
+        std::cout << pawnScore[WHITE] - pawnScore[BLACK] << std::endl;
+        std::cout << knightScore[WHITE] - knightScore[BLACK] << std::endl;
+        std::cout << bishopScore[WHITE] - bishopScore[BLACK] << std::endl;
+        std::cout << rookScore[WHITE] - rookScore[BLACK] << std::endl;
+        std::cout << queenScore[WHITE] - queenScore[BLACK] << std::endl;
+
+        // for (int i = 0; i < 64; i++) {
+        //     pawnPcSq[BLACK][i]   = -pawnPcSq[BLACK][i];
+        //     knightPcSq[BLACK][i] = -knightPcSq[BLACK][i];
+        //     bishopPcSq[BLACK][i] = -bishopPcSq[BLACK][i];
+        //     rookPcSq[BLACK][i]   = -rookPcSq[BLACK][i];
+        //     queenPcSq[BLACK][i]  = -queenPcSq[BLACK][i];
+        //     kingPcSq[BLACK][i]   = -kingPcSq[BLACK][i];
+        // }
+
+        std::cout << "PIECE SQUARE: " << std::endl;
+        for (int i = 0; i < 64; i++) {
+            if (pawnPcSq[WHITE][i])
+                std::cout << pawnPcSq[WHITE][i] << std::endl;
+            else if (pawnPcSq[BLACK][i])
+                std::cout << -pawnPcSq[BLACK][i] << std::endl;
+
+            else if (knightPcSq[WHITE][i])
+                std::cout << knightPcSq[WHITE][i] << std::endl;
+            else if (knightPcSq[BLACK][i])
+                std::cout << -knightPcSq[BLACK][i] << std::endl;
+
+            else if (bishopPcSq[WHITE][i])
+                std::cout << bishopPcSq[WHITE][i] << std::endl;
+            else if (bishopPcSq[BLACK][i])
+                std::cout << -bishopPcSq[BLACK][i] << std::endl;
+
+            else if (rookPcSq[WHITE][i])
+                std::cout << rookPcSq[WHITE][i] << std::endl;
+            else if (rookPcSq[BLACK][i])
+                std::cout << -rookPcSq[BLACK][i] << std::endl;
+
+            else if (queenPcSq[WHITE][i])
+                std::cout << queenPcSq[WHITE][i] << std::endl;
+            else if (queenPcSq[BLACK][i])
+                std::cout << -queenPcSq[BLACK][i] << std::endl;
+
+            else if (kingPcSq[WHITE][i])
+                std::cout << kingPcSq[WHITE][i] << std::endl;
+            else if (kingPcSq[BLACK][i])
+                std::cout << -kingPcSq[BLACK][i] << std::endl;
+
+            else
+                std::cout << 0 << std::endl;
+        }
+
+        std::cout << "PASSED PAWN: " << std::endl;
+        for (int i = 0; i < 8; i++) {
+            std::cout << passedPawn[i][WHITE] - passedPawn[i][BLACK] << std::endl;
+        }
+
+        std::cout << "PASSED PAWN BLOCKED/ATK: " << std::endl;
+        for (int i = 0; i < 8; i++) {
+            std::cout << passedPawnBlockedAttacked[i][WHITE] - passedPawnBlockedAttacked[i][BLACK] << std::endl;
+        }
+
+        std::cout << "PASSED PAWN BLOCKED/DEF: " << std::endl;
+        for (int i = 0; i < 8; i++) {
+            std::cout << passedPawnBlockedDefended[i][WHITE] - passedPawnBlockedDefended[i][BLACK] << std::endl;
+        }
+
+        std::cout << "PASSED PAWN BLOCKED: " << std::endl;
+        for (int i = 0; i < 8; i++) {
+            std::cout << passedPawnBlocked[i][WHITE] - passedPawnBlocked[i][BLACK] << std::endl;
+        }
+
+        std::cout << "DOUBLED PAWN" << std::endl;
+        for (int i = 0; i < 8; i++) {
+            std::cout << doubledPawns[WHITE] - doubledPawns[BLACK] << std::endl;
+        }
+
+        std::cout << "ISOLATED PAWNS:" << std::endl;
+        for (int i = 0; i < 8; i++) {
+            std::cout << isolatedPawns[WHITE] - isolatedPawns[BLACK] << std::endl;
+        }
+
+        std::cout << "BACKWARD PAWNS:" << std::endl;
+        for (int i = 0; i < 8; i++) {
+            std::cout << backwardPawns[WHITE] - backwardPawns[BLACK] << std::endl;
+        }
+
+        std::cout << "knightMobility:" << std::endl;
+        for (int i = 0; i < 9; i++) {
+            std::cout << knightMobility[WHITE][i] - knightMobility[BLACK][i] << std::endl;
+        }
+
+        std::cout << "bishopMobility:" << std::endl;
+        for (int i = 0; i < 14; i++) {
+            std::cout << bishopMobility[WHITE][i] - bishopMobility[BLACK][i] << std::endl;
+        }
+
+        std::cout << "rookMobility:" << std::endl;
+        for (int i = 0; i < 15; i++) {
+            std::cout << rookMobility[WHITE][i] - rookMobility[BLACK][i] << std::endl;
+        }
+
+        std::cout << "queenMobility:" << std::endl;
+        for (int i = 0; i < 28; i++) {
+            std::cout << queenMobility[WHITE][i] - queenMobility[BLACK][i] << std::endl;
+        }
+    }
+};
+
+extern Trace trace;
+
+enum Tracing : bool { NO_TRACE, TRACE };
+
 template <Color C> constexpr Bitboard doubledPawns(Board &board);
 template <Color C> constexpr Bitboard backwardPawns(Board &board);
 template <Color C> constexpr int backwardPawnScore(Board &board);
@@ -109,14 +248,12 @@ template <Color C> constexpr int isolatedPawnCount(Board &board);
 template <Color C> constexpr int passedBlockBonus(Bitboard passedPawns, Board &board);
 template <Color C> constexpr int doubledPawnPenalty(Board &board);
 
-template <Color C> constexpr int pieceSquare(Board &board);
-template <> constexpr int pieceSquare<WHITE>(Board &board);
-template <> constexpr int pieceSquare<BLACK>(Board &board);
+template <Tracing T, Color C> constexpr int pieceSquare(Board &board);
 
 template <Color C> constexpr int dotProduct(Bitboard moves, const int weights[64]);
 template <Color C> constexpr int mobilityScore(Board &board);
 
-int eval(Board &board, moveList &mList);
+template <Tracing T> int eval(Board &board, moveList &mList);
 
 template <Color C> constexpr Bitboard backwardPawns(Board &board) {
     constexpr Direction Up   = pushDirection(C);
@@ -133,7 +270,13 @@ template <Color C> constexpr Bitboard backwardPawns(Board &board) {
     return backwardPawns;
 }
 
-template <Color C> constexpr int backwardPawnScore(Board &board) { return -1 * popcount(backwardPawns<C>(board)); }
+template <Tracing T = NO_TRACE, Color C> constexpr int backwardPawnScore(Board &board) {
+    int numBackwardPawns = popcount(backwardPawns<C>(board));
+    if (T) {
+        trace.backwardPawns[C] = numBackwardPawns;
+    }
+    return -1 * numBackwardPawns;
+}
 
 template <Color C> constexpr int isolatedPawnCount(Board &board) {
     int count = 0;
@@ -169,7 +312,7 @@ template <Color C> constexpr Bitboard doubledPawns(Board &board) {
     return blockedPawns;
 }
 
-template <Color C> constexpr int passedBlockBonus(Bitboard passedPawns, Board &board) {
+template <Tracing T = NO_TRACE, Color C> constexpr int passedBlockBonus(Bitboard passedPawns, Board &board) {
     constexpr Direction Up    = pushDirection(C);
     constexpr Direction Down  = pushDirection(~C);
     constexpr Rank startRank  = (C == WHITE) ? RANK_2 : RANK_7;
@@ -205,11 +348,17 @@ template <Color C> constexpr int passedBlockBonus(Bitboard passedPawns, Board &b
             if (attacked && !defended) {
                 score += rankBonus[RANK_OF(sq)] / 4;
                 nAtk++;
+                if (T) {
+                    trace.passedPawnBlockedAttacked[RANK_OF(sq)][C]++;
+                }
             }
 
             if (attacked && defended) {
                 score += rankBonus[RANK_OF(sq)] / 2;
                 nDef++;
+                if (T) {
+                    trace.passedPawnBlockedDefended[RANK_OF(sq)][C]++;
+                }
             }
 
             pushToQueen &= pushToQueen - 1;
@@ -220,12 +369,15 @@ template <Color C> constexpr int passedBlockBonus(Bitboard passedPawns, Board &b
         }
 
         score += rankBonus[RANK_OF(psq)];
+        if (T) {
+            trace.passedPawnBlocked[RANK_OF(psq)][C]++;
+        }
     }
 
     return score;
 }
 
-template <Color C> constexpr int passedPawnScore(Board &board) {
+template <Tracing T = NO_TRACE, Color C> constexpr int passedPawnScore(Board &board) {
     constexpr Direction Up   = pushDirection(C);
     constexpr Direction Down = pushDirection(~C);
     Bitboard ourPawns        = board.pieces(PAWN, C);
@@ -241,7 +393,7 @@ template <Color C> constexpr int passedPawnScore(Board &board) {
 
     int score = 0;
 
-    score += passedBlockBonus<C>(passedPawns, board);
+    score += passedBlockBonus<T, C>(passedPawns, board);
 
     const int rankBonuses[] = {0, -20, 17, 15, 35, 175, 400};
     // const int rankBonuses[] = {0, 10, 17, 15, 62, 168, 278};
@@ -250,41 +402,54 @@ template <Color C> constexpr int passedPawnScore(Board &board) {
         psq        = (C == WHITE) ? psq : Square(mirror(psq));
 
         score += rankBonuses[RANK_OF(psq)];
+        if (T) {
+            trace.passedPawn[RANK_OF(psq)][C]++;
+        }
         passedPawns &= passedPawns - 1;
     }
 
     return score;
 }
 
-template <Color C> constexpr int doubledPawnPenalty(Board &board) {
-    return popcount(doubledPawns<C>(board)) * DOUBLED_PENALTY;
+template <Tracing T = NO_TRACE, Color C> constexpr int doubledPawnPenalty(Board &board) {
+    const int numDoubledPawns = popcount(doubledPawns<C>(board));
+    if (T) {
+        trace.doubledPawns[C] = numDoubledPawns;
+    }
+    return numDoubledPawns * DOUBLED_PENALTY;
 }
 
-template <Color C> constexpr int pieceSquare(Board &board) { return 0; }
-
-template <> constexpr int pieceSquare<WHITE>(Board &board) {
+template <Tracing T = NO_TRACE, Color C> constexpr int pieceSquare(Board &board) {
     int eval = 0;
     for (int i = 0; i < 64; i++) {
         Piece p   = board.board[i];
         PieceT pt = getPcType(p);
 
-        if (p < B_PAWN && p != NO_PC) {
-            eval += pieceTbls[pt - 1][i];
+        if (C == WHITE) {
+            if (p < B_PAWN && p != NO_PC) {
+                if (T) {
+                    int *pcSq[] = {trace.pawnPcSq[WHITE], trace.knightPcSq[WHITE], trace.bishopPcSq[WHITE],
+                                   trace.rookPcSq[WHITE], trace.queenPcSq[WHITE],  trace.kingPcSq[WHITE]};
+
+                    pcSq[pt - 1][i] = 1;
+                }
+
+                eval += pieceTbls[pt - 1][i];
+            }
+        } else if (C == BLACK) {
+            if (p >= B_PAWN && p != NO_PC) {
+                if (T) {
+                    int *pcSq[] = {trace.pawnPcSq[BLACK], trace.knightPcSq[BLACK], trace.bishopPcSq[BLACK],
+                                   trace.rookPcSq[BLACK], trace.queenPcSq[BLACK],  trace.kingPcSq[WHITE]};
+
+                    pcSq[pt - 1][i] = 1;
+                }
+
+                eval += pieceTbls[pt - 1][i];
+            }
         }
     }
-    return eval;
-}
 
-template <> constexpr int pieceSquare<BLACK>(Board &board) {
-    int eval = 0;
-    for (int i = 0; i < 64; i++) {
-        Piece p   = board.board[i];
-        PieceT pt = getPcType(p);
-
-        if (p >= B_PAWN && p != NO_PC) {
-            eval += pieceTbls[pt - 1][mirror(i)];
-        }
-    }
     return eval;
 }
 
@@ -300,7 +465,7 @@ constexpr int dotProduct(Bitboard moves, const int weights[64]) {
     return res;
 }
 
-template <Color C> constexpr int mobilityScore(Board &board) {
+template <Tracing T = NO_TRACE, Color C> constexpr int mobilityScore(Board &board) {
     constexpr int KnightBonus[] = {-60, -50, -10, -5, 5, 15, 21, 30, 40};
     constexpr int BishopBonus[] = {-50, -20, 15, 30, 40, 55, 55, 60, 62, 70, 80, 83, 91, 96};
     constexpr int RookBonus[]   = {-60, -25, 0, 3, 4, 15, 20, 30, 40, 40, 40, 45, 60, 61, 70};
@@ -318,14 +483,17 @@ template <Color C> constexpr int mobilityScore(Board &board) {
     const Bitboard friendlyPawns = board.pieces(PAWN, C);
     const Bitboard enemyPawns    = board.pieces(PAWN, ~C);
 
+    const Bitboard secondThirdRank      = (C == WHITE) ? (RANK_2BB | RANK_3BB) : (RANK_7BB | RANK_6BB);
     const Bitboard enemyPawnAttacks     = pawnDblAttacks<~C>(enemyPawns);
-    const Bitboard secondThirdRankPawns = friendlyPawns & (RANK_2BB | RANK_3BB);
+    const Bitboard secondThirdRankPawns = friendlyPawns & secondThirdRank;
     const Bitboard blockedPawns         = shift<Down>(enemyPawns) & friendlyPawns;
     const Bitboard friendlyKing         = board.pieces(KING, C);
     const Bitboard friendlyQueens       = board.pieces(QUEEN, C);
 
     const Bitboard excludedSquares =
         enemyPawnAttacks | secondThirdRankPawns | blockedPawns | friendlyKing | friendlyQueens;
+
+    Bitboards::print_bitboard(excludedSquares);
 
     int knightMobility = 0;
     while (knights) {
@@ -337,6 +505,9 @@ template <Color C> constexpr int mobilityScore(Board &board) {
             numMoves = 0;
 
         knightMobility += KnightBonus[numMoves];
+        if (T) {
+            trace.knightMobility[C][numMoves]++;
+        }
         knights &= knights - 1;
     }
 
@@ -349,6 +520,9 @@ template <Color C> constexpr int mobilityScore(Board &board) {
         if (numMoves < 0)
             numMoves = 0;
 
+        if (T) {
+            trace.bishopMobility[C][numMoves]++;
+        }
         bishopMobility += BishopBonus[numMoves];
         bishops &= bishops - 1;
     }
@@ -362,6 +536,9 @@ template <Color C> constexpr int mobilityScore(Board &board) {
         if (numMoves < 0)
             numMoves = 0;
 
+        if (T) {
+            trace.rookMobility[C][numMoves]++;
+        }
         rookMobility += RookBonus[numMoves];
         rooks &= rooks - 1;
     }
@@ -376,11 +553,20 @@ template <Color C> constexpr int mobilityScore(Board &board) {
         if (numMoves < 0)
             numMoves = 0;
 
+        if (T) {
+            trace.queenMobility[C][numMoves]++;
+        }
         queenMobility += QueenBonus[numMoves];
         queens &= queens - 1;
     }
 
-    const int mobilityScore = knightMobility + bishopMobility + rookMobility + queenMobility;
+    const int kingMobility = popcount(kingAttacks[lsb_index(board.pieces(KING, C))]);
+
+    if (T) {
+        trace.kingMobility[C] = kingMobility;
+    }
+
+    const int mobilityScore = knightMobility + bishopMobility + rookMobility + queenMobility + kingMobility;
 
     // std::cout << ((C == WHITE) ? "WHITE: " : "BLACK: ") << std::endl;
     // std::cout << "knight mobility evaluation: " << knightMobility << std::endl;

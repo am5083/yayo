@@ -1,4 +1,5 @@
 #include "thread.hpp"
+#include "eval.hpp"
 
 namespace Yayo {
 
@@ -38,6 +39,14 @@ const bool Search::checkForStop() const {
 
     return false;
 }
+
+moveList Search::generateMoves() {
+    moveList mList = {0};
+    generate(_board, &mList);
+    return mList;
+}
+
+Board Search::getBoard() { return _board; }
 
 void Search::scoreMoves(moveList *mList) {
     for (int i = 0; i < mList->nMoves; i++) {
@@ -101,7 +110,7 @@ int Search::quiescent(int alpha, int beta) {
         return negaMax(alpha, beta, 1);
     }
 
-    int standPat = eval(_board, mList);
+    int standPat = eval<NO_TRACE>(_board, mList);
 
     if (standPat >= beta)
         return beta;
