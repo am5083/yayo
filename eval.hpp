@@ -134,46 +134,25 @@ struct Trace {
         std::cout << rookScore[WHITE] - rookScore[BLACK] << std::endl;
         std::cout << queenScore[WHITE] - queenScore[BLACK] << std::endl;
 
-        // for (int i = 0; i < 64; i++) {
-        //     pawnPcSq[BLACK][i]   = -pawnPcSq[BLACK][i];
-        //     knightPcSq[BLACK][i] = -knightPcSq[BLACK][i];
-        //     bishopPcSq[BLACK][i] = -bishopPcSq[BLACK][i];
-        //     rookPcSq[BLACK][i]   = -rookPcSq[BLACK][i];
-        //     queenPcSq[BLACK][i]  = -queenPcSq[BLACK][i];
-        //     kingPcSq[BLACK][i]   = -kingPcSq[BLACK][i];
-        // }
-
         std::cout << "PIECE SQUARE: " << std::endl;
         for (int i = 0; i < 64; i++) {
-            if (pawnPcSq[WHITE][i])
-                std::cout << pawnPcSq[WHITE][i] << std::endl;
-            else if (pawnPcSq[BLACK][i])
-                std::cout << -pawnPcSq[BLACK][i] << std::endl;
+            if (pawnPcSq[WHITE][i] || pawnPcSq[BLACK][i])
+                std::cout << pawnPcSq[WHITE][i] - pawnPcSq[BLACK][i] << std::endl;
 
-            else if (knightPcSq[WHITE][i])
-                std::cout << knightPcSq[WHITE][i] << std::endl;
-            else if (knightPcSq[BLACK][i])
-                std::cout << -knightPcSq[BLACK][i] << std::endl;
+            else if (knightPcSq[WHITE][i] || knightPcSq[BLACK][i])
+                std::cout << knightPcSq[WHITE][i] - knightPcSq[BLACK][i] << std::endl;
 
-            else if (bishopPcSq[WHITE][i])
-                std::cout << bishopPcSq[WHITE][i] << std::endl;
-            else if (bishopPcSq[BLACK][i])
-                std::cout << -bishopPcSq[BLACK][i] << std::endl;
+            else if (bishopPcSq[WHITE][i] || bishopPcSq[BLACK][i])
+                std::cout << bishopPcSq[WHITE][i] - bishopPcSq[BLACK][i] << std::endl;
 
-            else if (rookPcSq[WHITE][i])
-                std::cout << rookPcSq[WHITE][i] << std::endl;
-            else if (rookPcSq[BLACK][i])
-                std::cout << -rookPcSq[BLACK][i] << std::endl;
+            else if (rookPcSq[WHITE][i] || rookPcSq[BLACK][i])
+                std::cout << rookPcSq[WHITE][i] - rookPcSq[BLACK][i] << std::endl;
 
-            else if (queenPcSq[WHITE][i])
-                std::cout << queenPcSq[WHITE][i] << std::endl;
-            else if (queenPcSq[BLACK][i])
-                std::cout << -queenPcSq[BLACK][i] << std::endl;
+            else if (queenPcSq[WHITE][i] || queenPcSq[BLACK][i])
+                std::cout << queenPcSq[WHITE][i] - queenPcSq[BLACK][i] << std::endl;
 
-            else if (kingPcSq[WHITE][i])
-                std::cout << kingPcSq[WHITE][i] << std::endl;
-            else if (kingPcSq[BLACK][i])
-                std::cout << -kingPcSq[BLACK][i] << std::endl;
+            else if (kingPcSq[WHITE][i] || kingPcSq[BLACK][i])
+                std::cout << kingPcSq[WHITE][i] - kingPcSq[BLACK][i] << std::endl;
 
             else
                 std::cout << 0 << std::endl;
@@ -440,12 +419,12 @@ template <Tracing T = NO_TRACE, Color C> constexpr int pieceSquare(Board &board)
             if (p >= B_PAWN && p != NO_PC) {
                 if (T) {
                     int *pcSq[] = {trace.pawnPcSq[BLACK], trace.knightPcSq[BLACK], trace.bishopPcSq[BLACK],
-                                   trace.rookPcSq[BLACK], trace.queenPcSq[BLACK],  trace.kingPcSq[WHITE]};
+                                   trace.rookPcSq[BLACK], trace.queenPcSq[BLACK],  trace.kingPcSq[BLACK]};
 
-                    pcSq[pt - 1][i] = 1;
+                    pcSq[pt - 1][mirror(i)] = 1;
                 }
 
-                eval += pieceTbls[pt - 1][i];
+                eval += pieceTbls[pt - 1][mirror(i)];
             }
         }
     }

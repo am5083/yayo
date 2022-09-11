@@ -93,36 +93,19 @@ template <> int eval<NO_TRACE>(Board &board, moveList &mList) {
     const int bMaterial =
         (PAWN_VAL * blackPawnScore) + (KNIGHT_VAL * blackKnightScore) + (BISHOP_VAL * blackBishopScore) + (ROOK_VAL * blackRookScore) + (QUEEN_VAL * blackQueenScore);
 
-    trace.pawnScore[WHITE] = whitePawnScore;
-    trace.pawnScore[BLACK] = blackPawnScore;
-
-    trace.knightScore[WHITE] = whiteKnightScore;
-    trace.knightScore[BLACK] = blackKnightScore;
-
-    trace.bishopScore[WHITE] = whiteBishopScore;
-    trace.bishopScore[BLACK] = blackBishopScore;
-
-    trace.rookScore[WHITE] = whiteRookScore;
-    trace.rookScore[BLACK] = blackRookScore;
-
-    trace.queenScore[WHITE] = whiteQueenScore;
-    trace.queenScore[BLACK] = blackQueenScore;
 
     const auto color = (board.turn == WHITE) ? 1 : -1;
 
     int eval = TEMPO;
-    const auto pcSqEval = pieceSquare<TRACE, WHITE>(board) - pieceSquare<TRACE, BLACK>(board);
-    const auto passed = passedPawnScore<TRACE, WHITE>(board) - passedPawnScore<TRACE, BLACK>(board);
-    const auto doubledPenalty = doubledPawnPenalty<TRACE, WHITE>(board) - doubledPawnPenalty<TRACE, BLACK>(board);
+    const auto pcSqEval = pieceSquare<NO_TRACE, WHITE>(board) - pieceSquare<NO_TRACE, BLACK>(board);
+    const auto passed = passedPawnScore<NO_TRACE, WHITE>(board) - passedPawnScore<NO_TRACE, BLACK>(board);
+    const auto doubledPenalty = doubledPawnPenalty<NO_TRACE, WHITE>(board) - doubledPawnPenalty<NO_TRACE, BLACK>(board);
     const auto whiteIsolatedPawnCount = isolatedPawnCount<WHITE>(board);
     const auto blackIsolatedPawnCount = isolatedPawnCount<BLACK>(board);
     const auto isolatedPenalty = ISOLATED_PENALTY * (whiteIsolatedPawnCount - blackIsolatedPawnCount);
-    const auto backwardPenalty = backwardPawnScore<TRACE, WHITE>(board) - backwardPawnScore<TRACE, BLACK>(board);
+    const auto backwardPenalty = backwardPawnScore<NO_TRACE, WHITE>(board) - backwardPawnScore<NO_TRACE, BLACK>(board);
     const auto pawnStructureScore = passed + doubledPenalty + (1.25 * isolatedPenalty) + backwardPenalty;
-    const auto mobility = mobilityScore<TRACE, WHITE>(board) - mobilityScore<TRACE, BLACK>(board);
-
-    trace.isolatedPawns[WHITE] = whiteIsolatedPawnCount;
-    trace.isolatedPawns[BLACK] = blackIsolatedPawnCount;
+    const auto mobility = mobilityScore<NO_TRACE, WHITE>(board) - mobilityScore<NO_TRACE, BLACK>(board);
 
     eval += (mobility / 2);
     eval += (wMaterial - bMaterial);
