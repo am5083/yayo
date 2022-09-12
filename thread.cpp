@@ -105,6 +105,7 @@ int Search::quiescent(int alpha, int beta) {
 
     if (standPat >= beta)
         return beta;
+
     if (alpha < standPat)
         alpha = standPat;
 
@@ -121,8 +122,10 @@ int Search::quiescent(int alpha, int beta) {
         Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
 
         if (fromPc > toPc) {
-            mList.moves[i].score = _board.see(toSq, toPc, fromSq, fromPc) + 10000000;
+            mList.moves[i].score = 2000 * _board.see(toSq, toPc, fromSq, fromPc);
         }
+
+        mList.swapBest(i);
 
         make(_board, mList.moves[i].move);
         score = -quiescent(-beta, -alpha);
