@@ -62,14 +62,6 @@ template <> int eval<TRACE>(Board &board, moveList &mList) {
     eval += (wMaterial - bMaterial);
     eval += (1.2 * pcSqEval);
     eval += (0.3 * pawnStructureScore);
-    // std::cout << "material: " << (wMaterial - bMaterial) << std::endl;
-    // std::cout << "pcSqEval: " << pcSqEval << std::endl;
-    // std::cout << "passed: " << passed << std::endl;
-    // std::cout << "doubledPenalty: " << doubledPenalty << std::endl;
-    // std::cout << "isolatedPenalty: " << isolatedPenalty << std::endl;
-    // std::cout << "backwardPenalty: " << backwardPenalty << std::endl;
-    // std::cout << "pawnStructureScore: " << pawnStructureScore << std::endl;
-    // std::cout << "mobility: " << mobility << std::endl;
 
     return  eval * color;
 }
@@ -111,14 +103,6 @@ template <> int eval<NO_TRACE>(Board &board, moveList &mList) {
     eval += (wMaterial - bMaterial);
     eval += (1.2 * pcSqEval);
     eval += (0.3 * pawnStructureScore);
-    // std::cout << "material: " << (wMaterial - bMaterial) << std::endl;
-    // std::cout << "pcSqEval: " << pcSqEval << std::endl;
-    // std::cout << "passed: " << passed << std::endl;
-    // std::cout << "doubledPenalty: " << doubledPenalty << std::endl;
-    // std::cout << "isolatedPenalty: " << isolatedPenalty << std::endl;
-    // std::cout << "backwardPenalty: " << backwardPenalty << std::endl;
-    // std::cout << "pawnStructureScore: " << pawnStructureScore << std::endl;
-    // std::cout << "mobility: " << mobility << std::endl;
 
     return  eval * color;
 }

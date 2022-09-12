@@ -7,12 +7,62 @@
 
 namespace Yayo {
 
+enum Score : int { NO_SCORE };
+
+#define S(mg, eg) (MakeScore(mg, eg))
+
+constexpr Score MakeScore(const int mg, const int eg) { return Score((int)((unsigned int)eg << 16) + mg); }
+
+inline std::int16_t MgScore(const Score score) {
+    union {
+        std::uint16_t upper;
+        std::int16_t lower;
+    } mg = {std::uint16_t(unsigned(score))};
+
+    return mg.lower;
+}
+
+constexpr std::int16_t EgScore(const Score score) {
+    union {
+        std::uint16_t upper;
+        std::int16_t lower;
+    } eg = {std::uint16_t(unsigned(score + 0x8000) >> 16)};
+
+    return eg.lower;
+}
+
 namespace { // penalties
 constexpr int UNMOVED_PASSED   = -20;
 constexpr int DOUBLED_PENALTY  = -10;
 constexpr int ISOLATED_PENALTY = -5;
 constexpr int TEMPO            = 10;
 } // namespace
+
+constexpr Score KnightMobilityScore[] = {S(-60, -80), S(-50, -30), S(-10, -20), S(-5, 10), S(5, 10),
+                                         S(15, 14),   S(21, 15),   S(30, 21),   S(40, 30)};
+
+constexpr Score BishopMobilityScore[] = {S(-50, -60), S(-20, -25), S(15, -10), S(30, 12), S(40, 21),
+                                         S(55, 49),   S(55, 55),   S(60, 58),  S(62, 65), S(70, 72),
+                                         S(80, 78),   S(83, 87),   S(91, 88),  S(96, 98)};
+
+constexpr Score RookMobilityScore[] = {S(-60, -80), S(-25, -15), S(0, 20),   S(3, 40),   S(4, 70),
+                                       S(15, 100),  S(20, 102),  S(30, 122), S(40, 133), S(40, 139),
+                                       S(40, 153),  S(45, 160),  S(60, 165), S(61, 170), S(70, 175)};
+
+constexpr Score QueenMobilityScore[] = {S(-30, -50), S(-15, -30), S(-10, -10), S(-10, 20),  S(20, 40),   S(25, 55),
+                                        S(23, 60),   S(35, 73),   S(40, 76),   S(55, 95),   S(65, 95),   S(68, 101),
+                                        S(69, 124),  S(70, 128),  S(70, 132),  S(70, 133),  S(71, 136),  S(72, 140),
+                                        S(74, 147),  S(76, 149),  S(90, 153),  S(104, 169), S(105, 171), S(106, 171),
+                                        S(112, 178), S(114, 185), S(114, 187), S(119, 221)};
+
+constexpr Score blockedPassedPawnRankBonus[] = {S(0, 0),     S(0, 0),     S(0, 0),     S(40, 40),
+                                                S(200, 200), S(260, 260), S(400, 400), S(0, 0)};
+
+constexpr Score passedPawnRankBonus[] = {S(0, 0),   S(-20, -20), S(17, 17),  S(15, 15),
+                                         S(35, 35), S(175, 175), S(400, 400)};
+
+constexpr short gamePhaseValues[] = {0, 1, 1, 2, 4, 0};
+
 // clang-format off
 constexpr int pawn[SQUARE_CT] = {
     0,  0,  0,  0,  0,  0,  0,  0,
@@ -230,8 +280,7 @@ template <Tracing T = NO_TRACE, Color C> constexpr int passedBlockBonus(Bitboard
             continue;
 
         int nAtk = 0, nDef = 0;
-        bool pathAttacked     = false;
-        const int rankBonus[] = {0, 0, 0, 40, 200, 260, 400, 0};
+        bool pathAttacked = false;
 
         Bitboard pushToQueen = fill<Up>(pushBB);
         while (pushToQueen) {
@@ -240,7 +289,7 @@ template <Tracing T = NO_TRACE, Color C> constexpr int passedBlockBonus(Bitboard
             bool defended = board.isSqAttacked(sq, board.pieces(), C);
 
             if (attacked && !defended) {
-                score += rankBonus[RANK_OF(sq)] / 4;
+                score += MgScore(blockedPassedPawnRankBonus[RANK_OF(sq)]) / 4;
                 nAtk++;
                 if (T) {
                     trace.passedPawnBlockedAttacked[RANK_OF(sq)][C]++;
@@ -248,7 +297,7 @@ template <Tracing T = NO_TRACE, Color C> constexpr int passedBlockBonus(Bitboard
             }
 
             if (attacked && defended) {
-                score += rankBonus[RANK_OF(sq)] / 2;
+                score += MgScore(blockedPassedPawnRankBonus[RANK_OF(sq)]) / 2;
                 nDef++;
                 if (T) {
                     trace.passedPawnBlockedDefended[RANK_OF(sq)][C]++;
@@ -262,7 +311,7 @@ template <Tracing T = NO_TRACE, Color C> constexpr int passedBlockBonus(Bitboard
             continue;
         }
 
-        score += rankBonus[RANK_OF(psq)];
+        score += MgScore(blockedPassedPawnRankBonus[RANK_OF(psq)]);
         if (T) {
             trace.passedPawnBlocked[RANK_OF(psq)][C]++;
         }
@@ -289,13 +338,11 @@ template <Tracing T = NO_TRACE, Color C> constexpr int passedPawnScore(Board &bo
 
     score += passedBlockBonus<T, C>(passedPawns, board);
 
-    const int rankBonuses[] = {0, -20, 17, 15, 35, 175, 400};
-    // const int rankBonuses[] = {0, 10, 17, 15, 62, 168, 278};
     while (passedPawns) {
         Square psq = Square(lsb_index(passedPawns));
         psq        = (C == WHITE) ? psq : Square(mirror(psq));
 
-        score += rankBonuses[RANK_OF(psq)];
+        score += MgScore(passedPawnRankBonus[RANK_OF(psq)]);
         if (T) {
             trace.passedPawn[RANK_OF(psq)][C]++;
         }
@@ -360,12 +407,6 @@ constexpr int dotProduct(Bitboard moves, const int weights[64]) {
 }
 
 template <Tracing T = NO_TRACE, Color C> constexpr int mobilityScore(Board &board) {
-    constexpr int KnightBonus[] = {-60, -50, -10, -5, 5, 15, 21, 30, 40};
-    constexpr int BishopBonus[] = {-50, -20, 15, 30, 40, 55, 55, 60, 62, 70, 80, 83, 91, 96};
-    constexpr int RookBonus[]   = {-60, -25, 0, 3, 4, 15, 20, 30, 40, 40, 40, 45, 60, 61, 70};
-    constexpr int QueenBonus[]  = {-30, -15, -10, -10, 20, 25, 23, 35,  40,  55,  65,  68,  69,  70,
-                                   70,  70,  71,  72,  74, 76, 90, 104, 105, 106, 112, 114, 114, 119};
-
     constexpr Direction Up   = pushDirection(C);
     constexpr Direction Down = pushDirection(~C);
 
@@ -387,8 +428,6 @@ template <Tracing T = NO_TRACE, Color C> constexpr int mobilityScore(Board &boar
     const Bitboard excludedSquares =
         enemyPawnAttacks | secondThirdRankPawns | blockedPawns | friendlyKing | friendlyQueens;
 
-    Bitboards::print_bitboard(excludedSquares);
-
     int knightMobility = 0;
     while (knights) {
         Square knightSq      = Square(lsb_index(knights));
@@ -398,7 +437,7 @@ template <Tracing T = NO_TRACE, Color C> constexpr int mobilityScore(Board &boar
         if (numMoves < 0)
             numMoves = 0;
 
-        knightMobility += KnightBonus[numMoves];
+        knightMobility += MgScore(KnightMobilityScore[numMoves]);
         if (T) {
             trace.knightMobility[C][numMoves]++;
         }
@@ -417,7 +456,7 @@ template <Tracing T = NO_TRACE, Color C> constexpr int mobilityScore(Board &boar
         if (T) {
             trace.bishopMobility[C][numMoves]++;
         }
-        bishopMobility += BishopBonus[numMoves];
+        bishopMobility += MgScore(BishopMobilityScore[numMoves]);
         bishops &= bishops - 1;
     }
 
@@ -433,7 +472,7 @@ template <Tracing T = NO_TRACE, Color C> constexpr int mobilityScore(Board &boar
         if (T) {
             trace.rookMobility[C][numMoves]++;
         }
-        rookMobility += RookBonus[numMoves];
+        rookMobility += MgScore(RookMobilityScore[numMoves]);
         rooks &= rooks - 1;
     }
 
@@ -450,7 +489,7 @@ template <Tracing T = NO_TRACE, Color C> constexpr int mobilityScore(Board &boar
         if (T) {
             trace.queenMobility[C][numMoves]++;
         }
-        queenMobility += QueenBonus[numMoves];
+        queenMobility += MgScore(QueenMobilityScore[numMoves]);
         queens &= queens - 1;
     }
 
@@ -463,11 +502,11 @@ template <Tracing T = NO_TRACE, Color C> constexpr int mobilityScore(Board &boar
     const int mobilityScore = knightMobility + bishopMobility + rookMobility + queenMobility + kingMobility;
 
     // std::cout << ((C == WHITE) ? "WHITE: " : "BLACK: ") << std::endl;
-    // std::cout << "knight mobility evaluation: " << knightMobility << std::endl;
+    // std::cout << "knight mobility evaluation: " << MgScore(Score(knightMobility)) << std::endl;
     // std::cout << "bishop mobility evaluation: " << bishopMobility << std::endl;
     // std::cout << "rook mobility evaluation: " << rookMobility << std::endl;
     // std::cout << "queen mobility evaluation: " << queenMobility << std::endl;
-    // std::cout << "total mobility evaluation: " << mobilityScore / 2 << std::endl;
+    // std::cout << "total mobility evaluation: " << MgScore(Score(mobilityScore)) / 2 << std::endl;
     // std::cout << std::endl;
 
     return mobilityScore;
