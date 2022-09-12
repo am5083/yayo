@@ -120,19 +120,30 @@ int Search::quiescent(int alpha, int beta) {
 
     pvTableLen[ply] = 0;
 
-    int score;
     for (int i = 0; i < mList.nMoves; i++) {
-        if (mList.moves[i].score == 0)
+        if (mList.moves[i].score == 0) {
             continue;
+        }
 
         const int c_move = mList.moves[i].move;
 
         Square fromSq = getFrom(c_move), toSq = getTo(c_move);
         Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
 
-        if (fromPc > toPc) {
-            mList.moves[i].score = 2000 * _board.see(toSq, toPc, fromSq, fromPc);
+        if (getPcType(fromPc) > getPcType(toPc)) {
+            int see = _board.see(toSq, toPc, fromSq, fromPc);
+            if (see < 0) {
+                mList.moves[i].score = (see / 1000) + 50;
+            } else {
+                mList.moves[i].score = see;
+            }
         }
+    }
+
+    int score;
+    for (int i = 0; i < mList.nMoves; i++) {
+        if (mList.moves[i].score == 0)
+            continue;
 
         mList.swapBest(i);
 
@@ -143,7 +154,7 @@ int Search::quiescent(int alpha, int beta) {
         if (score >= beta)
             return beta;
         if (score > alpha) {
-            updatePv(_board.ply, c_move);
+            updatePv(_board.ply, mList.moves[i].move);
             alpha = score;
         }
     }
