@@ -523,6 +523,10 @@ template <Tracing T = NO_TRACE, Color C> constexpr int mobilityScore(Board &boar
     const Bitboard excludedSquares =
         enemyPawnAttacks | secondThirdRankPawns | blockedPawns | friendlyKing | friendlyQueens;
 
+    int phase   = 0;
+    int mgScore = 0;
+    int egScore = 0;
+
     int knightMobility = 0;
     while (knights) {
         Square knightSq      = Square(lsb_index(knights));
@@ -532,10 +536,15 @@ template <Tracing T = NO_TRACE, Color C> constexpr int mobilityScore(Board &boar
         if (numMoves < 0)
             numMoves = 0;
 
-        knightMobility += MgScore(KnightMobilityScore[numMoves]);
         if (T) {
             trace.knightMobility[C][numMoves]++;
         }
+
+        mgScore += MgScore(KnightMobilityScore[numMoves]);
+        egScore += EgScore(KnightMobilityScore[numMoves]);
+
+        knightMobility += MgScore(KnightMobilityScore[numMoves]);
+
         knights &= knights - 1;
     }
 
@@ -551,6 +560,10 @@ template <Tracing T = NO_TRACE, Color C> constexpr int mobilityScore(Board &boar
         if (T) {
             trace.bishopMobility[C][numMoves]++;
         }
+
+        mgScore += MgScore(BishopMobilityScore[numMoves]);
+        egScore += EgScore(BishopMobilityScore[numMoves]);
+
         bishopMobility += MgScore(BishopMobilityScore[numMoves]);
         bishops &= bishops - 1;
     }
@@ -567,6 +580,10 @@ template <Tracing T = NO_TRACE, Color C> constexpr int mobilityScore(Board &boar
         if (T) {
             trace.rookMobility[C][numMoves]++;
         }
+
+        mgScore += MgScore(RookMobilityScore[numMoves]);
+        egScore += EgScore(RookMobilityScore[numMoves]);
+
         rookMobility += MgScore(RookMobilityScore[numMoves]);
         rooks &= rooks - 1;
     }
@@ -584,6 +601,10 @@ template <Tracing T = NO_TRACE, Color C> constexpr int mobilityScore(Board &boar
         if (T) {
             trace.queenMobility[C][numMoves]++;
         }
+
+        mgScore += MgScore(QueenMobilityScore[numMoves]);
+        egScore += EgScore(QueenMobilityScore[numMoves]);
+
         queenMobility += MgScore(QueenMobilityScore[numMoves]);
         queens &= queens - 1;
     }
@@ -593,6 +614,18 @@ template <Tracing T = NO_TRACE, Color C> constexpr int mobilityScore(Board &boar
     if (T) {
         trace.kingMobility[C] = kingMobility;
     }
+
+    for (int i = 0; i < 64; i++) {
+        PieceT pt = getPcType(board.board[i]);
+        phase += gamePhaseValues[pt - 1];
+    }
+
+    int mgPhase = phase;
+    if (mgPhase > 24)
+        mgPhase = 24;
+    int egPhase = 24 - mgPhase;
+
+    const int taperedMobilityScore = (mgScore * mgPhase + egScore * egPhase) / 24;
 
     const int mobilityScore = knightMobility + bishopMobility + rookMobility + queenMobility + kingMobility;
 
@@ -604,7 +637,7 @@ template <Tracing T = NO_TRACE, Color C> constexpr int mobilityScore(Board &boar
     // std::cout << "total mobility evaluation: " << MgScore(Score(mobilityScore)) / 2 << std::endl;
     // std::cout << std::endl;
 
-    return mobilityScore;
+    return taperedMobilityScore;
 }
 
 } // namespace Yayo
