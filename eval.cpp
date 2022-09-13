@@ -99,7 +99,7 @@ template <> int eval<NO_TRACE>(Board &board, moveList &mList) {
     const auto pawnStructureScore = passed + doubledPenalty + (1.25 * isolatedPenalty) + backwardPenalty;
     const auto mobility = mobilityScore<NO_TRACE, WHITE>(board) - mobilityScore<NO_TRACE, BLACK>(board);
 
-    eval += (mobility / 2);
+    eval += mobility;
     eval += (wMaterial - bMaterial);
     eval += (1.2 * pcSqEval);
     eval += (0.3 * pawnStructureScore);
