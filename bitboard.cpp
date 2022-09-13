@@ -52,8 +52,6 @@ void Bitboards::init_arrays() {
     initMasks(ROOK, rookAttacks, rookMagics);
     initMasks(BISHOP, bishopAttacks, bishopMagics);
 
-    int temp[2][2];
-
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
             zobristCastle[i][j] = random_u64();
