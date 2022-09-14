@@ -154,13 +154,13 @@ struct Trace {
 };
 
 struct EvalWeights {
-    Score pawnScore   = S(PAWN_VAL, PAWN_VAL);
-    Score knightScore = S(KNIGHT_VAL, KNIGHT_VAL);
-    Score bishopScore = S(BISHOP_VAL, BISHOP_VAL);
-    Score rookScore   = S(ROOK_VAL, ROOK_VAL);
-    Score queenScore  = S(QUEEN_VAL, QUEEN_VAL);
+    const Score pawnScore   = S(PAWN_VAL, PAWN_VAL);
+    const Score knightScore = S(KNIGHT_VAL, KNIGHT_VAL);
+    const Score bishopScore = S(BISHOP_VAL, BISHOP_VAL);
+    const Score rookScore   = S(ROOK_VAL, ROOK_VAL);
+    const Score queenScore  = S(QUEEN_VAL, QUEEN_VAL);
 
-    Score taperedPawnPcSq[SQUARE_CT] = {
+    const Score taperedPawnPcSq[SQUARE_CT] = {
         S(0, 0),    S(0, 0),     S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0),     S(0, 0),    S(0, 0),
         S(98, 178), S(134, 173), S(61, 158), S(95, 134), S(68, 147), S(126, 132), S(34, 165), S(-11, 187),
         S(-6, 94),  S(7, 100),   S(26, 85),  S(31, 67),  S(65, 56),  S(56, 53),   S(25, 82),  S(-20, 84),
@@ -171,7 +171,7 @@ struct EvalWeights {
         S(0, 0),    S(0, 0),     S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0),     S(0, 0),    S(0, 0),
     };
 
-    Score taperedKnightPcSq[SQUARE_CT] = {
+    const Score taperedKnightPcSq[SQUARE_CT] = {
         S(-167, -58), S(-89, -38), S(-34, -13), S(-49, -28), S(61, -31),  S(-97, -27), S(-15, -63), S(-107, -99),
         S(-73, -25),  S(-41, -8),  S(72, -25),  S(36, -2),   S(23, -9),   S(62, -25),  S(7, -24),   S(-17, -52),
         S(-47, -24),  S(60, -20),  S(37, 10),   S(65, 9),    S(84, -1),   S(129, -9),  S(73, -19),  S(44, -41),
@@ -182,7 +182,7 @@ struct EvalWeights {
         S(-105, -29), S(-21, -51), S(-58, -23), S(-33, -15), S(-17, -22), S(-28, -18), S(-19, -50), S(-23, -64),
     };
 
-    Score taperedBishopPcSq[SQUARE_CT] = {
+    const Score taperedBishopPcSq[SQUARE_CT] = {
         S(-29, -14), S(4, -21),  S(-82, -11), S(-37, -8),  S(-25, -7), S(-42, -9),  S(7, -17),  S(-8, -24),
         S(-26, -8),  S(16, -4),  S(-18, 7),   S(-13, -12), S(30, -3),  S(59, -13),  S(18, -4),  S(-47, -14),
         S(-16, 2),   S(37, -8),  S(43, 0),    S(40, -1),   S(35, -2),  S(50, 6),    S(37, 0),   S(-2, 4),
@@ -193,7 +193,7 @@ struct EvalWeights {
         S(-33, -23), S(-3, -9),  S(-14, -23), S(-21, -5),  S(-13, -9), S(-12, -16), S(-39, -5), S(-21, -17),
     };
 
-    Score taperedRookPcSq[SQUARE_CT] = {
+    const Score taperedRookPcSq[SQUARE_CT] = {
         S(32, 13),  S(42, 10),  S(32, 18),  S(51, 15),  S(63, 12), S(9, 12),  S(31, 8),   S(43, 5),
         S(27, 11),  S(32, 13),  S(58, 13),  S(62, 11),  S(80, -3), S(67, 3),  S(26, 8),   S(44, 3),
         S(-5, 7),   S(19, 7),   S(26, 7),   S(36, 5),   S(17, 4),  S(45, -3), S(61, -5),  S(16, -3),
@@ -204,7 +204,7 @@ struct EvalWeights {
         S(-19, -9), S(-13, 2),  S(1, 3),    S(17, -1),  S(16, -5), S(7, -13), S(-37, 4),  S(-26, -20),
     };
 
-    Score taperedQueenPcSq[SQUARE_CT] = {
+    const Score taperedQueenPcSq[SQUARE_CT] = {
         S(-28, -9),  S(0, 22),    S(29, 22),  S(12, 27),  S(59, 27),  S(44, 19),   S(43, 10),   S(45, 20),
         S(-24, -17), S(-39, 20),  S(-5, 32),  S(1, 41),   S(-16, 58), S(57, 25),   S(28, 30),   S(54, 0),
         S(-13, -20), S(-17, 6),   S(7, 9),    S(8, 49),   S(29, 47),  S(56, 35),   S(47, 19),   S(57, 9),
@@ -215,7 +215,7 @@ struct EvalWeights {
         S(-1, -33),  S(-18, -28), S(-9, -22), S(10, -43), S(-15, -5), S(-25, -32), S(-31, -20), S(-50, -41),
     };
 
-    Score taperedKingPcSq[SQUARE_CT] = {
+    const Score taperedKingPcSq[SQUARE_CT] = {
         S(-65, -74), S(23, -35), S(16, -18), S(-15, -18), S(-56, -11), S(-34, 15),  S(2, 4),    S(13, -17),
         S(29, -12),  S(-1, 17),  S(-20, 14), S(-7, 17),   S(-8, 17),   S(-4, 38),   S(-38, 23), S(-29, 11),
         S(-9, 10),   S(24, 17),  S(2, 23),   S(-16, 15),  S(-20, 20),  S(6, 45),    S(22, 44),  S(-22, 13),
@@ -226,23 +226,28 @@ struct EvalWeights {
         S(-15, -53), S(36, -34), S(12, -21), S(-54, -11), S(8, -28),   S(-28, -14), S(24, -24), S(14, -43),
     };
 
-    Score passedPawnRankBonus[8] = {S(0, 0), S(-20, -20), S(17, 17), S(15, 15), S(35, 35), S(175, 175), S(400, 400)};
+    const Score passedPawnRankBonus[8]   = {S(0, 0),   S(-20, -20), S(17, 17),  S(15, 15),
+                                            S(35, 35), S(175, 175), S(400, 400)};
+    const Score doubledPawnRankBonus[8]  = {S(DOUBLED_PENALTY, DOUBLED_PENALTY)};
+    const Score isolatedPawnRankBonus[8] = {S(ISOLATED_PENALTY, ISOLATED_PENALTY)};
+    const Score backwardPawnRankBonus[8] = {S(-1, -1)};
 
-    Score KnightMobilityScore[9] = {S(-60, -80), S(-50, -30), S(-10, -20), S(-5, 10), S(5, 10),
-                                    S(15, 14),   S(21, 15),   S(30, 21),   S(40, 30)};
+    const Score KnightMobilityScore[9] = {S(-60, -80), S(-50, -30), S(-10, -20), S(-5, 10), S(5, 10),
+                                          S(15, 14),   S(21, 15),   S(30, 21),   S(40, 30)};
 
-    Score BishopMobilityScore[14] = {S(-50, -60), S(-20, -25), S(15, -10), S(30, 12), S(40, 21), S(55, 49), S(55, 55),
-                                     S(60, 58),   S(62, 65),   S(70, 72),  S(80, 78), S(83, 87), S(91, 88), S(96, 98)};
+    const Score BishopMobilityScore[14] = {S(-50, -60), S(-20, -25), S(15, -10), S(30, 12), S(40, 21),
+                                           S(55, 49),   S(55, 55),   S(60, 58),  S(62, 65), S(70, 72),
+                                           S(80, 78),   S(83, 87),   S(91, 88),  S(96, 98)};
 
-    Score RookMobilityScore[15] = {S(-60, -80), S(-25, -15), S(0, 20),   S(3, 40),   S(4, 70),
-                                   S(15, 100),  S(20, 102),  S(30, 122), S(40, 133), S(40, 139),
-                                   S(40, 153),  S(45, 160),  S(60, 165), S(61, 170), S(70, 175)};
+    const Score RookMobilityScore[15] = {S(-60, -80), S(-25, -15), S(0, 20),   S(3, 40),   S(4, 70),
+                                         S(15, 100),  S(20, 102),  S(30, 122), S(40, 133), S(40, 139),
+                                         S(40, 153),  S(45, 160),  S(60, 165), S(61, 170), S(70, 175)};
 
-    Score QueenMobilityScore[28] = {S(-30, -50), S(-15, -30), S(-10, -10), S(-10, 20),  S(20, 40),   S(25, 55),
-                                    S(23, 60),   S(35, 73),   S(40, 76),   S(55, 95),   S(65, 95),   S(68, 101),
-                                    S(69, 124),  S(70, 128),  S(70, 132),  S(70, 133),  S(71, 136),  S(72, 140),
-                                    S(74, 147),  S(76, 149),  S(90, 153),  S(104, 169), S(105, 171), S(106, 171),
-                                    S(112, 178), S(114, 185), S(114, 187), S(119, 221)};
+    const Score QueenMobilityScore[28] = {S(-30, -50), S(-15, -30), S(-10, -10), S(-10, 20),  S(20, 40),   S(25, 55),
+                                          S(23, 60),   S(35, 73),   S(40, 76),   S(55, 95),   S(65, 95),   S(68, 101),
+                                          S(69, 124),  S(70, 128),  S(70, 132),  S(70, 133),  S(71, 136),  S(72, 140),
+                                          S(74, 147),  S(76, 149),  S(90, 153),  S(104, 169), S(105, 171), S(106, 171),
+                                          S(112, 178), S(114, 185), S(114, 187), S(119, 221)};
 };
 
 struct TracePeek {
