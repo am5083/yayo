@@ -277,15 +277,16 @@ void UCI::Main() {
             moveList mList = search.generateMoves();
             Board board    = search.getBoard();
 
-            int evaluate = eval<TRACE>(board, mList);
-            trace.print();
+            int evaluate = Eval<TRACE>(board).eval();
+            TracePeek tp(trace);
+            tp.print();
         } else if (cmd == "uci") {
             Uci();
         } else if (cmd == "setoption") {
         } else if (cmd == "eval") {
             moveList mList = {0};
             generate(board, &mList);
-            std::cout << eval<NO_TRACE>(board, mList) << std::endl;
+            std::cout << Eval(board).eval() << std::endl;
         } else if (cmd == "perft") {
             int depth;
             iss >> depth;

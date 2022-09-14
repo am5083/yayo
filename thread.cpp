@@ -86,9 +86,6 @@ int Search::quiescent(int alpha, int beta) {
     if (ply > selDepth)
         selDepth = ply;
 
-    moveList mList = {0};
-    generate(_board, &mList);
-
     // mate distance pruning
     int mate_val = INF - ply;
     if (mate_val <= beta) {
@@ -110,7 +107,7 @@ int Search::quiescent(int alpha, int beta) {
         return negaMax(alpha, beta, 1);
     }
 
-    int standPat = eval<NO_TRACE>(_board, mList);
+    int standPat = Eval(_board).eval();
 
     if (standPat >= beta)
         return beta;
@@ -119,6 +116,9 @@ int Search::quiescent(int alpha, int beta) {
         alpha = standPat;
 
     pvTableLen[ply] = 0;
+
+    moveList mList = {0};
+    generate(_board, &mList);
 
     for (int i = 0; i < mList.nMoves; i++) {
         if (mList.moves[i].score == 0) {
