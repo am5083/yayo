@@ -1,11 +1,12 @@
 CXX=g++-12
-CXXFLAGS=-O3 -std=c++20 -mbmi2 -Wall -Wextra -pedantic-errors
+CXXFLAGS=-I. -O3 -std=c++20 -mbmi2 -Wall -Wextra -pedantic-errors
 EXE=yayo
 
 SRC := src
 TARGET := $(EXE)
 BUILD := build
 
+SEARCHHPP = $(addsuffix /*.hpp ,$(SRC))
 SEARCHCPP = $(addsuffix /*.cpp ,$(SRC))
 SRCS := $(wildcard $(SEARCHCPP))
 

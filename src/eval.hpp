@@ -138,12 +138,12 @@ struct Trace {
     int bishopScore[NUM_COLOR]           = {0};
     int rookScore[NUM_COLOR]             = {0};
     int queenScore[NUM_COLOR]            = {0};
-    int pawnPcSq[NUM_COLOR][SQUARE_CT]   = {{0}};
-    int knightPcSq[NUM_COLOR][SQUARE_CT] = {{0}};
-    int bishopPcSq[NUM_COLOR][SQUARE_CT] = {{0}};
-    int rookPcSq[NUM_COLOR][SQUARE_CT]   = {{0}};
-    int queenPcSq[NUM_COLOR][SQUARE_CT]  = {{0}};
-    int kingPcSq[NUM_COLOR][SQUARE_CT]   = {{0}};
+    int pawnPcSq[SQUARE_CT][NUM_COLOR]   = {{0}};
+    int knightPcSq[SQUARE_CT][NUM_COLOR] = {{0}};
+    int bishopPcSq[SQUARE_CT][NUM_COLOR] = {{0}};
+    int rookPcSq[SQUARE_CT][NUM_COLOR]   = {{0}};
+    int queenPcSq[SQUARE_CT][NUM_COLOR]  = {{0}};
+    int kingPcSq[SQUARE_CT][NUM_COLOR]   = {{0}};
     int passedPawn[NUM_COLOR][8]         = {{0}};
     int doubledPawns[NUM_COLOR]          = {0};
     int isolatedPawns[NUM_COLOR]         = {0};
@@ -332,12 +332,14 @@ template <Tracing T = NO_TRACE> class Eval {
 
         const auto color         = (board.turn == WHITE) ? 1 : -1;
         const auto materialScore = wMaterial - bMaterial;
-        const auto pcSqEval      = (mgPcSq * mgPhase + egPcSq * egPhase);
+        const auto pcSqEval      = (mgPcSq * mgPhase + egPcSq * egPhase) / 24;
+
+        std::cout << "pcSqEval: " << pcSqEval << std::endl;
 
         auto eval = TEMPO;
         eval += materialScore + pcSqEval;
 
-        return eval;
+        return eval * color;
     }
 
   private:
@@ -476,10 +478,11 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::pieceSquare() {
         if (C == WHITE) {
             if (p < B_PAWN && p != NO_PC) {
                 if (T) {
-                    int *pcSq[] = {trace.pawnPcSq[WHITE], trace.knightPcSq[WHITE], trace.bishopPcSq[WHITE],
-                                   trace.rookPcSq[WHITE], trace.queenPcSq[WHITE],  trace.kingPcSq[WHITE]};
 
-                    pcSq[pt - 1][i] = 1;
+                    auto pcSq = {&trace.pawnPcSq, &trace.knightPcSq, &trace.bishopPcSq,
+                                 &trace.rookPcSq, &trace.queenPcSq,  &trace.kingPcSq};
+
+                    (*std::data(pcSq))[pt - 1][i][WHITE] = 1;
                 }
 
                 mgScore += MgScore(pcSq[pt - 1][i]);
@@ -488,10 +491,10 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::pieceSquare() {
         } else if (C == BLACK) {
             if (p >= B_PAWN && p != NO_PC) {
                 if (T) {
-                    int *pcSq[] = {trace.pawnPcSq[BLACK], trace.knightPcSq[BLACK], trace.bishopPcSq[BLACK],
-                                   trace.rookPcSq[BLACK], trace.queenPcSq[BLACK],  trace.kingPcSq[BLACK]};
+                    auto pcSq = {&trace.pawnPcSq, &trace.knightPcSq, &trace.bishopPcSq,
+                                 &trace.rookPcSq, &trace.queenPcSq,  &trace.kingPcSq};
 
-                    pcSq[pt - 1][mirror(i)] = 1;
+                    (*std::data(pcSq))[pt - 1][mirror(i)][BLACK] = 1;
                 }
 
                 mgScore += MgScore(pcSq[pt - 1][mirror(i)]);

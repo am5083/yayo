@@ -8,8 +8,8 @@ namespace Yayo {
 Trace trace;
 
 int TracePeek::calculate() {
-    int *trace     = &((int *)&t)[2]; // lol
-    Score *weights = (Score *)&w;
+    int *trace     = &(((int *)&t)[12]); // lol
+    Score *weights = &((Score *)&w)[5];
 
     int mgPhase = ((int *)&t)[0];
     int egPhase = ((int *)&t)[1];
@@ -19,14 +19,13 @@ int TracePeek::calculate() {
               << "type pun test: \n";
 
     int score = TEMPO;
-    for (int i = 0, w = 0; w < 394; i += 2, w++) {
-        std::cout << trace[WHITE + i] - trace[BLACK + i] << std::endl;
+    for (int i = 0, w = 0; w < 384; i += 2, w++) {
+        std::cout << trace[i] - trace[BLACK + i] << std::endl;
         std::cout << "S(" << MgScore(weights[w]) << ", " << EgScore(weights[w]) << ")\n";
 
         int eval = (trace[WHITE + i] - trace[BLACK + i]) *
                    ((mgPhase * MgScore(weights[w]) + egPhase * EgScore(weights[w])) / 24);
 
-        std::cout << "value: " << eval << std::endl;
         score += eval;
     }
 
@@ -68,75 +67,141 @@ void TracePeek::print() {
     numTerms += 6 * 64;
     std::cout << "PIECE SQUARE: " << std::endl;
     for (int i = 0; i < 64; i++) {
-        if (t.pawnPcSq[WHITE][i] || t.pawnPcSq[BLACK][i])
-            std::cout << t.pawnPcSq[WHITE][i] - t.pawnPcSq[BLACK][i] << std::endl;
+        if (i && !(i % 8)) {
+            std::cout << std::endl;
+        }
 
-        else if (t.knightPcSq[WHITE][i] || t.knightPcSq[BLACK][i])
-            std::cout << t.knightPcSq[WHITE][i] - t.knightPcSq[BLACK][i] << std::endl;
+        if (t.pawnPcSq[i][WHITE] || t.pawnPcSq[i][BLACK])
+            std::cout << t.pawnPcSq[WHITE][i] - t.pawnPcSq[BLACK][i];
 
-        else if (t.bishopPcSq[WHITE][i] || t.bishopPcSq[BLACK][i])
-            std::cout << t.bishopPcSq[WHITE][i] - t.bishopPcSq[BLACK][i] << std::endl;
+        else if (t.knightPcSq[i][WHITE] || t.knightPcSq[i][BLACK])
+            std::cout << t.knightPcSq[i][WHITE] - t.knightPcSq[i][BLACK];
 
-        else if (t.rookPcSq[WHITE][i] || t.rookPcSq[BLACK][i])
-            std::cout << t.rookPcSq[WHITE][i] - t.rookPcSq[BLACK][i] << std::endl;
+        else if (t.bishopPcSq[i][WHITE] || t.bishopPcSq[i][BLACK])
+            std::cout << t.bishopPcSq[i][WHITE] - t.bishopPcSq[i][BLACK];
 
-        else if (t.queenPcSq[WHITE][i] || t.queenPcSq[BLACK][i])
-            std::cout << t.queenPcSq[WHITE][i] - t.queenPcSq[BLACK][i] << std::endl;
+        else if (t.rookPcSq[i][WHITE] || t.rookPcSq[i][BLACK])
+            std::cout << t.rookPcSq[i][WHITE] - t.rookPcSq[i][BLACK];
 
-        else if (t.kingPcSq[WHITE][i] || t.kingPcSq[BLACK][i])
-            std::cout << t.kingPcSq[WHITE][i] - t.kingPcSq[BLACK][i] << std::endl;
+        else if (t.queenPcSq[i][WHITE] || t.queenPcSq[i][BLACK])
+            std::cout << t.queenPcSq[i][WHITE] - t.queenPcSq[i][BLACK];
+
+        else if (t.kingPcSq[i][WHITE] || t.kingPcSq[i][BLACK])
+            std::cout << t.kingPcSq[i][WHITE] - t.kingPcSq[i][BLACK];
 
         else
-            std::cout << 0 << std::endl;
+            std::cout << 0;
     }
 
-    numTerms += 8;
-    std::cout << "PASSED PAWN: " << std::endl;
-    for (int i = 0; i < 8; i++) {
-        std::cout << t.passedPawn[WHITE][i] - t.passedPawn[BLACK][i] << std::endl;
+    std::cout << std::endl;
+
+    std::cout << "---------------------\n";
+
+    for (int i = 0; i < 64; i++) {
+        if (i && !(i % 8)) {
+            std::cout << std::endl;
+        }
+
+        std::cout << t.pawnPcSq[i][WHITE];
     }
 
-    numTerms += 8;
-    std::cout << "DOUBLED PAWN" << std::endl;
-    for (int i = 0; i < 8; i++) {
-        std::cout << t.doubledPawns[WHITE] - t.doubledPawns[BLACK] << std::endl;
+    std::cout << std::endl << std::endl;
+
+    for (int i = 0; i < 64; i++) {
+        if (i && !(i % 8)) {
+            std::cout << std::endl;
+        }
+
+        std::cout << t.pawnPcSq[i][BLACK];
     }
 
-    numTerms += 8;
-    std::cout << "ISOLATED PAWNS:" << std::endl;
-    for (int i = 0; i < 8; i++) {
-        std::cout << t.isolatedPawns[WHITE] - t.isolatedPawns[BLACK] << std::endl;
+    std::cout << std::endl << std::endl;
+
+    int *x = ((int *)&t.pawnPcSq);
+    for (int i = 0; i < 128; i += 2) {
+        if (!(i % 16)) {
+            std::cout << std::endl;
+        }
+        std::cout << x[i] - x[i + 1];
     }
 
-    numTerms += 8;
-    std::cout << "BACKWARD PAWNS:" << std::endl;
-    for (int i = 0; i < 8; i++) {
-        std::cout << t.backwardPawns[WHITE] - t.backwardPawns[BLACK] << std::endl;
+    std::cout << "\n---------------------\n";
+
+    for (int i = 0; i < 64; i++) {
+        if (i && !(i % 8)) {
+            std::cout << std::endl;
+        }
+
+        std::cout << t.knightPcSq[i][WHITE];
     }
 
-    numTerms += 9;
-    std::cout << "knightMobility:" << std::endl;
-    for (int i = 0; i < 9; i++) {
-        std::cout << t.knightMobility[WHITE][i] - t.knightMobility[BLACK][i] << std::endl;
+    std::cout << std::endl << std::endl;
+
+    for (int i = 0; i < 64; i++) {
+        if (i && !(i % 8)) {
+            std::cout << std::endl;
+        }
+
+        std::cout << t.knightPcSq[i][BLACK];
     }
 
-    numTerms += 14;
-    std::cout << "bishopMobility:" << std::endl;
-    for (int i = 0; i < 14; i++) {
-        std::cout << t.bishopMobility[WHITE][i] - t.bishopMobility[BLACK][i] << std::endl;
+    std::cout << std::endl << std::endl;
+
+    x = ((int *)&t.knightPcSq);
+    for (int i = 0; i < 128; i += 2) {
+        if (!(i % 16)) {
+            std::cout << std::endl;
+        }
+        std::cout << x[i] - x[i + 1];
     }
 
-    numTerms += 15;
-    std::cout << "rookMobility:" << std::endl;
-    for (int i = 0; i < 15; i++) {
-        std::cout << t.rookMobility[WHITE][i] - t.rookMobility[BLACK][i] << std::endl;
-    }
+    // numTerms += 8;
+    // std::cout << "PASSED PAWN: " << std::endl;
+    // for (int i = 0; i < 8; i++) {
+    //     std::cout << t.passedPawn[WHITE][i] - t.passedPawn[BLACK][i] << std::endl;
+    // }
 
-    numTerms += 28;
-    std::cout << "queenMobility:" << std::endl;
-    for (int i = 0; i < 28; i++) {
-        std::cout << t.queenMobility[WHITE][i] - t.queenMobility[BLACK][i] << std::endl;
-    }
+    // numTerms += 8;
+    // std::cout << "DOUBLED PAWN" << std::endl;
+    // for (int i = 0; i < 8; i++) {
+    //     std::cout << t.doubledPawns[WHITE] - t.doubledPawns[BLACK] << std::endl;
+    // }
+
+    // numTerms += 8;
+    // std::cout << "ISOLATED PAWNS:" << std::endl;
+    // for (int i = 0; i < 8; i++) {
+    //     std::cout << t.isolatedPawns[WHITE] - t.isolatedPawns[BLACK] << std::endl;
+    // }
+
+    // numTerms += 8;
+    // std::cout << "BACKWARD PAWNS:" << std::endl;
+    // for (int i = 0; i < 8; i++) {
+    //     std::cout << t.backwardPawns[WHITE] - t.backwardPawns[BLACK] << std::endl;
+    // }
+
+    // numTerms += 9;
+    // std::cout << "knightMobility:" << std::endl;
+    // for (int i = 0; i < 9; i++) {
+    //     std::cout << t.knightMobility[WHITE][i] - t.knightMobility[BLACK][i] << std::endl;
+    // }
+
+    // numTerms += 14;
+    // std::cout << "bishopMobility:" << std::endl;
+    // for (int i = 0; i < 14; i++) {
+    //     std::cout << t.bishopMobility[WHITE][i] - t.bishopMobility[BLACK][i] << std::endl;
+    // }
+
+    // numTerms += 15;
+    // std::cout << "rookMobility:" << std::endl;
+    // for (int i = 0; i < 15; i++) {
+    //     std::cout << t.rookMobility[WHITE][i] - t.rookMobility[BLACK][i] << std::endl;
+    // }
+
+    // numTerms += 28;
+    // std::cout << "queenMobility:" << std::endl;
+    // for (int i = 0; i < 28; i++) {
+    //     std::cout << t.queenMobility[WHITE][i] - t.queenMobility[BLACK][i] << std::endl;
+    // }
 
     std::cout << "total number of terms: " << numTerms << std::endl;
 }

@@ -199,6 +199,11 @@ void UCI::Main() {
             std::cout << "static exchange evaluation: "
                       << board.see(getTo(m), board.board[getTo(m)], getFrom(m), board.board[getFrom(m)]);
             std::cout << std::endl;
+        } else if (cmd == "mirror") {
+            std::string move;
+            iss >> move;
+            int m = getFrom(parseMove(board, move));
+            std::cout << nToSq[mirror(m)] << std::endl;
         } else if (cmd == "d") {
             search.printBoard();
         } else if (cmd == "make") {
@@ -275,13 +280,15 @@ void UCI::Main() {
         } else if (cmd == "stop") {
             Stop();
         } else if (cmd == "trace") {
-            moveList mList = search.generateMoves();
-            Board board    = search.getBoard();
-
-            int evaluate = Eval<TRACE>(board).eval();
+            Board board = search.getBoard();
             TracePeek tp(trace, ev);
-            tp.print();
+
+            memset(&trace, 0, sizeof(trace));
+            int evaluate = Eval<TRACE>(board).eval();
+
             tp.calculate();
+            tp.print();
+            std::cout << "eval score: " << evaluate << std::endl;
         } else if (cmd == "uci") {
             Uci();
         } else if (cmd == "setoption") {
