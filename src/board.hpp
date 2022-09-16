@@ -264,7 +264,7 @@ class Board {
 
         return (pawnAttacks[~C][sq] & pieces(PAWN, C)) | (knightAttacks[sq] & knights) | (kingAttacks[sq] & kings) |
                (getBishopAttacks(sq, occ) & queenBishops) | (getRookAttacks(sq, occ) & queenRooks);
-    };
+    }
 };
 
 constexpr bool Board::isDraw() {

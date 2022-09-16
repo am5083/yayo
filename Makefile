@@ -1,5 +1,5 @@
 CXX=g++-12
-CXXFLAGS=-O3 -std=c++20 -mbmi2 -Wall -Wextra -Werror -pedantic-errors
+CXXFLAGS=-O3 -std=c++20 -mbmi2 -Wall -Wextra -pedantic-errors
 EXE=yayo
 
 SRC := src
