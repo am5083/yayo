@@ -32,9 +32,7 @@ constexpr std::int16_t EgScore(const Score score) {
 }
 
 namespace { // penalties
-constexpr int DOUBLED_PENALTY  = -10;
-constexpr int ISOLATED_PENALTY = -6;
-constexpr int TEMPO            = 10;
+constexpr int TEMPO = 10;
 } // namespace
 
 constexpr short gamePhaseValues[] = {0, 1, 1, 2, 4, 0};
@@ -59,8 +57,17 @@ constexpr Score QueenMobilityScore[] = {S(-30, -50), S(-15, -30), S(-10, -10), S
 constexpr Score blockedPassedPawnRankBonus[] = {S(0, 0),     S(0, 0),     S(0, 0),     S(40, 40),
                                                 S(200, 200), S(260, 260), S(400, 400), S(0, 0)};
 
-constexpr Score passedPawnRankBonus[] = {S(0, 0),   S(-20, -20), S(17, 17),  S(15, 15),
-                                         S(35, 35), S(175, 175), S(400, 400)};
+constexpr Score passedPawnRankBonus[] = {S(0, 0),   S(-20, -20), S(17, 17),   S(15, 15),
+                                         S(35, 35), S(175, 175), S(400, 400), S(0, 0)};
+
+constexpr Score doubledPawnRankPenalty[8] = {S(-10, -10), S(-10, -10), S(-10, -10), S(-10, -10),
+                                             S(-10, -10), S(-10, -10), S(-10, -10), S(-10, -10)};
+
+constexpr Score isolatedPawnRankBonus[8] = {S(-6, -6), S(-6, -6), S(-6, -6), S(-6, -6),
+                                            S(-6, -6), S(-6, -6), S(-6, -6), S(-6, -6)};
+
+constexpr Score backwardPawnRankBonus[8] = {S(-15, -15), S(-15, -15), S(-15, -15), S(-15, -15),
+                                            S(-15, -15), S(-15, -15), S(-15, -15), S(-15, -15)};
 
 constexpr Score taperedPawnPcSq[SQUARE_CT] = {
     S(0, 0),    S(0, 0),     S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0),     S(0, 0),    S(0, 0),
@@ -132,6 +139,7 @@ static const Score *pcSq[] = {taperedPawnPcSq, taperedKnightPcSq, taperedBishopP
                               taperedRookPcSq, taperedQueenPcSq,  taperedKingPcSq};
 
 struct Trace {
+    int turn;
     int phase[2]                         = {0};
     int pawnScore[NUM_COLOR]             = {0};
     int knightScore[NUM_COLOR]           = {0};
@@ -144,14 +152,14 @@ struct Trace {
     int rookPcSq[SQUARE_CT][NUM_COLOR]   = {{0}};
     int queenPcSq[SQUARE_CT][NUM_COLOR]  = {{0}};
     int kingPcSq[SQUARE_CT][NUM_COLOR]   = {{0}};
-    int passedPawn[NUM_COLOR][8]         = {{0}};
-    int doubledPawns[NUM_COLOR]          = {0};
-    int isolatedPawns[NUM_COLOR]         = {0};
-    int backwardPawns[NUM_COLOR]         = {0};
-    int knightMobility[NUM_COLOR][9]     = {{0}};
-    int bishopMobility[NUM_COLOR][14]    = {{0}};
-    int rookMobility[NUM_COLOR][15]      = {{0}};
-    int queenMobility[NUM_COLOR][28]     = {{0}};
+    int passedPawn[8][NUM_COLOR]         = {{0}};
+    int doubledPawns[8][NUM_COLOR]       = {0};
+    int isolatedPawns[8][NUM_COLOR]      = {0};
+    int backwardPawns[8][NUM_COLOR]      = {0};
+    int knightMobility[9][NUM_COLOR]     = {{0}};
+    int bishopMobility[14][NUM_COLOR]    = {{0}};
+    int rookMobility[15][NUM_COLOR]      = {{0}};
+    int queenMobility[28][NUM_COLOR]     = {{0}};
 };
 
 struct EvalWeights {
@@ -227,12 +235,17 @@ struct EvalWeights {
         S(-15, -53), S(36, -34), S(12, -21), S(-54, -11), S(8, -28),   S(-28, -14), S(24, -24), S(14, -43),
     };
 
-    const Score passedPawnRankBonus[8] = {S(0, 0),   S(-20, -20), S(17, 17),  S(15, 15),
-                                          S(35, 35), S(175, 175), S(400, 400)};
+    const Score passedPawnRankBonus[8] = {S(0, 0),   S(-20, -20), S(17, 17),   S(15, 15),
+                                          S(35, 35), S(175, 175), S(400, 400), S(0, 0)};
 
-    const Score doubledPawnRankBonus  = S(DOUBLED_PENALTY, DOUBLED_PENALTY);
-    const Score isolatedPawnRankBonus = S(ISOLATED_PENALTY, ISOLATED_PENALTY);
-    const Score backwardPawnRankBonus = S(-1, -1);
+    const Score doubledPawnRankBonus[8] = {S(-10, -10), S(-10, -10), S(-10, -10), S(-10, -10),
+                                           S(-10, -10), S(-10, -10), S(-10, -10), S(-10, -10)};
+
+    const Score isolatedPawnRankBonus[8] = {S(-6, -6), S(-6, -6), S(-6, -6), S(-6, -6),
+                                            S(-6, -6), S(-6, -6), S(-6, -6), S(-6, -6)};
+
+    const Score backwardPawnRankBonus[8] = {S(-15, -15), S(-15, -15), S(-15, -15), S(-15, -15),
+                                            S(-15, -15), S(-15, -15), S(-15, -15), S(-15, -15)};
 
     const Score KnightMobilityScore[9] = {S(-60, -80), S(-50, -30), S(-10, -20), S(-5, 10), S(5, 10),
                                           S(15, 14),   S(21, 15),   S(30, 21),   S(40, 30)};
@@ -276,8 +289,11 @@ template <Tracing T = NO_TRACE> class Eval {
         egPhase = 0;
 
         for (int i = 0; i < 64; i++) {
-            PieceT pt = getPcType(board.board[i]);
-            phase += gamePhaseValues[pt - 1];
+            Piece p = board.board[i];
+            if (p != NO_PC) {
+                PieceT pt = getPcType(p);
+                phase += gamePhaseValues[pt - 1];
+            }
         }
 
         mgPhase = phase;
@@ -308,6 +324,7 @@ template <Tracing T = NO_TRACE> class Eval {
                               (QUEEN_VAL * blackQueenScore);
 
         if (T) {
+            trace.turn     = board.turn;
             trace.phase[0] = mgPhase;
             trace.phase[1] = egPhase;
 
@@ -327,17 +344,48 @@ template <Tracing T = NO_TRACE> class Eval {
             trace.queenScore[BLACK] = blackQueenScore;
         }
 
-        const auto mgPcSq = MgScore(pieceSquare<WHITE>()) - MgScore(pieceSquare<BLACK>());
-        const auto egPcSq = EgScore(pieceSquare<WHITE>()) - EgScore(pieceSquare<BLACK>());
+        const Score wPcSq = pieceSquare<WHITE>();
+        const Score bPcSq = pieceSquare<BLACK>();
+        const int mgPcSq  = MgScore(wPcSq) - MgScore(bPcSq);
+        const int egPcSq  = EgScore(wPcSq) - EgScore(bPcSq);
 
-        const auto color         = (board.turn == WHITE) ? 1 : -1;
-        const auto materialScore = wMaterial - bMaterial;
-        const auto pcSqEval      = (mgPcSq * mgPhase + egPcSq * egPhase) / 24;
+        const Score wPassedPawn = passedPawnScore<WHITE>();
+        const Score bPassedPawn = passedPawnScore<BLACK>();
+        const int mgPassedPawn  = MgScore(wPassedPawn) - MgScore(bPassedPawn);
+        const int egPassedPawn  = EgScore(wPassedPawn) - EgScore(bPassedPawn);
 
-        std::cout << "pcSqEval: " << pcSqEval << std::endl;
+        const Score wDoubledPawn = doubledPawnPenalty<WHITE>();
+        const Score bDoubledPawn = doubledPawnPenalty<BLACK>();
+        const int mgDoubledPawn  = MgScore(wDoubledPawn) - MgScore(bDoubledPawn);
+        const int egDoubledPawn  = EgScore(wDoubledPawn) - EgScore(bDoubledPawn);
+
+        const Score wIsolatedPawn = isolatedPawnPenalty<WHITE>();
+        const Score bIsolatedPawn = isolatedPawnPenalty<BLACK>();
+        const int mgIsolatedPawn  = MgScore(wIsolatedPawn) - MgScore(bIsolatedPawn);
+        const int egIsolatedPawn  = EgScore(wIsolatedPawn) - EgScore(bIsolatedPawn);
+
+        const Score wBackwardPawn = backwardPawnScore<WHITE>();
+        const Score bBackwardPawn = backwardPawnScore<BLACK>();
+        const int mgBackwardPawn  = MgScore(wBackwardPawn) - MgScore(bBackwardPawn);
+        const int egBackwardPawn  = EgScore(wBackwardPawn) - EgScore(bBackwardPawn);
+
+        const Score wMobility = mobilityScore<WHITE>();
+        const Score bMobility = mobilityScore<BLACK>();
+        const int mgMobility  = MgScore(wMobility) - MgScore(bMobility);
+        const int egMobility  = EgScore(wMobility) - EgScore(bMobility);
+
+        const auto color           = (board.turn == WHITE) ? 1 : -1;
+        const auto materialScore   = wMaterial - bMaterial;
+        const int pcSqEval         = (mgPcSq * mgPhase + egPcSq * egPhase) / 24;
+        const int passedPawnEval   = (mgPassedPawn * mgPhase + egPassedPawn * egPhase) / 24;
+        const int doubledPawnEval  = (mgDoubledPawn * mgPhase + egDoubledPawn * egPhase) / 24;
+        const int isolatedPawnEval = (mgIsolatedPawn * mgPhase + egIsolatedPawn * egPhase) / 24;
+        const int backwardPawnEval = (mgBackwardPawn * mgPhase + egBackwardPawn * egPhase) / 24;
+        const int mobilityEval     = (mgMobility * mgPhase + egMobility * egPhase) / 24;
 
         auto eval = TEMPO;
-        eval += materialScore + pcSqEval;
+        eval += materialScore + pcSqEval + passedPawnEval + doubledPawnEval + isolatedPawnEval + backwardPawnEval +
+                mobilityEval;
 
         return eval * color;
     }
@@ -353,56 +401,14 @@ template <Tracing T = NO_TRACE> class Eval {
   private:
     template <Color C> constexpr Bitboard doubledPawns();
     template <Color C> constexpr Bitboard backwardPawns();
-    template <Color C> constexpr int isolatedPawnCount();
 
+    template <Color C> constexpr Score isolatedPawnPenalty();
     template <Color C> constexpr Score backwardPawnScore();
     template <Color C> constexpr Score passedPawnScore();
     template <Color C> constexpr Score doubledPawnPenalty();
     template <Color C> constexpr Score pieceSquare();
     template <Color C> constexpr Score mobilityScore();
 };
-
-template <Tracing T> template <Color C> constexpr Bitboard Eval<T>::backwardPawns() {
-    constexpr Direction Up   = pushDirection(C);
-    constexpr Direction Down = pushDirection(~C);
-
-    const Bitboard pawns      = board.pieces(PAWN, C);
-    const Bitboard enemyPawns = board.pieces(PAWN, ~C);
-    const Bitboard stopSquare = shift<Up>(pawns);
-
-    const Bitboard candidateBackwardPawns = shift<Down>(pawnDblAttacks<~C>(enemyPawns) & stopSquare) & pawns;
-    const Bitboard defendedStopSquares    = pawnDblAttacks<C>(pawns) & stopSquare;
-    const Bitboard backwardPawns          = candidateBackwardPawns & ~shift<Down>(defendedStopSquares);
-
-    return backwardPawns;
-}
-
-template <Tracing T> template <Color C> constexpr int Eval<T>::isolatedPawnCount() {
-    int count = 0;
-
-    Bitboard pawns = board.pieces(PAWN, C);
-    while (pawns) {
-        Square psq = Square(lsb_index(pawns));
-        if (!(isolatedPawnMasks[psq] & board.pieces(PAWN, C))) {
-            count++;
-        }
-
-        pawns &= pawns - 1;
-    }
-
-    return count;
-}
-
-template <Tracing T> template <Color C> constexpr Score Eval<T>::backwardPawnScore() {
-    int numBackwardPawns = popcount(backwardPawns<C>(board));
-    if (T) {
-        trace.backwardPawns[C] = numBackwardPawns;
-    }
-
-    const int backwardPawnPenalty = -1 * numBackwardPawns;
-
-    return S(backwardPawnPenalty, backwardPawnPenalty);
-}
 
 template <Tracing T> template <Color C> constexpr Bitboard Eval<T>::doubledPawns() {
     Bitboard pawns        = board.pieces(PAWN, C);
@@ -420,6 +426,66 @@ template <Tracing T> template <Color C> constexpr Bitboard Eval<T>::doubledPawns
     }
 
     return blockedPawns;
+}
+
+template <Tracing T> template <Color C> constexpr Bitboard Eval<T>::backwardPawns() {
+    constexpr Direction Up   = pushDirection(C);
+    constexpr Direction Down = pushDirection(~C);
+
+    const Bitboard pawns      = board.pieces(PAWN, C);
+    const Bitboard enemyPawns = board.pieces(PAWN, ~C);
+    const Bitboard stopSquare = shift<Up>(pawns);
+
+    const Bitboard candidateBackwardPawns = shift<Down>(pawnDblAttacks<~C>(enemyPawns) & stopSquare) & pawns;
+    const Bitboard defendedStopSquares    = pawnDblAttacks<C>(pawns) & stopSquare;
+    const Bitboard backwardPawns          = candidateBackwardPawns & ~shift<Down>(defendedStopSquares);
+
+    return backwardPawns;
+}
+
+template <Tracing T> template <Color C> constexpr Score Eval<T>::backwardPawnScore() {
+    Bitboard bckPawns = backwardPawns<C>();
+
+    int mgScore = 0, egScore = 0;
+    while (bckPawns) {
+        Square psq = Square(lsb_index(bckPawns));
+        psq        = (C == WHITE) ? psq : Square(mirror(psq));
+
+        mgScore += MgScore(backwardPawnRankBonus[RANK_OF(psq)]);
+        egScore += EgScore(backwardPawnRankBonus[RANK_OF(psq)]);
+
+        if (T) {
+            trace.backwardPawns[RANK_OF(psq)][C]++;
+        }
+
+        bckPawns &= bckPawns - 1;
+    }
+
+    return S(mgScore, egScore);
+}
+
+template <Tracing T> template <Color C> constexpr Score Eval<T>::isolatedPawnPenalty() {
+    Bitboard pawns = board.pieces(PAWN, C);
+
+    int mgScore = 0, egScore = 0;
+    while (pawns) {
+        Square psq = Square(lsb_index(pawns));
+        psq        = (C == WHITE) ? psq : Square(mirror(psq));
+
+        if (!(isolatedPawnMasks[psq] & board.pieces(PAWN, C))) {
+
+            mgScore += MgScore(isolatedPawnRankBonus[RANK_OF(psq)]);
+            egScore += EgScore(isolatedPawnRankBonus[RANK_OF(psq)]);
+
+            if (T) {
+                trace.isolatedPawns[RANK_OF(psq)][C]++;
+            }
+        }
+
+        pawns &= pawns - 1;
+    }
+
+    return S(mgScore, egScore);
 }
 
 template <Tracing T> template <Color C> constexpr Score Eval<T>::passedPawnScore() {
@@ -447,8 +513,9 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::passedPawnScore
         egScore += EgScore(passedPawnRankBonus[RANK_OF(psq)]);
 
         if (T) {
-            trace.passedPawn[C][RANK_OF(psq)]++;
+            trace.passedPawn[RANK_OF(psq)][C]++;
         }
+
         passedPawns &= passedPawns - 1;
     }
 
@@ -456,15 +523,24 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::passedPawnScore
 }
 
 template <Tracing T> template <Color C> constexpr Score Eval<T>::doubledPawnPenalty() {
-    const int numDoubledPawns = popcount(doubledPawns<C>(board));
+    Bitboard dblPawns = doubledPawns<C>();
 
-    if (T) {
-        trace.doubledPawns[C] = numDoubledPawns;
+    int mgScore = 0, egScore = 0;
+    while (dblPawns) {
+        Square psq = Square(lsb_index(dblPawns));
+        psq        = (C == WHITE) ? psq : Square(mirror(psq));
+
+        mgScore += MgScore(doubledPawnRankPenalty[RANK_OF(psq)]);
+        egScore += EgScore(doubledPawnRankPenalty[RANK_OF(psq)]);
+
+        if (T) {
+            trace.doubledPawns[RANK_OF(psq)][C]++;
+        }
+
+        dblPawns &= dblPawns - 1;
     }
 
-    const int doubledPawnPenalty = numDoubledPawns * DOUBLED_PENALTY;
-
-    return S(doubledPawnPenalty, doubledPawnPenalty);
+    return S(mgScore, egScore);
 }
 
 template <Tracing T> template <Color C> constexpr Score Eval<T>::pieceSquare() {
@@ -540,7 +616,7 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::mobilityScore()
             numMoves = 0;
 
         if (T) {
-            trace.knightMobility[C][numMoves]++;
+            trace.knightMobility[numMoves][C]++;
         }
 
         mgScore += MgScore(KnightMobilityScore[numMoves]);
@@ -558,7 +634,7 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::mobilityScore()
             numMoves = 0;
 
         if (T) {
-            trace.bishopMobility[C][numMoves]++;
+            trace.bishopMobility[numMoves][C]++;
         }
 
         mgScore += MgScore(BishopMobilityScore[numMoves]);
@@ -576,7 +652,7 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::mobilityScore()
             numMoves = 0;
 
         if (T) {
-            trace.rookMobility[C][numMoves]++;
+            trace.rookMobility[numMoves][C]++;
         }
 
         mgScore += MgScore(RookMobilityScore[numMoves]);
@@ -595,7 +671,7 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::mobilityScore()
             numMoves = 0;
 
         if (T) {
-            trace.queenMobility[C][numMoves]++;
+            trace.queenMobility[numMoves][C]++;
         }
 
         mgScore += MgScore(QueenMobilityScore[numMoves]);

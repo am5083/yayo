@@ -281,10 +281,10 @@ void UCI::Main() {
             Stop();
         } else if (cmd == "trace") {
             Board board = search.getBoard();
-            TracePeek tp(trace, ev);
 
             memset(&trace, 0, sizeof(trace));
             int evaluate = Eval<TRACE>(board).eval();
+            TracePeek tp(trace, ev);
 
             tp.calculate();
             tp.print();
