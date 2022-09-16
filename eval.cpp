@@ -7,7 +7,33 @@ namespace Yayo {
 
 Trace trace;
 
-int TracePeek::calculate() { return 0; }
+int TracePeek::calculate() {
+    int *trace     = &((int *)&t)[2]; // lol
+    Score *weights = (Score *)&w;
+
+    int mgPhase = ((int *)&t)[0];
+    int egPhase = ((int *)&t)[1];
+
+    std::cout << std::endl
+              << "-------------\n"
+              << "type pun test: \n";
+
+    int score = TEMPO;
+    for (int i = 0, w = 0; w < 394; i += 2, w++) {
+        std::cout << trace[WHITE + i] - trace[BLACK + i] << std::endl;
+        std::cout << "S(" << MgScore(weights[w]) << ", " << EgScore(weights[w]) << ")\n";
+
+        int eval = (trace[WHITE + i] - trace[BLACK + i]) *
+                   ((mgPhase * MgScore(weights[w]) + egPhase * EgScore(weights[w])) / 24);
+
+        std::cout << "value: " << eval << std::endl;
+        score += eval;
+    }
+
+    std::cout << "final eval: " << score << std::endl;
+
+    return 0;
+}
 
 void TracePeek::print() {
     int numTerms = 0;
@@ -67,7 +93,7 @@ void TracePeek::print() {
     numTerms += 8;
     std::cout << "PASSED PAWN: " << std::endl;
     for (int i = 0; i < 8; i++) {
-        std::cout << t.passedPawn[i][WHITE] - t.passedPawn[i][BLACK] << std::endl;
+        std::cout << t.passedPawn[WHITE][i] - t.passedPawn[BLACK][i] << std::endl;
     }
 
     numTerms += 8;

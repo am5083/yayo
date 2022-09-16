@@ -132,6 +132,7 @@ static const Score *pcSq[] = {taperedPawnPcSq, taperedKnightPcSq, taperedBishopP
                               taperedRookPcSq, taperedQueenPcSq,  taperedKingPcSq};
 
 struct Trace {
+    int phase[2]                         = {0};
     int pawnScore[NUM_COLOR]             = {0};
     int knightScore[NUM_COLOR]           = {0};
     int bishopScore[NUM_COLOR]           = {0};
@@ -143,7 +144,7 @@ struct Trace {
     int rookPcSq[NUM_COLOR][SQUARE_CT]   = {{0}};
     int queenPcSq[NUM_COLOR][SQUARE_CT]  = {{0}};
     int kingPcSq[NUM_COLOR][SQUARE_CT]   = {{0}};
-    int passedPawn[8][NUM_COLOR]         = {{0}};
+    int passedPawn[NUM_COLOR][8]         = {{0}};
     int doubledPawns[NUM_COLOR]          = {0};
     int isolatedPawns[NUM_COLOR]         = {0};
     int backwardPawns[NUM_COLOR]         = {0};
@@ -226,11 +227,12 @@ struct EvalWeights {
         S(-15, -53), S(36, -34), S(12, -21), S(-54, -11), S(8, -28),   S(-28, -14), S(24, -24), S(14, -43),
     };
 
-    const Score passedPawnRankBonus[8]   = {S(0, 0),   S(-20, -20), S(17, 17),  S(15, 15),
-                                            S(35, 35), S(175, 175), S(400, 400)};
-    const Score doubledPawnRankBonus[8]  = {S(DOUBLED_PENALTY, DOUBLED_PENALTY)};
-    const Score isolatedPawnRankBonus[8] = {S(ISOLATED_PENALTY, ISOLATED_PENALTY)};
-    const Score backwardPawnRankBonus[8] = {S(-1, -1)};
+    const Score passedPawnRankBonus[8] = {S(0, 0),   S(-20, -20), S(17, 17),  S(15, 15),
+                                          S(35, 35), S(175, 175), S(400, 400)};
+
+    const Score doubledPawnRankBonus  = S(DOUBLED_PENALTY, DOUBLED_PENALTY);
+    const Score isolatedPawnRankBonus = S(ISOLATED_PENALTY, ISOLATED_PENALTY);
+    const Score backwardPawnRankBonus = S(-1, -1);
 
     const Score KnightMobilityScore[9] = {S(-60, -80), S(-50, -30), S(-10, -20), S(-5, 10), S(5, 10),
                                           S(15, 14),   S(21, 15),   S(30, 21),   S(40, 30)};
@@ -251,7 +253,7 @@ struct EvalWeights {
 };
 
 struct TracePeek {
-    TracePeek(Trace &ts) : t(ts){};
+    TracePeek(Trace &ts, EvalWeights &ws) : t(ts), w(ws){};
 
   public:
     void print();
@@ -259,6 +261,7 @@ struct TracePeek {
 
   private:
     Trace &t;
+    EvalWeights &w;
 };
 
 extern Trace trace;
@@ -305,7 +308,8 @@ template <Tracing T = NO_TRACE> class Eval {
                               (QUEEN_VAL * blackQueenScore);
 
         if (T) {
-            trace.tempo[board.turn] = 1;
+            trace.phase[0] = mgPhase;
+            trace.phase[1] = egPhase;
 
             trace.pawnScore[WHITE] = whitePawnScore;
             trace.pawnScore[BLACK] = blackPawnScore;
@@ -323,11 +327,15 @@ template <Tracing T = NO_TRACE> class Eval {
             trace.queenScore[BLACK] = blackQueenScore;
         }
 
+        const auto mgPcSq = MgScore(pieceSquare<WHITE>()) - MgScore(pieceSquare<BLACK>());
+        const auto egPcSq = EgScore(pieceSquare<WHITE>()) - EgScore(pieceSquare<BLACK>());
+
         const auto color         = (board.turn == WHITE) ? 1 : -1;
         const auto materialScore = wMaterial - bMaterial;
+        const auto pcSqEval      = (mgPcSq * mgPhase + egPcSq * egPhase);
 
         auto eval = TEMPO;
-        eval += materialScore;
+        eval += materialScore + pcSqEval;
 
         return eval;
     }
@@ -437,7 +445,7 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::passedPawnScore
         egScore += EgScore(passedPawnRankBonus[RANK_OF(psq)]);
 
         if (T) {
-            trace.passedPawn[RANK_OF(psq)][C]++;
+            trace.passedPawn[C][RANK_OF(psq)]++;
         }
         passedPawns &= passedPawns - 1;
     }

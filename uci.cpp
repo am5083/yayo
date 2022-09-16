@@ -142,6 +142,7 @@ void UCI::Main() {
     board.setFen(START_POS);
     search._setFen(START_POS);
 
+    EvalWeights ev;
     Info info[1];
 
     std::cout << "Yayo Engine - Verision 0.1.0" << std::endl;
@@ -278,8 +279,9 @@ void UCI::Main() {
             Board board    = search.getBoard();
 
             int evaluate = Eval<TRACE>(board).eval();
-            TracePeek tp(trace);
+            TracePeek tp(trace, ev);
             tp.print();
+            tp.calculate();
         } else if (cmd == "uci") {
             Uci();
         } else if (cmd == "setoption") {
