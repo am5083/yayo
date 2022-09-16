@@ -1,6 +1,25 @@
 CXX=g++-12
-CXXFLAGS=-I.
+CXXFLAGS=-O3 -std=c++20 -mbmi2 -Wall -Wextra -Werror -pedantic-errors
 EXE=yayo
 
-default: bitboard.cpp board.cpp eval.cpp move.cpp movegen.cpp thread.cpp tt.cpp uci.cpp main.cpp
-	g++-12 -o $(EXE) -std=c++20 -mbmi2 -Wall -O3 bitboard.cpp board.cpp eval.cpp move.cpp movegen.cpp thread.cpp tt.cpp uci.cpp main.cpp -I .
+SRC := src
+TARGET := $(EXE)
+BUILD := build
+
+SEARCHCPP = $(addsuffix /*.cpp ,$(SRC))
+SRCS := $(wildcard $(SEARCHCPP))
+
+OBJS := $(subst $(SRC)/,$(BUILD)/,$(addsuffix .o,$(basename $(SRCS))))
+
+$(TARGET): $(OBJS)
+	@echo $(SRCS)
+	@echo $(OBJS)
+	$(CXX) $(OBJS) -o $@
+
+$(BUILD)/%.o: $(SRC)/%.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+clean:
+	rm -f $(BUILD)/*.o
+	rm -f $(TARGET)
