@@ -278,6 +278,7 @@ struct TracePeek {
 };
 
 extern Trace trace;
+extern const EvalWeights evalWeights;
 
 enum Tracing : bool { NO_TRACE, TRACE };
 
@@ -288,13 +289,12 @@ template <Tracing T = NO_TRACE> class Eval {
         mgPhase = 0;
         egPhase = 0;
 
-        for (int i = 0; i < 64; i++) {
-            Piece p = board.board[i];
-            if (p != NO_PC) {
-                PieceT pt = getPcType(p);
-                phase += gamePhaseValues[pt - 1];
-            }
-        }
+        // clang-format off
+        phase = 4 * popcount(board.pieces(QUEEN)) +
+                2 * popcount(board.pieces(ROOK)) +
+                1 * popcount(board.pieces(BISHOP)) +
+                1 * popcount(board.pieces(KNIGHT));
+        // clang-format on
 
         mgPhase = phase;
         if (mgPhase > 24)

@@ -5,6 +5,7 @@
 
 namespace Yayo {
 
+const EvalWeights evalWeights;
 Trace trace;
 
 int TracePeek::calculate() {
