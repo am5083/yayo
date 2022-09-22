@@ -6,18 +6,18 @@
 namespace Yayo {
 
 const EvalWeights evalWeights;
-Trace trace;
 
-int TracePeek::calculate() {
-    int *trace     = &(((int *)&t)[3]); // lol
+int TracePeek::calculate(std::tuple<int, int, int> info) {
+    int *trace     = (int *)&t; // lol
     Score *weights = &((Score *)&w)[0];
 
-    const int color   = (((int *)&t)[0]) ? -1 : 1;
-    const int mgPhase = ((int *)&t)[1];
-    const int egPhase = ((int *)&t)[2];
+    const int color   = std::get<0>(info);
+    const int mgPhase = std::get<1>(info);
+    const int egPhase = std::get<2>(info);
 
-    int score = TEMPO;
-    for (int i = 0, w = 0; w < 553; i += 2, w++) {
+    int score     = TEMPO;
+    int nFeatures = 0;
+    for (int i = 0, w = 0; w < 487; i += 2, w++) {
         if (trace[i] - trace[i + 1]) {
             const int eval =
                 (trace[i] - trace[i + 1]) * ((mgPhase * MgScore(weights[w]) + egPhase * EgScore(weights[w])) / 24);
@@ -25,10 +25,12 @@ int TracePeek::calculate() {
             std::cout << "eval: " << eval << std::endl;
 
             score += eval;
+            nFeatures++;
         }
     }
 
     std::cout << "\\sum{features * weights} = " << score * color << std::endl;
+    std::cout << "nFeatures: " << nFeatures << std::endl;
 
     return 0;
 }

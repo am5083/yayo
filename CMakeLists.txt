@@ -19,6 +19,7 @@ add_executable(
   ${CMAKE_SOURCE_DIR}/src/tt.cpp
   ${CMAKE_SOURCE_DIR}/src/thread.cpp
   ${CMAKE_SOURCE_DIR}/src/uci.cpp
+  ${CMAKE_SOURCE_DIR}/src/tuner.cpp
   )
 
 target_include_directories(yayo PRIVATE ./)

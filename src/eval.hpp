@@ -139,8 +139,6 @@ static const Score *pcSq[] = {taperedPawnPcSq, taperedKnightPcSq, taperedBishopP
                               taperedRookPcSq, taperedQueenPcSq,  taperedKingPcSq};
 
 struct Trace {
-    int turn;
-    int phase[2]                         = {0};
     int pawnScore[NUM_COLOR]             = {0};
     int knightScore[NUM_COLOR]           = {0};
     int bishopScore[NUM_COLOR]           = {0};
@@ -270,37 +268,22 @@ struct TracePeek {
 
   public:
     void print();
-    int calculate();
+    int calculate(std::tuple<int, int, int> phase);
 
   private:
     Trace &t;
     EvalWeights &w;
 };
 
-extern Trace trace;
 extern const EvalWeights evalWeights;
+static Trace tempTrace;
 
 enum Tracing : bool { NO_TRACE, TRACE };
 
 template <Tracing T = NO_TRACE> class Eval {
   public:
-    Eval(Board &b) : board(b) {
-        phase   = 0;
-        mgPhase = 0;
-        egPhase = 0;
-
-        // clang-format off
-        phase = 4 * popcount(board.pieces(QUEEN)) +
-                2 * popcount(board.pieces(ROOK)) +
-                1 * popcount(board.pieces(BISHOP)) +
-                1 * popcount(board.pieces(KNIGHT));
-        // clang-format on
-
-        mgPhase = phase;
-        if (mgPhase > 24)
-            mgPhase = 24;
-        egPhase = 24 - mgPhase;
-    };
+    Eval(Board &b) : board(b), trace(tempTrace) { init(); };
+    Eval(Board &b, Trace &t) : board(b), trace(t) { init(); }
 
     int eval() {
         const auto whitePawnScore   = popcount(board.pieces(PAWN, WHITE));
@@ -324,10 +307,6 @@ template <Tracing T = NO_TRACE> class Eval {
                               (QUEEN_VAL * blackQueenScore);
 
         if (T) {
-            trace.turn     = board.turn;
-            trace.phase[0] = mgPhase;
-            trace.phase[1] = egPhase;
-
             trace.pawnScore[WHITE] = whitePawnScore;
             trace.pawnScore[BLACK] = blackPawnScore;
 
@@ -392,6 +371,7 @@ template <Tracing T = NO_TRACE> class Eval {
 
   private:
     Board &board;
+    Trace &trace;
 
   private:
     int phase;
@@ -408,6 +388,25 @@ template <Tracing T = NO_TRACE> class Eval {
     template <Color C> constexpr Score doubledPawnPenalty();
     template <Color C> constexpr Score pieceSquare();
     template <Color C> constexpr Score mobilityScore();
+
+  private:
+    void init() {
+        phase   = 0;
+        mgPhase = 0;
+        egPhase = 0;
+
+        // clang-format off
+        phase = 4 * popcount(board.pieces(QUEEN)) +
+                2 * popcount(board.pieces(ROOK)) +
+                1 * popcount(board.pieces(BISHOP)) +
+                1 * popcount(board.pieces(KNIGHT));
+        // clang-format on
+
+        mgPhase = phase;
+        if (mgPhase > 24)
+            mgPhase = 24;
+        egPhase = 24 - mgPhase;
+    }
 };
 
 template <Tracing T> template <Color C> constexpr Bitboard Eval<T>::doubledPawns() {

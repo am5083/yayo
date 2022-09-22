@@ -138,6 +138,8 @@ void UCI::Main() {
     init_arrays();
     initMvvLva();
 
+#define START_POS "5r2/p4pk1/2pb4/8/1p2rN2/4p3/PPPB4/3K4 w - - 0 3"
+
     Board board;
     board.setFen(START_POS);
     search._setFen(START_POS);
@@ -281,13 +283,28 @@ void UCI::Main() {
             Stop();
         } else if (cmd == "trace") {
             Board board = search.getBoard();
-
-            memset(&trace, 0, sizeof(trace));
-            int evaluate = Eval<TRACE>(board).eval();
+            Trace trace;
+            int evaluate = Eval<TRACE>(board, trace).eval();
             TracePeek tp(trace, ev);
 
-            tp.calculate();
-            tp.print();
+            int phase   = 0;
+            int mgPhase = 0;
+            int egPhase = 0;
+
+            // clang-format off
+            phase = 4 * popcount(board.pieces(QUEEN)) +
+                2 * popcount(board.pieces(ROOK)) +
+                1 * popcount(board.pieces(BISHOP)) +
+                1 * popcount(board.pieces(KNIGHT));
+            // clang-format on
+
+            mgPhase = phase;
+            if (mgPhase > 24)
+                mgPhase = 24;
+            egPhase = 24 - mgPhase;
+
+            tp.calculate(std::make_tuple(board.turn, mgPhase, egPhase));
+            // tp.print();
             std::cout << "eval score: " << evaluate << std::endl;
         } else if (cmd == "uci") {
             Uci();

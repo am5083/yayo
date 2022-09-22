@@ -280,4 +280,149 @@ std::uint64_t Board::hash() const {
     return h;
 }
 
+Board::Board() {
+    key          = 0;
+    checkPcs     = 0;
+    lastCapt     = NO_PC;
+    turn         = WHITE;
+    ply          = 0;
+    gamePly      = 0;
+    halfMoves    = 0;
+    fullMoves    = 0;
+    enPass       = SQUARE_64;
+    castleRights = 0;
+    color[WHITE] = 0;
+    color[BLACK] = 0;
+
+    for (int i = 0; i < 13; i++)
+        pieceBB[i] = 0;
+    for (int i = 0; i < 7; i++)
+        cPieceBB[i] = 0;
+    for (int i = 0; i < 64; i++)
+        board[i] = NO_PC;
+}
+
+Board::Board(const Board &other) {
+    for (int i = 0; hist[i].key; i++) {
+        hist[i].castleStatus = other.hist[i].castleStatus;
+        hist[i].checkPcs     = other.hist[i].checkPcs;
+        hist[i].enPass       = other.hist[i].enPass;
+        hist[i].fullMoves    = other.hist[i].fullMoves;
+        hist[i].halfMoves    = other.hist[i].halfMoves;
+        hist[i].key          = other.hist[i].key;
+        hist[i].lastCapt     = other.hist[i].lastCapt;
+    }
+
+    for (int i = 0; i < 64; i++) {
+        board[i] = other.board[i];
+    }
+
+    color[0] = other.color[0];
+    color[1] = other.color[1];
+
+    for (int i = 0; i < PC_MAX; i++) {
+        pieceBB[i] = other.pieceBB[i];
+    }
+
+    for (int i = 0; i < 7; i++) {
+        cPieceBB[i] = other.cPieceBB[i];
+    }
+
+    key          = other.key;
+    checkPcs     = other.checkPcs;
+    lastCapt     = other.lastCapt;
+    turn         = other.turn;
+    ply          = other.ply;
+    gamePly      = other.gamePly;
+    halfMoves    = other.halfMoves;
+    fullMoves    = other.fullMoves;
+    enPass       = other.enPass;
+    castleRights = other.castleRights;
+}
+
+constexpr bool Board::operator==(const Board &b1) const {
+    bool equal = true;
+    for (int i = 0; hist[i].key; i++) {
+        equal = equal && (hist[i].castleStatus == b1.hist[i].castleStatus);
+        equal = equal && (hist[i].checkPcs == b1.hist[i].checkPcs);
+        equal = equal && (hist[i].enPass == b1.hist[i].enPass);
+        equal = equal && (hist[i].fullMoves == b1.hist[i].fullMoves);
+        equal = equal && (hist[i].halfMoves == b1.hist[i].halfMoves);
+        equal = equal && (hist[i].key == b1.hist[i].key);
+        equal = equal && (hist[i].lastCapt == b1.hist[i].lastCapt);
+
+        if (!equal) {
+            std::cout << "ERROR! HIST ARRAY"
+                      << "\n";
+            return false;
+        }
+    }
+
+    for (int i = 0; i < 64; i++) {
+        equal = equal && (board[i] == b1.board[i]);
+
+        if (!equal) {
+            print();
+            b1.print();
+            std::cout << "INDEX: " << i << std::endl;
+            std::cout << "BOARD1: " << board[i] << std::endl;
+            std::cout << "BOARD2: " << b1.board[i] << std::endl;
+            std::cout << "ERROR! BOARD ARRAY"
+                      << "\n";
+            return false;
+        }
+    }
+
+    equal = equal && (color[0] == b1.color[0]);
+    equal = equal && (color[1] == b1.color[1]);
+
+    if (!equal) {
+        std::cout << "ERROR! COLOR ARRAY"
+                  << "\n";
+        return false;
+    }
+
+    for (int i = 0; i < PC_MAX; i++) {
+        equal = equal && (pieceBB[i] == b1.pieceBB[i]);
+    }
+
+    if (!equal) {
+        std::cout << "ERROR! PIECEBB ARRAY"
+                  << "\n";
+        return false;
+    }
+    for (int i = 0; i < 7; i++) {
+        equal = equal && (cPieceBB[i] == b1.cPieceBB[i]);
+
+        if (!equal) {
+            std::cout << "ERROR! CPIECEBB ARRAY"
+                      << "; INDEX: " << i << "\n";
+            Bitboards::print_bitboard(cPieceBB[1]);
+            Bitboards::print_bitboard(b1.cPieceBB[1]);
+            print();
+            b1.print();
+            return false;
+        }
+    }
+
+    return equal;
+
+    equal = equal && (key == b1.key);
+    equal = equal && (checkPcs == b1.checkPcs);
+    equal = equal && (lastCapt == b1.lastCapt);
+    equal = equal && (turn == b1.turn);
+    equal = equal && (ply == b1.ply);
+    equal = equal && (gamePly == b1.gamePly);
+    equal = equal && (halfMoves == b1.halfMoves);
+    equal = equal && (fullMoves == b1.fullMoves);
+    equal = equal && (enPass == b1.enPass);
+    equal = equal && (castleRights == b1.castleRights);
+
+    if (!equal) {
+        std::cout << "ERROR! VARIABLES"
+                  << "\n";
+        return false;
+    }
+    return equal;
+}
 } // namespace Yayo
