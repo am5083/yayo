@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     }
 
     TunerEntries entries("lichess-big3-resolved.book");
-    uci.Main();
+    entries.runTuner();
 
     return 0;
 }

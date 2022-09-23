@@ -138,8 +138,6 @@ void UCI::Main() {
     init_arrays();
     initMvvLva();
 
-#define START_POS "5r2/p4pk1/2pb4/8/1p2rN2/4p3/PPPB4/3K4 w - - 0 3"
-
     Board board;
     board.setFen(START_POS);
     search._setFen(START_POS);

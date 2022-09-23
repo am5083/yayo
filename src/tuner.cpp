@@ -37,32 +37,6 @@ void TEntry::init(Board &board) {
         }
     }
 
-    // int score      = TEMPO;
-    // nTuples        = 0;
-    // Score *weights = &((Score *)&evalWeights)[0];
-    // for (int i = 0, w = 0; w < 487; i += 2, w++) {
-    //     std::cout << "index: " << i << ", "
-    //               << "whiteScore: " << TraceArray[i] << ", blackScore: " << TraceArray[i + 1] << std::endl;
-    //     if ((TraceArray[i] - TraceArray[i + 1]) != 0) {
-    //         const int eval = (TraceArray[i] - TraceArray[i + 1]) *
-    //                          ((mgPhase * MgScore(weights[w]) + egPhase * EgScore(weights[w])) / 24);
-
-    //         std::cout << "eval: " << eval << std::endl;
-    //         std::cout << ((mgPhase * MgScore(weights[w]) + egPhase * EgScore(weights[w])) / 24) << std::endl;
-    //         std::cout << TraceArray[i] - TraceArray[i + 1] << std::endl;
-    //         std::cout << std::endl;
-
-    //         temp_tuples[nTuples].index      = w;
-    //         temp_tuples[nTuples].whiteScore = TraceArray[i];
-    //         temp_tuples[nTuples].blackScore = TraceArray[i + 1];
-
-    //         score += eval;
-    //         nTuples++;
-    //     }
-    // }
-
-    // std::cout << "nTuples: " << nTuples << std::endl;
-
     tuples = new TTuple[nTuples];
     for (int i = 0; i < nTuples; i++) {
         tuples[i] = temp_tuples[i];
@@ -103,24 +77,25 @@ double TunerEntries::staticEvalErrors(double K) {
     return total / (double)NUM_ENTRIES;
 }
 
-double TEntry::linearEval() {
+double TEntry::linearEval(double params[487][2]) {
     Score *weights = &((Score *)&w)[0];
     int mgScore = 0, egScore = 0;
 
-    int linearEval = 0;
+    double linearEval = 0;
     for (int i = 0; i < nTuples; i++) {
         int Fi  = tuples[i].whiteScore - tuples[i].blackScore;
         Score s = weights[tuples[i].index];
 
-        int eval = Fi * ((mgPhase * MgScore(s) + egPhase * EgScore(s)) / 24);
+        double eval = Fi * ((double)(mgPhase * (MgScore(s) + params[tuples[i].index][0]) +
+                                     egPhase * (EgScore(s) + params[tuples[i].index][1])) /
+                            24);
         std::cout << "eval: " << eval << std::endl;
 
         linearEval += eval;
     }
 
-    std::cout << "linear eval: " << linearEval << ", " << staticEval << std::endl;
-
-    return linearEval;
+    int color = (turn == WHITE) ? 1 : -1;
+    return linearEval * color;
 }
 
 TunerEntries::TunerEntries(std::string file) {
@@ -143,13 +118,6 @@ TunerEntries::TunerEntries(std::string file) {
 
         board.setFen(line);
         entries[i].init(board);
-
-        if (!(i % 10000)) {
-            std::cout << "Initializing Tuner Entries: " << i + 1 << " of " << NUM_ENTRIES << std::endl;
-            entries[i].linearEval();
-        }
-
-        break;
     }
 
     games.close();
