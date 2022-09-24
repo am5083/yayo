@@ -5,12 +5,9 @@
 using namespace Yayo;
 
 int main(int argc, char *argv[]) {
-
-    init_arrays();
-    initMvvLva();
-
     std::unique_ptr<Search> searcher(new Search);
     UCI uci(*searcher.get());
+
     if (argc == 2) {
         if (strcmp(argv[1], "bench") == 0) {
             uci.Bench();
@@ -18,10 +15,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    TunerEntries entries("lichess-big3-resolved.book");
-    entries.runTuner();
-
-    // uci.Main();
-
+    uci.Main();
     return 0;
 }
