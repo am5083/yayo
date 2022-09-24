@@ -221,8 +221,69 @@ inline void printParams(double params[487][2]) {
     }
     printf("\n};\n");
 
+    printf("passedPawnRankBonus[8] = {");
+    for (int i = 0, start = 389; i < 8; i++) {
+        if (!(i % 4))
+            printf("\n");
+        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+    }
+    printf("\n};\n");
 
+    printf("doubledPawnRankBonus[8] = {");
+    for (int i = 0, start = 397; i < 8; i++) {
+        if (!(i % 4))
+            printf("\n");
+        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+    }
+    printf("\n};\n");
 
+    printf("isolatedPawnRankBonus[8] = {");
+    for (int i = 0, start = 405; i < 8; i++) {
+        if (!(i % 4))
+            printf("\n");
+        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+    }
+    printf("\n};\n");
+
+    printf("backwardPawnRankBonus[8] = {");
+    for (int i = 0, start = 413; i < 8; i++) {
+        if (!(i % 4))
+            printf("\n");
+        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+    }
+    printf("\n};\n");
+
+    printf("KnightMobilityScore[9] = {");
+    for (int i = 0, start = 421; i < 9; i++) {
+        if (!(i % 4))
+            printf("\n");
+        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+    }
+    printf("\n};\n");
+
+    printf("BishopMobilityScore[14] = {");
+    for (int i = 0, start = 430; i < 14; i++) {
+        if (!(i % 4))
+            printf("\n");
+        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+    }
+    printf("\n};\n");
+
+    printf("RookMobilityScore[15] = {");
+    for (int i = 0, start = 444; i < 15; i++) {
+        if (!(i % 4))
+            printf("\n");
+        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+    }
+    printf("\n};\n");
+
+    printf("QueenMobilityScore[28] = {");
+    for (int i = 0, start = 459; i < 28; i++) {
+        if (!(i % 4))
+            printf("\n");
+        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+    }
+    printf("\n};\n");
 }
 // clang-format on
 
@@ -233,6 +294,7 @@ void TunerEntries::runTuner() {
 
     K = computeOptimalK();
 
+    std::ofstream out("new_weights.txt");
     for (int epoch = 0; epoch < MAX_EPOCHS; epoch++) {
         for (int batch = 0; batch < NUM_ENTRIES / BATCH_SIZE; batch++) {
             double gradient[487][2] = {0};
@@ -248,15 +310,18 @@ void TunerEntries::runTuner() {
         }
 
         error = tunedEvalErrors(params, K);
-
         if (epoch && epoch % LRSTEPRATE == 0)
             rate = rate / LRDROPRATE;
         if (epoch % REPORTING == 0) {
             printParams(params);
+
             for (int i = 0; i < 487; i++) {
-                std::cout << "index: " << i << ", "
-                          << "deltaMg: " << params[i][0] << ", deltaEg: " << params[i][1] << std::endl;
+                out << "index: " << i << ", "
+                    << "deltaMg: " << params[i][0] << ", deltaEg: " << params[i][1] << std::endl;
             }
+
+            out << "-----------------------" << std::endl;
+            out << std::endl;
         }
 
         printf("Epoch  [%d]  Rate = [%g], ", epoch, rate);
