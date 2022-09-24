@@ -124,6 +124,30 @@ constexpr Square Sq(Bitboard bb) {
     return Square(63 - __builtin_clzll(bb));
 }
 
+enum Score : int { NO_SCORE };
+
+#define S(mg, eg) (MakeScore(mg, eg))
+
+constexpr Score MakeScore(const int mg, const int eg) { return Score((int)((unsigned int)eg << 16) + mg); }
+
+inline std::int16_t MgScore(const Score score) {
+    union {
+        std::uint16_t upper;
+        std::int16_t lower;
+    } mg = {std::uint16_t(unsigned(score))};
+
+    return mg.lower;
+}
+
+constexpr std::int16_t EgScore(const Score score) {
+    union {
+        std::uint16_t upper;
+        std::int16_t lower;
+    } eg = {std::uint16_t(unsigned(score + 0x8000) >> 16)};
+
+    return eg.lower;
+}
+
 constexpr Direction operator+(Direction d1, int d2) { return Direction(int(d1) + int(d2)); }
 constexpr Direction operator-(Direction d1, int d2) { return Direction(int(d1) - int(d2)); }
 constexpr Direction operator-(Direction d) { return Direction(0) - Direction(int(d)); }

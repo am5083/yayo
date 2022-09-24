@@ -2,72 +2,31 @@
 #define SEARCH_H_
 #include "board.hpp"
 #include "move.hpp"
+#include "tuned.hpp"
 #include "util.hpp"
 #include <thread>
 
+#define PAWN_VAL 100
+#define KNIGHT_VAL 300
+#define BISHOP_VAL 320
+#define ROOK_VAL 500
+#define QUEEN_VAL 910
+
 namespace Yayo {
-
-enum Score : int { NO_SCORE };
-
-#define S(mg, eg) (MakeScore(mg, eg))
-
-constexpr Score MakeScore(const int mg, const int eg) { return Score((int)((unsigned int)eg << 16) + mg); }
-
-inline std::int16_t MgScore(const Score score) {
-    union {
-        std::uint16_t upper;
-        std::int16_t lower;
-    } mg = {std::uint16_t(unsigned(score))};
-
-    return mg.lower;
-}
-
-constexpr std::int16_t EgScore(const Score score) {
-    union {
-        std::uint16_t upper;
-        std::int16_t lower;
-    } eg = {std::uint16_t(unsigned(score + 0x8000) >> 16)};
-
-    return eg.lower;
-}
-
-namespace { // penalties
+namespace {
 constexpr int TEMPO = 10;
 } // namespace
 
 constexpr short gamePhaseValues[] = {0, 1, 1, 2, 4, 0};
 
-constexpr Score KnightMobilityScore[] = {S(-60, -80), S(-50, -30), S(-10, -20), S(-5, 10), S(5, 10),
-                                         S(15, 14),   S(21, 15),   S(30, 21),   S(40, 30)};
-
-constexpr Score BishopMobilityScore[] = {S(-50, -60), S(-20, -25), S(15, -10), S(30, 12), S(40, 21),
-                                         S(55, 49),   S(55, 55),   S(60, 58),  S(62, 65), S(70, 72),
-                                         S(80, 78),   S(83, 87),   S(91, 88),  S(96, 98)};
-
-constexpr Score RookMobilityScore[] = {S(-60, -80), S(-25, -15), S(0, 20),   S(3, 40),   S(4, 70),
-                                       S(15, 100),  S(20, 102),  S(30, 122), S(40, 133), S(40, 139),
-                                       S(40, 153),  S(45, 160),  S(60, 165), S(61, 170), S(70, 175)};
-
-constexpr Score QueenMobilityScore[] = {S(-30, -50), S(-15, -30), S(-10, -10), S(-10, 20),  S(20, 40),   S(25, 55),
-                                        S(23, 60),   S(35, 73),   S(40, 76),   S(55, 95),   S(65, 95),   S(68, 101),
-                                        S(69, 124),  S(70, 128),  S(70, 132),  S(70, 133),  S(71, 136),  S(72, 140),
-                                        S(74, 147),  S(76, 149),  S(90, 153),  S(104, 169), S(105, 171), S(106, 171),
-                                        S(112, 178), S(114, 185), S(114, 187), S(119, 221)};
+constexpr Score pawnScore   = S(PAWN_VAL - 17, PAWN_VAL - 28);
+constexpr Score knightScore = S(KNIGHT_VAL - 8, KNIGHT_VAL - 9);
+constexpr Score bishopScore = S(BISHOP_VAL - 17, BISHOP_VAL - 17);
+constexpr Score rookScore   = S(ROOK_VAL - 25, ROOK_VAL - 31);
+constexpr Score queenScore  = S(QUEEN_VAL - 42, QUEEN_VAL - 42);
 
 constexpr Score blockedPassedPawnRankBonus[] = {S(0, 0),     S(0, 0),     S(0, 0),     S(40, 40),
                                                 S(200, 200), S(260, 260), S(400, 400), S(0, 0)};
-
-constexpr Score passedPawnRankBonus[] = {S(0, 0),   S(-20, -20), S(17, 17),   S(15, 15),
-                                         S(35, 35), S(175, 175), S(400, 400), S(0, 0)};
-
-constexpr Score doubledPawnRankPenalty[8] = {S(-10, -10), S(-10, -10), S(-10, -10), S(-10, -10),
-                                             S(-10, -10), S(-10, -10), S(-10, -10), S(-10, -10)};
-
-constexpr Score isolatedPawnRankBonus[8] = {S(-6, -6), S(-6, -6), S(-6, -6), S(-6, -6),
-                                            S(-6, -6), S(-6, -6), S(-6, -6), S(-6, -6)};
-
-constexpr Score backwardPawnRankBonus[8] = {S(-15, -15), S(-15, -15), S(-15, -15), S(-15, -15),
-                                            S(-15, -15), S(-15, -15), S(-15, -15), S(-15, -15)};
 
 constexpr Score taperedPawnPcSq[SQUARE_CT] = {
     S(0, 0),    S(0, 0),     S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0),     S(0, 0),    S(0, 0),
@@ -134,6 +93,35 @@ constexpr Score taperedKingPcSq[SQUARE_CT] = {
     S(1, -27),   S(7, -11),  S(-8, 4),   S(-64, 13),  S(-43, 14),  S(-16, 4),   S(9, -5),   S(8, -17),
     S(-15, -53), S(36, -34), S(12, -21), S(-54, -11), S(8, -28),   S(-28, -14), S(24, -24), S(14, -43),
 };
+
+constexpr Score passedPawnRankBonus[] = {S(0, 0),   S(-20, -20), S(17, 17),   S(15, 15),
+                                         S(35, 35), S(175, 175), S(400, 400), S(0, 0)};
+
+constexpr Score doubledPawnRankPenalty[8] = {S(-10, -10), S(-10, -10), S(-10, -10), S(-10, -10),
+                                             S(-10, -10), S(-10, -10), S(-10, -10), S(-10, -10)};
+
+constexpr Score isolatedPawnRankBonus[8] = {S(-6, -6), S(-6, -6), S(-6, -6), S(-6, -6),
+                                            S(-6, -6), S(-6, -6), S(-6, -6), S(-6, -6)};
+
+constexpr Score backwardPawnRankBonus[8] = {S(-15, -15), S(-15, -15), S(-15, -15), S(-15, -15),
+                                            S(-15, -15), S(-15, -15), S(-15, -15), S(-15, -15)};
+
+constexpr Score KnightMobilityScore[] = {S(-60, -80), S(-50, -30), S(-10, -20), S(-5, 10), S(5, 10),
+                                         S(15, 14),   S(21, 15),   S(30, 21),   S(40, 30)};
+
+constexpr Score BishopMobilityScore[] = {S(-50, -60), S(-20, -25), S(15, -10), S(30, 12), S(40, 21),
+                                         S(55, 49),   S(55, 55),   S(60, 58),  S(62, 65), S(70, 72),
+                                         S(80, 78),   S(83, 87),   S(91, 88),  S(96, 98)};
+
+constexpr Score RookMobilityScore[] = {S(-60, -80), S(-25, -15), S(0, 20),   S(3, 40),   S(4, 70),
+                                       S(15, 100),  S(20, 102),  S(30, 122), S(40, 133), S(40, 139),
+                                       S(40, 153),  S(45, 160),  S(60, 165), S(61, 170), S(70, 175)};
+
+constexpr Score QueenMobilityScore[] = {S(-30, -50), S(-15, -30), S(-10, -10), S(-10, 20),  S(20, 40),   S(25, 55),
+                                        S(23, 60),   S(35, 73),   S(40, 76),   S(55, 95),   S(65, 95),   S(68, 101),
+                                        S(69, 124),  S(70, 128),  S(70, 132),  S(70, 133),  S(71, 136),  S(72, 140),
+                                        S(74, 147),  S(76, 149),  S(90, 153),  S(104, 169), S(105, 171), S(106, 171),
+                                        S(112, 178), S(114, 185), S(114, 187), S(119, 221)};
 
 static const Score *pcSq[] = {taperedPawnPcSq, taperedKnightPcSq, taperedBishopPcSq,
                               taperedRookPcSq, taperedQueenPcSq,  taperedKingPcSq};
@@ -286,41 +274,46 @@ template <Tracing T = NO_TRACE> class Eval {
     Eval(Board &b, Trace &t) : board(b), trace(t) { init(); }
 
     int eval() {
-        const auto whitePawnScore   = popcount(board.pieces(PAWN, WHITE));
-        const auto whiteKnightScore = popcount(board.pieces(KNIGHT, WHITE));
-        const auto whiteBishopScore = popcount(board.pieces(BISHOP, WHITE));
-        const auto whiteRookScore   = popcount(board.pieces(ROOK, WHITE));
-        const auto whiteQueenScore  = popcount(board.pieces(QUEEN, WHITE));
+        const auto whitePawnCount   = popcount(board.pieces(PAWN, WHITE));
+        const auto whiteKnightCount = popcount(board.pieces(KNIGHT, WHITE));
+        const auto whiteBishopCount = popcount(board.pieces(BISHOP, WHITE));
+        const auto whiteRookCount   = popcount(board.pieces(ROOK, WHITE));
+        const auto whiteQueenCount  = popcount(board.pieces(QUEEN, WHITE));
 
-        const auto blackPawnScore   = popcount(board.pieces(PAWN, BLACK));
-        const auto blackKnightScore = popcount(board.pieces(KNIGHT, BLACK));
-        const auto blackBishopScore = popcount(board.pieces(BISHOP, BLACK));
-        const auto blackRookScore   = popcount(board.pieces(ROOK, BLACK));
-        const auto blackQueenScore  = popcount(board.pieces(QUEEN, BLACK));
+        const auto blackPawnCount   = popcount(board.pieces(PAWN, BLACK));
+        const auto blackKnightCount = popcount(board.pieces(KNIGHT, BLACK));
+        const auto blackBishopCount = popcount(board.pieces(BISHOP, BLACK));
+        const auto blackRookCount   = popcount(board.pieces(ROOK, BLACK));
+        const auto blackQueenCount  = popcount(board.pieces(QUEEN, BLACK));
 
-        const int wMaterial = (PAWN_VAL * whitePawnScore) + (KNIGHT_VAL * whiteKnightScore) +
-                              (BISHOP_VAL * whiteBishopScore) + (ROOK_VAL * whiteRookScore) +
-                              (QUEEN_VAL * whiteQueenScore);
+        const auto pawnVal   = (MgScore(pawnScore) * mgPhase + EgScore(pawnScore) * egPhase) / 24;
+        const auto knightVal = (MgScore(knightScore) * mgPhase + EgScore(knightScore) * egPhase) / 24;
+        const auto bishopVal = (MgScore(bishopScore) * mgPhase + EgScore(bishopScore) * egPhase) / 24;
+        const auto rookVal   = (MgScore(rookScore) * mgPhase + EgScore(bishopScore) * egPhase) / 24;
+        const auto queenVal  = (MgScore(queenScore) * mgPhase + EgScore(queenScore) * egPhase) / 24;
 
-        const int bMaterial = (PAWN_VAL * blackPawnScore) + (KNIGHT_VAL * blackKnightScore) +
-                              (BISHOP_VAL * blackBishopScore) + (ROOK_VAL * blackRookScore) +
-                              (QUEEN_VAL * blackQueenScore);
+        const auto wMaterial = (pawnVal * whitePawnCount) + (knightVal * whiteKnightCount) +
+                               (bishopVal * whiteBishopCount) + (rookVal * whiteRookCount) +
+                               (queenVal * whiteQueenCount);
+        const auto bMaterial = (pawnVal * blackPawnCount) + (knightVal * blackKnightCount) +
+                               (bishopVal * blackBishopCount) + (rookVal * blackRookCount) +
+                               (queenVal * blackQueenCount);
 
         if (T) {
-            trace.pawnScore[WHITE] = whitePawnScore;
-            trace.pawnScore[BLACK] = blackPawnScore;
+            trace.pawnScore[WHITE] = whitePawnCount;
+            trace.pawnScore[BLACK] = blackPawnCount;
 
-            trace.knightScore[WHITE] = whiteKnightScore;
-            trace.knightScore[BLACK] = blackKnightScore;
+            trace.knightScore[WHITE] = whiteKnightCount;
+            trace.knightScore[BLACK] = blackKnightCount;
 
-            trace.bishopScore[WHITE] = whiteBishopScore;
-            trace.bishopScore[BLACK] = blackBishopScore;
+            trace.bishopScore[WHITE] = whiteBishopCount;
+            trace.bishopScore[BLACK] = blackBishopCount;
 
-            trace.rookScore[WHITE] = whiteRookScore;
-            trace.rookScore[BLACK] = blackRookScore;
+            trace.rookScore[WHITE] = whiteRookCount;
+            trace.rookScore[BLACK] = blackRookCount;
 
-            trace.queenScore[WHITE] = whiteQueenScore;
-            trace.queenScore[BLACK] = blackQueenScore;
+            trace.queenScore[WHITE] = whiteQueenCount;
+            trace.queenScore[BLACK] = blackQueenCount;
         }
 
         const Score wPcSq = pieceSquare<WHITE>();
@@ -452,6 +445,8 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::backwardPawnSco
 
         mgScore += MgScore(backwardPawnRankBonus[RANK_OF(psq)]);
         egScore += EgScore(backwardPawnRankBonus[RANK_OF(psq)]);
+        mgScore += MgScore(t_backwardPawnRankBonus[RANK_OF(psq)]);
+        egScore += EgScore(t_backwardPawnRankBonus[RANK_OF(psq)]);
 
         if (T) {
             trace.backwardPawns[RANK_OF(psq)][C]++;
@@ -475,6 +470,8 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::isolatedPawnPen
 
             mgScore += MgScore(isolatedPawnRankBonus[RANK_OF(psq)]);
             egScore += EgScore(isolatedPawnRankBonus[RANK_OF(psq)]);
+            mgScore += MgScore(t_isolatedPawnRankBonus[RANK_OF(psq)]);
+            egScore += EgScore(t_isolatedPawnRankBonus[RANK_OF(psq)]);
 
             if (T) {
                 trace.isolatedPawns[RANK_OF(psq)][C]++;
@@ -510,6 +507,8 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::passedPawnScore
 
         mgScore += MgScore(passedPawnRankBonus[RANK_OF(psq)]);
         egScore += EgScore(passedPawnRankBonus[RANK_OF(psq)]);
+        mgScore += MgScore(t_passedPawnRankBonus[RANK_OF(psq)]);
+        egScore += EgScore(t_passedPawnRankBonus[RANK_OF(psq)]);
 
         if (T) {
             trace.passedPawn[RANK_OF(psq)][C]++;
@@ -531,6 +530,8 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::doubledPawnPena
 
         mgScore += MgScore(doubledPawnRankPenalty[RANK_OF(psq)]);
         egScore += EgScore(doubledPawnRankPenalty[RANK_OF(psq)]);
+        mgScore += MgScore(t_doubledPawnRankBonus[RANK_OF(psq)]);
+        egScore += EgScore(t_doubledPawnRankBonus[RANK_OF(psq)]);
 
         if (T) {
             trace.doubledPawns[RANK_OF(psq)][C]++;
@@ -560,8 +561,8 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::pieceSquare() {
                     (*std::data(pcSq))[pt - 1][i][WHITE] = 1;
                 }
 
-                mgScore += MgScore(pcSq[pt - 1][i]);
-                egScore += EgScore(pcSq[pt - 1][i]);
+                mgScore += MgScore(pcSq[pt - 1][i]) + MgScore(t_pcSq[pt - 1][i]);
+                egScore += EgScore(pcSq[pt - 1][i]) + EgScore(t_pcSq[pt - 1][i]);
             }
         } else if (C == BLACK) {
             if (p >= B_PAWN && p != NO_PC) {
@@ -572,8 +573,8 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::pieceSquare() {
                     (*std::data(pcSq))[pt - 1][mirror(i)][BLACK] = 1;
                 }
 
-                mgScore += MgScore(pcSq[pt - 1][mirror(i)]);
-                egScore += EgScore(pcSq[pt - 1][mirror(i)]);
+                mgScore += MgScore(pcSq[pt - 1][mirror(i)]) + MgScore(t_pcSq[pt - 1][mirror(i)]);
+                egScore += EgScore(pcSq[pt - 1][mirror(i)]) + EgScore(t_pcSq[pt - 1][mirror(i)]);
             }
         }
     }
@@ -618,8 +619,8 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::mobilityScore()
             trace.knightMobility[numMoves][C]++;
         }
 
-        mgScore += MgScore(KnightMobilityScore[numMoves]);
-        egScore += EgScore(KnightMobilityScore[numMoves]);
+        mgScore += MgScore(KnightMobilityScore[numMoves]) + MgScore(t_KnightMobilityScore[numMoves]);
+        egScore += EgScore(KnightMobilityScore[numMoves]) + EgScore(t_KnightMobilityScore[numMoves]);
 
         knights &= knights - 1;
     }
@@ -638,6 +639,8 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::mobilityScore()
 
         mgScore += MgScore(BishopMobilityScore[numMoves]);
         egScore += EgScore(BishopMobilityScore[numMoves]);
+        mgScore += MgScore(t_BishopMobilityScore[numMoves]);
+        egScore += EgScore(t_BishopMobilityScore[numMoves]);
 
         bishops &= bishops - 1;
     }
@@ -656,6 +659,8 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::mobilityScore()
 
         mgScore += MgScore(RookMobilityScore[numMoves]);
         egScore += EgScore(RookMobilityScore[numMoves]);
+        mgScore += MgScore(t_RookMobilityScore[numMoves]);
+        egScore += EgScore(t_RookMobilityScore[numMoves]);
 
         rooks &= rooks - 1;
     }
@@ -675,6 +680,8 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::mobilityScore()
 
         mgScore += MgScore(QueenMobilityScore[numMoves]);
         egScore += EgScore(QueenMobilityScore[numMoves]);
+        mgScore += MgScore(t_QueenMobilityScore[numMoves]);
+        egScore += EgScore(t_QueenMobilityScore[numMoves]);
 
         queens &= queens - 1;
     }
