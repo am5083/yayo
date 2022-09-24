@@ -21,5 +21,7 @@ int main(int argc, char *argv[]) {
     TunerEntries entries("lichess-big3-resolved.book");
     entries.runTuner();
 
+    // uci.Main();
+
     return 0;
 }

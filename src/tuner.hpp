@@ -7,7 +7,7 @@
 
 #define NUM_ENTRIES 1000000
 #define MAX_EPOCHS 100000
-#define BATCH_SIZE 20000
+#define BATCH_SIZE 1
 #define LRRATE 0.10
 #define LRDROPRATE 1.00
 #define LRSTEPRATE 250
@@ -53,7 +53,7 @@ struct TunerEntries {
 
     void computeGradient(double gradient[487][2], double params[487][2], double K, int batch);
 
-    void updateSingleGradient(TEntry *entry, double gradient[487][2], double params[487][2], double K);
+    void updateSingleGradient(TEntry &entry, double gradient[487][2], double params[487][2], double K);
 
     void runTuner();
 };
