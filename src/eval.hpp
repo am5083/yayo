@@ -19,11 +19,11 @@ constexpr int TEMPO = 10;
 
 constexpr short gamePhaseValues[] = {0, 1, 1, 2, 4, 0};
 
-constexpr Score pawnScore   = S(PAWN_VAL - 17, PAWN_VAL - 28);
-constexpr Score knightScore = S(KNIGHT_VAL - 8, KNIGHT_VAL - 9);
-constexpr Score bishopScore = S(BISHOP_VAL - 17, BISHOP_VAL - 17);
-constexpr Score rookScore   = S(ROOK_VAL - 25, ROOK_VAL - 31);
-constexpr Score queenScore  = S(QUEEN_VAL - 42, QUEEN_VAL - 42);
+constexpr Score pawnScore   = S(PAWN_VAL - 20, PAWN_VAL - 32);
+constexpr Score knightScore = S(KNIGHT_VAL - 10, KNIGHT_VAL - 10);
+constexpr Score bishopScore = S(BISHOP_VAL - 20, BISHOP_VAL - 20);
+constexpr Score rookScore   = S(ROOK_VAL - 29, ROOK_VAL - 36);
+constexpr Score queenScore  = S(QUEEN_VAL - 49, QUEEN_VAL - 49);
 
 constexpr Score blockedPassedPawnRankBonus[] = {S(0, 0),     S(0, 0),     S(0, 0),     S(40, 40),
                                                 S(200, 200), S(260, 260), S(400, 400), S(0, 0)};
