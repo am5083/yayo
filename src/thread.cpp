@@ -1,4 +1,23 @@
+/*
+**    Yayo is a UCI chess engine written by am5083 (am@kvasm.us)
+**    Copyright (C) 2022 Ahmed Mohamed (am@kvasm.us)
+**
+**    This program is free software: you can redistribute it and/or modify
+**    it under the terms of the GNU General Public License as published by
+**    the Free Software Foundation, either version 3 of the License, or
+**    (at your option) any later version.
+**
+**    This program is distributed in the hope that it will be useful,
+**    but WITHOUT ANY WARRANTY; without even the implied warranty of
+**    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**    GNU General Public License for more details.
+**
+**    You should have received a copy of the GNU General Public License
+**    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "thread.hpp"
+#include "eval.hpp"
 
 namespace Yayo {
 
@@ -39,6 +58,14 @@ const bool Search::checkForStop() const {
     return false;
 }
 
+moveList Search::generateMoves() {
+    moveList mList = {0};
+    generate(_board, &mList);
+    return mList;
+}
+
+Board Search::getBoard() { return _board; }
+
 void Search::scoreMoves(moveList *mList) {
     for (int i = 0; i < mList->nMoves; i++) {
         int move = mList->moves[i].move;
@@ -77,9 +104,6 @@ int Search::quiescent(int alpha, int beta) {
     if (ply > selDepth)
         selDepth = ply;
 
-    moveList mList = {0};
-    generate(_board, &mList);
-
     // mate distance pruning
     int mate_val = INF - ply;
     if (mate_val <= beta) {
@@ -101,28 +125,45 @@ int Search::quiescent(int alpha, int beta) {
         return negaMax(alpha, beta, 1);
     }
 
-    int standPat = eval(_board, mList);
+    int standPat = Eval(_board).eval();
 
     if (standPat >= beta)
         return beta;
+
     if (alpha < standPat)
         alpha = standPat;
 
     pvTableLen[ply] = 0;
 
-    int score;
+    moveList mList = {0};
+    generate(_board, &mList);
+
     for (int i = 0; i < mList.nMoves; i++) {
-        if (mList.moves[i].score == 0)
+        if (mList.moves[i].score == 0) {
             continue;
+        }
 
         const int c_move = mList.moves[i].move;
 
         Square fromSq = getFrom(c_move), toSq = getTo(c_move);
         Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
 
-        if (fromPc > toPc) {
-            mList.moves[i].score = _board.see(toSq, toPc, fromSq, fromPc) + 10000000;
+        if (getPcType(fromPc) > getPcType(toPc)) {
+            int see = _board.see(toSq, toPc, fromSq, fromPc);
+            if (see < 0) {
+                mList.moves[i].score = (see / 1000) + 50;
+            } else {
+                mList.moves[i].score = see;
+            }
         }
+    }
+
+    int score;
+    for (int i = 0; i < mList.nMoves; i++) {
+        if (mList.moves[i].score == 0)
+            continue;
+
+        mList.swapBest(i);
 
         make(_board, mList.moves[i].move);
         score = -quiescent(-beta, -alpha);
@@ -131,7 +172,7 @@ int Search::quiescent(int alpha, int beta) {
         if (score >= beta)
             return beta;
         if (score > alpha) {
-            updatePv(_board.ply, c_move);
+            updatePv(_board.ply, mList.moves[i].move);
             alpha = score;
         }
     }
@@ -381,4 +422,7 @@ void Search::joinThread() {
         searchThread->join();
     }
 }
+
+void Search::clearTT() { tpTbl.clear(); }
+
 } // namespace Yayo

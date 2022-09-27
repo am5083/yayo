@@ -1,3 +1,26 @@
+/*
+**    Yayo is a UCI chess engine written by am5083 (am@kvasm.us)
+**    Copyright (C) 2022 Ahmed Mohamed (am@kvasm.us)
+**
+**    This program is free software: you can redistribute it and/or modify
+**    it under the terms of the GNU General Public License as published by
+**    the Free Software Foundation, either version 3 of the License, or
+**    (at your option) any later version.
+**
+**    This program is distributed in the hope that it will be useful,
+**    but WITHOUT ANY WARRANTY; without even the implied warranty of
+**    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**    GNU General Public License for more details.
+**
+**    You should have received a copy of the GNU General Public License
+**    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/*
+** Perft test suite for debugging movegen
+** No longer in use
+*/
+
 #include "board.h"
 #include "movegen.h"
 #include <cstring>
@@ -108,15 +131,15 @@ void runPerftSuite(int depth) {
     init_arrays();
     Board board;
 
-    int failed = 0;
-    std::uint64_t total = 0;
+    int failed              = 0;
+    std::uint64_t total     = 0;
     std::uint64_t positions = 0;
     parseTestFile("test.epd");
     for (int i = 0; i < 126; i++) {
         board.setFen(posArray[i].fen);
         std::cout << "FEN: " << posArray[i].fen << std::endl;
         for (int j = 1; j <= depth; j++) {
-            unsigned long long ref = posArray[i].results[j - 1];
+            unsigned long long ref  = posArray[i].results[j - 1];
             unsigned long long test = perft(board, j);
             if (j < 6) {
                 positions += ref;

@@ -1,4 +1,23 @@
+/*
+**    Yayo is a UCI chess engine written by am5083 (am@kvasm.us)
+**    Copyright (C) 2022 Ahmed Mohamed (am@kvasm.us)
+**
+**    This program is free software: you can redistribute it and/or modify
+**    it under the terms of the GNU General Public License as published by
+**    the Free Software Foundation, either version 3 of the License, or
+**    (at your option) any later version.
+**
+**    This program is distributed in the hope that it will be useful,
+**    but WITHOUT ANY WARRANTY; without even the implied warranty of
+**    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**    GNU General Public License for more details.
+**
+**    You should have received a copy of the GNU General Public License
+**    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "uci.hpp"
+#include "eval.hpp"
 
 static inline int parseMove(Board &board, std::string move) {
     moveList mList = {0};
@@ -103,7 +122,10 @@ void UCI::Uci() {
     std::cout << "uciok" << std::endl;
 }
 
-void UCI::NewGame() { search._setFen(START_POS); }
+void UCI::NewGame() {
+    search.clearTT();
+    search._setFen(START_POS);
+}
 
 void UCI::IsReady() { search.isReady(); }
 
@@ -141,6 +163,7 @@ void UCI::Main() {
     board.setFen(START_POS);
     search._setFen(START_POS);
 
+    EvalWeights ev;
     Info info[1];
 
     std::cout << "Yayo Engine - Verision 0.1.0" << std::endl;
@@ -197,6 +220,11 @@ void UCI::Main() {
             std::cout << "static exchange evaluation: "
                       << board.see(getTo(m), board.board[getTo(m)], getFrom(m), board.board[getFrom(m)]);
             std::cout << std::endl;
+        } else if (cmd == "mirror") {
+            std::string move;
+            iss >> move;
+            int m = getFrom(parseMove(board, move));
+            std::cout << nToSq[mirror(m)] << std::endl;
         } else if (cmd == "d") {
             search.printBoard();
         } else if (cmd == "make") {
@@ -272,13 +300,38 @@ void UCI::Main() {
             break;
         } else if (cmd == "stop") {
             Stop();
+        } else if (cmd == "trace") {
+            Board board = search.getBoard();
+            Trace trace;
+            int evaluate = Eval<TRACE>(board, trace).eval();
+            TracePeek tp(trace, ev);
+
+            int phase   = 0;
+            int mgPhase = 0;
+            int egPhase = 0;
+
+            // clang-format off
+            phase = 4 * popcount(board.pieces(QUEEN)) +
+                2 * popcount(board.pieces(ROOK)) +
+                1 * popcount(board.pieces(BISHOP)) +
+                1 * popcount(board.pieces(KNIGHT));
+            // clang-format on
+
+            mgPhase = phase;
+            if (mgPhase > 24)
+                mgPhase = 24;
+            egPhase = 24 - mgPhase;
+
+            tp.calculate(std::make_tuple(board.turn, mgPhase, egPhase));
+            // tp.print();
+            std::cout << "eval score: " << evaluate << std::endl;
         } else if (cmd == "uci") {
             Uci();
         } else if (cmd == "setoption") {
         } else if (cmd == "eval") {
             moveList mList = {0};
             generate(board, &mList);
-            std::cout << eval(board, mList) << std::endl;
+            std::cout << Eval(board).eval() << std::endl;
         } else if (cmd == "perft") {
             int depth;
             iss >> depth;

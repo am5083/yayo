@@ -9,5 +9,5 @@ yayo
 /.ccls-cache/
 /cmake-build-debug/
 /.idea/
-/test/
 compile_commands.json
+/a.out

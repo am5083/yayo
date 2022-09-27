@@ -1,3 +1,21 @@
+/*
+**    Yayo is a UCI chess engine written by am5083 (am@kvasm.us)
+**    Copyright (C) 2022 Ahmed Mohamed (am@kvasm.us)
+**
+**    This program is free software: you can redistribute it and/or modify
+**    it under the terms of the GNU General Public License as published by
+**    the Free Software Foundation, either version 3 of the License, or
+**    (at your option) any later version.
+**
+**    This program is distributed in the hope that it will be useful,
+**    but WITHOUT ANY WARRANTY; without even the implied warranty of
+**    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**    GNU General Public License for more details.
+**
+**    You should have received a copy of the GNU General Public License
+**    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef UTIL_H_
 #define UTIL_H_
 #include <cstdint>
@@ -122,6 +140,30 @@ constexpr Rank RANK_OF(Square sq) {
 constexpr Square Sq(Bitboard bb) {
     if (bb == 0) return Square(A1);
     return Square(63 - __builtin_clzll(bb));
+}
+
+enum Score : int { NO_SCORE };
+
+#define S(mg, eg) (MakeScore(mg, eg))
+
+constexpr Score MakeScore(const int mg, const int eg) { return Score((int)((unsigned int)eg << 16) + mg); }
+
+inline std::int16_t MgScore(const Score score) {
+    union {
+        std::uint16_t upper;
+        std::int16_t lower;
+    } mg = {std::uint16_t(unsigned(score))};
+
+    return mg.lower;
+}
+
+constexpr std::int16_t EgScore(const Score score) {
+    union {
+        std::uint16_t upper;
+        std::int16_t lower;
+    } eg = {std::uint16_t(unsigned(score + 0x8000) >> 16)};
+
+    return eg.lower;
 }
 
 constexpr Direction operator+(Direction d1, int d2) { return Direction(int(d1) + int(d2)); }
