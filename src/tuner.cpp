@@ -29,6 +29,36 @@ namespace Yayo {
 
 double sigmoid(double K, double E) { return 1.0 / (1.0 + exp(-K * E / 400.00)); }
 
+TunerEntries::TunerEntries(std::string file) {
+    entries = new TEntry[NUM_ENTRIES];
+
+    Board board;
+    std::ifstream games;
+    games.open(file);
+
+    if (!games.is_open()) {
+        std::cerr << "ERROR: COULD NOT LOCATE TRAINING DATASET\n";
+        return;
+    }
+
+    std::string line;
+    for (int i = 0; i < NUM_ENTRIES; i++) {
+        getline(games, line);
+
+        if (line.find("[1.0]") != std::string::npos)
+            entries[i].result = 1.0;
+        else if (line.find("[0.5]") != std::string::npos)
+            entries[i].result = 0.5;
+        else if (line.find("[0.0]") != std::string::npos)
+            entries[i].result = 0.0;
+
+        board.setFen(line);
+        entries[i].init(board);
+    }
+
+    games.close();
+}
+
 void TEntry::init(Board &board) {
     Trace trace = Trace();
     Eval<TRACE> eval(board, trace);
@@ -93,14 +123,35 @@ double TunerEntries::computeOptimalK() {
     return start;
 }
 
+// clang-format off
 double TunerEntries::staticEvalErrors(double K) {
     double total = 0.0;
-    for (int i = 0; i < NUM_ENTRIES; i++) {
-        float result = entries[i].turn == WHITE ? entries[i].result : 1 - entries[i].result; // thanks to dave7895
-        total += pow(result - sigmoid(K, entries[i].staticEval), 2);
+
+    #pragma omp parallel shared(total)
+    {
+        #pragma omp for schedule(static, NUM_ENTRIES / 8) reduction(+:total)
+        for (int i = 0; i < NUM_ENTRIES; i++) {
+            int staticEval = entries[i].turn == WHITE ? entries[i].staticEval : -1 * entries[i].staticEval;
+            total += pow(entries[i].result - sigmoid(K, staticEval), 2);
+        }
     }
     return total / (double)NUM_ENTRIES;
 }
+
+double TunerEntries::tunedEvalErrors(double params[487][2], double K) {
+    double total = 0.0;
+
+    #pragma omp parallel shared(total)
+    {
+        #pragma omp for schedule(static, NUM_ENTRIES / 8) reduction(+:total)
+        for (int i = 0; i < NUM_ENTRIES; i++) {
+            total += pow(entries[i].result - sigmoid(K, entries[i].linearEval(params)), 2.0);
+        }
+    }
+
+    return total / (double)NUM_ENTRIES;
+}
+// clang-format on
 
 double TEntry::linearEval(double params[487][2]) {
     Score *weights = &((Score *)&w)[0];
@@ -118,60 +169,27 @@ double TEntry::linearEval(double params[487][2]) {
         linearEval += eval;
     }
 
-    const auto color = turn == WHITE ? 1 : -1;
-    return color * linearEval;
+    return linearEval;
 }
 
-TunerEntries::TunerEntries(std::string file) {
-    entries = new TEntry[NUM_ENTRIES];
-
-    Board board;
-    std::ifstream games;
-    games.open(file);
-
-    if (!games.is_open()) {
-        std::cerr << "ERROR: COULD NOT LOCATE TRAINING DATASET\n";
-        return;
-    }
-
-    std::string line;
-    for (int i = 0; i < NUM_ENTRIES; i++) {
-        getline(games, line);
-
-        if (line.find("[1.0]") != std::string::npos)
-            entries[i].result = 1.0;
-        else if (line.find("[0.5]") != std::string::npos)
-            entries[i].result = 0.5;
-        else if (line.find("[0.0]") != std::string::npos)
-            entries[i].result = 0.0;
-
-        board.setFen(line);
-        entries[i].init(board);
-    }
-
-    games.close();
-}
-
-double TunerEntries::tunedEvalErrors(double params[487][2], double K) {
-    double total = 0.0;
-    for (int i = 0; i < NUM_ENTRIES; i++) {
-        float result = entries[i].turn == WHITE ? entries[i].result : 1 - entries[i].result; // thanks to dave7895
-        total += pow(result - sigmoid(K, entries[i].linearEval(params)), 2.0);
-    }
-    return total / (double)NUM_ENTRIES;
-}
-
+// clang-format off
 void TunerEntries::computeGradient(double gradient[487][2], double params[487][2], double K, int batch) {
-    double local[487][2] = {{0}};
-    for (int i = batch * BATCH_SIZE; i < (batch + 1) * BATCH_SIZE; i++) {
-        updateSingleGradient(entries[i], local, params, K);
+    #pragma omp parallel shared(gradient)
+    {
+        double local[487][2] = {{0}};
 
-        for (int i = 0; i < 487; i++) {
-            gradient[i][0] += local[i][0];
-            gradient[i][1] += local[i][1];
+        #pragma omp for schedule(static, BATCH_SIZE / 8)
+        for (int i = batch * BATCH_SIZE; i < (batch + 1) * BATCH_SIZE; i++) {
+            updateSingleGradient(entries[i], local, params, K);
+
+            for (int i = 0; i < 487; i++) {
+                gradient[i][0] += local[i][0];
+                gradient[i][1] += local[i][1];
+            }
         }
     }
 }
+// clang-format on
 
 void TunerEntries::updateSingleGradient(TEntry &entry, double gradient[487][2], double params[487][2], double K) {
     double E = entry.linearEval(params);
@@ -185,21 +203,21 @@ void TunerEntries::updateSingleGradient(TEntry &entry, double gradient[487][2], 
         int wcoeff = entry.tuples[i].whiteScore;
         int bcoeff = entry.tuples[i].blackScore;
 
-        gradient[idx][0] = (wcoeff - bcoeff) * (mgBase / 24.0);
-        gradient[idx][1] = (wcoeff - bcoeff) * (egBase / 24.0);
+        gradient[idx][0] = (wcoeff - bcoeff) * mgBase * ((double)entry.mgPhase / 24);
+        gradient[idx][1] = (wcoeff - bcoeff) * egBase * ((double)entry.egPhase / 24);
     }
 }
 
 // clang-format off
 inline void printParams(double cparams[487][2], double params[487][2]) {
     printf("\n");
-    printf("pawnScore   = S(%4d, %4d)\n", (int)cparams[0][0] + (int)params[0][0], (int)cparams[0][1] + (int)params[0][1]);
-    printf("knightScore = S(%4d, %4d)\n", (int)cparams[1][0] + (int)params[1][0], (int)cparams[1][1] + (int)params[1][1]);
-    printf("bishopScore = S(%4d, %4d)\n", (int)cparams[2][0] + (int)params[2][0], (int)cparams[2][1] + (int)params[2][1]);
-    printf("rookScore   = S(%4d, %4d)\n", (int)cparams[3][0] + (int)params[3][0], (int)cparams[3][1] + (int)params[3][1]);
-    printf("queenScore  = S(%4d, %4d)\n\n", (int)cparams[4][0] + (int)params[4][0], (int)cparams[4][1] + (int)params[4][1]);
+    printf("constexpr Score pawnScore   = S(%4d, %4d)\n", (int)cparams[0][0] + (int)params[0][0], (int)cparams[0][1] + (int)params[0][1]);
+    printf("constexpr Score knightScore = S(%4d, %4d)\n", (int)cparams[1][0] + (int)params[1][0], (int)cparams[1][1] + (int)params[1][1]);
+    printf("constexpr Score bishopScore = S(%4d, %4d)\n", (int)cparams[2][0] + (int)params[2][0], (int)cparams[2][1] + (int)params[2][1]);
+    printf("constexpr Score rookScore   = S(%4d, %4d)\n", (int)cparams[3][0] + (int)params[3][0], (int)cparams[3][1] + (int)params[3][1]);
+    printf("constexpr Score queenScore  = S(%4d, %4d)\n\n", (int)cparams[4][0] + (int)params[4][0], (int)cparams[4][1] + (int)params[4][1]);
 
-    printf("taperedPawnPcSq[SQUARE_CT] = {");
+    printf("constexpr Score taperedPawnPcSq[SQUARE_CT] = {");
     for (int i = 0, start = 5; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
@@ -207,7 +225,7 @@ inline void printParams(double cparams[487][2], double params[487][2]) {
     }
     printf("\n};\n");
 
-    printf("taperedKnightPcSq[SQUARE_CT] = {");
+    printf("constexpr Score taperedKnightPcSq[SQUARE_CT] = {");
     for (int i = 0, start = 69; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
@@ -215,7 +233,7 @@ inline void printParams(double cparams[487][2], double params[487][2]) {
     }
     printf("\n};\n");
 
-    printf("taperedBishopPcSq[SQUARE_CT] = {");
+    printf("constexpr Score taperedBishopPcSq[SQUARE_CT] = {");
     for (int i = 0, start = 133; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
@@ -223,7 +241,7 @@ inline void printParams(double cparams[487][2], double params[487][2]) {
     }
     printf("\n};\n");
 
-    printf("taperedRookPcSq[SQUARE_CT] = {");
+    printf("constexpr Score taperedRookPcSq[SQUARE_CT] = {");
     for (int i = 0, start = 197; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
@@ -231,7 +249,7 @@ inline void printParams(double cparams[487][2], double params[487][2]) {
     }
     printf("\n};\n");
 
-    printf("taperedQueenPcSq[SQUARE_CT] = {");
+    printf("constexpr Score taperedQueenPcSq[SQUARE_CT] = {");
     for (int i = 0, start = 261; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
@@ -239,7 +257,7 @@ inline void printParams(double cparams[487][2], double params[487][2]) {
     }
     printf("\n};\n");
 
-    printf("taperedKingPcSq[SQUARE_CT] = {");
+    printf("constexpr Score taperedKingPcSq[SQUARE_CT] = {");
     for (int i = 0, start = 325; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
@@ -247,7 +265,7 @@ inline void printParams(double cparams[487][2], double params[487][2]) {
     }
     printf("\n};\n");
 
-    printf("passedPawnRankBonus[8] = {");
+    printf("constexpr Score passedPawnRankBonus[8] = {");
     for (int i = 0, start = 389; i < 8; i++) {
         if (!(i % 4))
             printf("\n");
@@ -255,7 +273,7 @@ inline void printParams(double cparams[487][2], double params[487][2]) {
     }
     printf("\n};\n");
 
-    printf("doubledPawnRankBonus[8] = {");
+    printf("constexpr Score doubledPawnRankBonus[8] = {");
     for (int i = 0, start = 397; i < 8; i++) {
         if (!(i % 4))
             printf("\n");
@@ -263,7 +281,7 @@ inline void printParams(double cparams[487][2], double params[487][2]) {
     }
     printf("\n};\n");
 
-    printf("isolatedPawnRankBonus[8] = {");
+    printf("constexpr Score isolatedPawnRankBonus[8] = {");
     for (int i = 0, start = 405; i < 8; i++) {
         if (!(i % 4))
             printf("\n");
@@ -271,7 +289,7 @@ inline void printParams(double cparams[487][2], double params[487][2]) {
     }
     printf("\n};\n");
 
-    printf("backwardPawnRankBonus[8] = {");
+    printf("constexpr Score backwardPawnRankBonus[8] = {");
     for (int i = 0, start = 413; i < 8; i++) {
         if (!(i % 4))
             printf("\n");
@@ -279,7 +297,7 @@ inline void printParams(double cparams[487][2], double params[487][2]) {
     }
     printf("\n};\n");
 
-    printf("KnightMobilityScore[9] = {");
+    printf("constexpr Score KnightMobilityScore[9] = {");
     for (int i = 0, start = 421; i < 9; i++) {
         if (!(i % 4))
             printf("\n");
@@ -287,7 +305,7 @@ inline void printParams(double cparams[487][2], double params[487][2]) {
     }
     printf("\n};\n");
 
-    printf("BishopMobilityScore[14] = {");
+    printf("constexpr Score BishopMobilityScore[14] = {");
     for (int i = 0, start = 430; i < 14; i++) {
         if (!(i % 4))
             printf("\n");
@@ -295,7 +313,7 @@ inline void printParams(double cparams[487][2], double params[487][2]) {
     }
     printf("\n};\n");
 
-    printf("RookMobilityScore[15] = {");
+    printf("constexpr Score RookMobilityScore[15] = {");
     for (int i = 0, start = 444; i < 15; i++) {
         if (!(i % 4))
             printf("\n");
@@ -303,7 +321,7 @@ inline void printParams(double cparams[487][2], double params[487][2]) {
     }
     printf("\n};\n");
 
-    printf("QueenMobilityScore[28] = {");
+    printf("constexpr Score QueenMobilityScore[28] = {");
     for (int i = 0, start = 459; i < 28; i++) {
         if (!(i % 4))
             printf("\n");
@@ -364,7 +382,4 @@ void TunerEntries::runTuner() {
         std::cout << "Error = [" << error << "]\n";
     }
 }
-
 } // namespace Yayo
-
-// 2:42 - 233

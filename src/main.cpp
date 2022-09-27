@@ -23,10 +23,6 @@
 using namespace Yayo;
 
 int main(int argc, char *argv[]) {
-
-    init_arrays();
-    initMvvLva();
-
     std::unique_ptr<Search> searcher(new Search);
     UCI uci(*searcher.get());
 
@@ -36,9 +32,6 @@ int main(int argc, char *argv[]) {
             return 0;
         }
     }
-
-    TunerEntries tuner("lichess-big3-resolved.book");
-    tuner.runTuner();
 
     uci.Main();
     return 0;
