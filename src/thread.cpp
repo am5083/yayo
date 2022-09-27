@@ -367,10 +367,10 @@ int Search::search() {
 
         // aspiration windows
         int x = score;
-        alpha = score - pow(25, num / 2);
-        beta  = score + pow(25, num / 2);
+        alpha = score - pow(35, num / 2);
+        beta  = score + pow(35, num / 2);
 
-        x = negaMax(alpha, beta, j);
+        x = negaMax(-alpha, beta, j);
         if (x <= alpha || x >= beta) {
             x = negaMax(-(INF * 2), INF * 2, j);
             num++;
