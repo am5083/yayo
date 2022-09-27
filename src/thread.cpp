@@ -280,7 +280,8 @@ int Search::negaMax(int alpha, int beta, int depth) {
         const int curr_move = mList.moves[i].move;
         make(_board, mList.moves[i].move);
 
-        if (futilityPruned && !(mList.moves[i].move >= CAPTURE) && !_board.checkPcs) {
+        if (futilityPruned && movesSearched && (getCapture(mList.moves[abs(i - 1)].move) < CAPTURE) &&
+            !_board.checkPcs) {
             unmake(_board, mList.moves[i].move);
             continue;
         }
