@@ -208,16 +208,18 @@ int Search::negaMax(int alpha, int beta, int depth) {
     if (depth <= 0)
         return quiescent(alpha, beta);
 
-    // int static_eval = 0;
-    // if (depth == 1 && canFutilityPrune) {
-    //     Eval eval(_board);
-    //     static_eval = eval.eval();
+    futilityPruned  = false;
+    int static_eval = 0;
+    if (depth == 1 && canFutilityPrune) {
+        Eval eval(_board);
+        static_eval = eval.eval();
 
-    //     int pawn_val = (MgScore(pawnScore) * eval.mgPhase + EgScore(pawnScore) * eval.egPhase) / 24;
-    //     if (alpha > (static_eval + pawn_val)) {
-    //         return static_eval;
-    //     }
-    // }
+        int pawn_val = 200;
+        if (alpha > (static_eval + pawn_val)) {
+            futilityPruned = true;
+            return static_eval;
+        }
+    }
 
     pvTableLen[ply] = 0;
 
@@ -336,7 +338,7 @@ int Search::negaMax(int alpha, int beta, int depth) {
         prevMove = curr_move;
     }
 
-    if (mList.nMoves == 0) {
+    if (mList.nMoves == 0 && !futilityPruned) {
         if (_board.checkPcs) {
             return -INF + _board.ply;
         }
