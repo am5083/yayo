@@ -353,7 +353,7 @@ int Search::search() {
     abortDepth = 0;
     int depth  = info->depth;
 
-    int num      = 1;
+    int num      = 2;
     double start = get_time();
     int alpha = -(INF * 2), beta = INF * 2;
     int score = negaMax(alpha, beta, 1);
@@ -367,8 +367,8 @@ int Search::search() {
 
         // aspiration windows
         int x = score;
-        alpha = score - pow(25, num);
-        beta  = score + pow(25, num);
+        alpha = score - pow(25, num / 2);
+        beta  = score + pow(25, num / 2);
 
         x = negaMax(alpha, beta, j);
         if (x <= alpha || x >= beta) {
