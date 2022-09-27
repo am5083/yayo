@@ -261,20 +261,20 @@ int Search::negaMax(int alpha, int beta, int depth) {
             return beta;
     }
 
-    futilityPruned = false;
-    const auto pcVal =
-        std::array<Score, 4>{S(0, 0), S(2 * MgScore(pawnScore), 2 * EgScore(pawnScore)), rookScore, queenScore};
+    // futilityPruned = false;
+    // const auto pcVal =
+    //     std::array<Score, 4>{S(0, 0), S(2 * MgScore(pawnScore), 2 * EgScore(pawnScore)), rookScore, queenScore};
 
-    const bool isPv = (alpha < beta - 1);
-    if (depth <= 3 && !isPv && !_board.checkPcs && (abs(alpha) < 9000)) {
-        Eval eval = Eval(_board);
-        int E     = eval.eval();
+    // const bool isPv = (alpha < beta - 1);
+    // if (depth <= 3 && !isPv && !_board.checkPcs && (abs(alpha) < 9000)) {
+    //     Eval eval = Eval(_board);
+    //     int E     = eval.eval();
 
-        const auto futilityMargin = (MgScore(pcVal[depth]) * eval.mgPhase + EgScore(pcVal[depth]) * eval.egPhase) / 24;
-        if (E + futilityMargin + 20 <= alpha) {
-            futilityPruned = true;
-        }
-    }
+    //     const auto futilityMargin = (MgScore(pcVal[depth]) * eval.mgPhase + EgScore(pcVal[depth]) * eval.egPhase) /
+    //     24; if (E + futilityMargin + 20 <= alpha) {
+    //         futilityPruned = true;
+    //     }
+    // }
 
     int bestMove      = move;
     int movesSearched = 0;
@@ -283,10 +283,11 @@ int Search::negaMax(int alpha, int beta, int depth) {
         const int curr_move = mList.moves[i].move;
         make(_board, mList.moves[i].move);
 
-        if (futilityPruned && movesSearched && !(getCapture(mList.moves[i].move) >= CAPTURE) && _board.checkPcs == 0) {
-            unmake(_board, mList.moves[i].move);
-            continue;
-        }
+        // if (futilityPruned && movesSearched && !(getCapture(mList.moves[i].move) >= CAPTURE) && _board.checkPcs == 0)
+        // {
+        //     unmake(_board, mList.moves[i].move);
+        //     continue;
+        // }
 
         nodes++;
         movesSearched++;
@@ -354,14 +355,30 @@ int Search::search() {
 
     int score;
     double start = get_time();
+    int alpha = -(INF * 2), beta = INF * 2;
     for (int j = 1; j <= depth; j++) {
         canNullMove = true;
-        score       = negaMax(-(INF * 2), INF * 2, j);
+        score       = negaMax(alpha, beta, j);
 
         if (checkForStop()) {
             abortDepth = j;
             break;
         }
+
+        if (score <= alpha) {
+            alpha = -(INF * 2);
+            beta  = score + 1;
+            continue;
+        }
+
+        if (score >= beta) {
+            beta  = INF * 2;
+            alpha = score - 1;
+            continue;
+        }
+
+        alpha = score - 50;
+        beta  = score + 50;
 
         double end      = ((get_time() - start) + 1) / 1000.0;
         long double nps = (nodes / (end));
