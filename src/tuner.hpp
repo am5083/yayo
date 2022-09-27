@@ -41,11 +41,14 @@ struct TEntry {
 };
 
 class TunerEntries {
-    TEntry *entries;
-
+  public:
     TunerEntries(std::string file);
-
     ~TunerEntries() { delete[] entries; }
+
+    void runTuner();
+
+  private:
+    TEntry *entries;
 
     double staticEvalErrors(double K);
     double tunedEvalErrors(double params[487][2], double K);
@@ -55,7 +58,7 @@ class TunerEntries {
 
     void updateSingleGradient(TEntry &entry, double gradient[487][2], double params[487][2], double K);
 
-    void runTuner();
+    void initUntunedWeights(double params[487][2]);
 };
 
 } // namespace Yayo

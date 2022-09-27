@@ -96,7 +96,8 @@ double TunerEntries::computeOptimalK() {
 double TunerEntries::staticEvalErrors(double K) {
     double total = 0.0;
     for (int i = 0; i < NUM_ENTRIES; i++) {
-        total += pow(entries[i].result - sigmoid(K, entries[i].staticEval), 2);
+        float result = entries[i].turn == WHITE ? entries[i].result : 1 - entries[i].result; // thanks to dave7895
+        total += pow(result - sigmoid(K, entries[i].staticEval), 2);
     }
     return total / (double)NUM_ENTRIES;
 }
@@ -190,19 +191,19 @@ void TunerEntries::updateSingleGradient(TEntry &entry, double gradient[487][2], 
 }
 
 // clang-format off
-inline void printParams(double params[487][2]) {
+inline void printParams(double cparams[487][2], double params[487][2]) {
     printf("\n");
-    printf("pawnScore   = S(%4d, %4d)\n", (int)params[0][0], (int)params[0][1]);
-    printf("knightScore = S(%4d, %4d)\n", (int)params[1][0], (int)params[1][1]);
-    printf("bishopScore = S(%4d, %4d)\n", (int)params[2][0], (int)params[2][1]);
-    printf("rookScore   = S(%4d, %4d)\n", (int)params[3][0], (int)params[3][1]);
-    printf("queenScore  = S(%4d, %4d)\n\n", (int)params[4][0], (int)params[4][1]);
+    printf("pawnScore   = S(%4d, %4d)\n", (int)cparams[0][0] + (int)params[0][0], (int)cparams[0][1] + (int)params[0][1]);
+    printf("knightScore = S(%4d, %4d)\n", (int)cparams[1][0] + (int)params[1][0], (int)cparams[1][1] + (int)params[1][1]);
+    printf("bishopScore = S(%4d, %4d)\n", (int)cparams[2][0] + (int)params[2][0], (int)cparams[2][1] + (int)params[2][1]);
+    printf("rookScore   = S(%4d, %4d)\n", (int)cparams[3][0] + (int)params[3][0], (int)cparams[3][1] + (int)params[3][1]);
+    printf("queenScore  = S(%4d, %4d)\n\n", (int)cparams[4][0] + (int)params[4][0], (int)cparams[4][1] + (int)params[4][1]);
 
     printf("taperedPawnPcSq[SQUARE_CT] = {");
     for (int i = 0, start = 5; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
-        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
     }
     printf("\n};\n");
 
@@ -210,7 +211,7 @@ inline void printParams(double params[487][2]) {
     for (int i = 0, start = 69; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
-        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
     }
     printf("\n};\n");
 
@@ -218,7 +219,7 @@ inline void printParams(double params[487][2]) {
     for (int i = 0, start = 133; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
-        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
     }
     printf("\n};\n");
 
@@ -226,7 +227,7 @@ inline void printParams(double params[487][2]) {
     for (int i = 0, start = 197; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
-        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
     }
     printf("\n};\n");
 
@@ -234,7 +235,7 @@ inline void printParams(double params[487][2]) {
     for (int i = 0, start = 261; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
-        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
     }
     printf("\n};\n");
 
@@ -242,7 +243,7 @@ inline void printParams(double params[487][2]) {
     for (int i = 0, start = 325; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
-        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
     }
     printf("\n};\n");
 
@@ -250,7 +251,7 @@ inline void printParams(double params[487][2]) {
     for (int i = 0, start = 389; i < 8; i++) {
         if (!(i % 4))
             printf("\n");
-        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
     }
     printf("\n};\n");
 
@@ -258,7 +259,7 @@ inline void printParams(double params[487][2]) {
     for (int i = 0, start = 397; i < 8; i++) {
         if (!(i % 4))
             printf("\n");
-        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
     }
     printf("\n};\n");
 
@@ -266,7 +267,7 @@ inline void printParams(double params[487][2]) {
     for (int i = 0, start = 405; i < 8; i++) {
         if (!(i % 4))
             printf("\n");
-        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
     }
     printf("\n};\n");
 
@@ -274,7 +275,7 @@ inline void printParams(double params[487][2]) {
     for (int i = 0, start = 413; i < 8; i++) {
         if (!(i % 4))
             printf("\n");
-        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
     }
     printf("\n};\n");
 
@@ -282,7 +283,7 @@ inline void printParams(double params[487][2]) {
     for (int i = 0, start = 421; i < 9; i++) {
         if (!(i % 4))
             printf("\n");
-        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
     }
     printf("\n};\n");
 
@@ -290,7 +291,7 @@ inline void printParams(double params[487][2]) {
     for (int i = 0, start = 430; i < 14; i++) {
         if (!(i % 4))
             printf("\n");
-        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
     }
     printf("\n};\n");
 
@@ -298,7 +299,7 @@ inline void printParams(double params[487][2]) {
     for (int i = 0, start = 444; i < 15; i++) {
         if (!(i % 4))
             printf("\n");
-        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
     }
     printf("\n};\n");
 
@@ -306,7 +307,7 @@ inline void printParams(double params[487][2]) {
     for (int i = 0, start = 459; i < 28; i++) {
         if (!(i % 4))
             printf("\n");
-        printf("S(%4d, %4d), ", (int)params[start + i][0], (int)params[start + i][1]);
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
     }
     printf("\n};\n");
 }
@@ -315,6 +316,8 @@ inline void printParams(double params[487][2]) {
 void TunerEntries::initUntunedWeights(double weights[487][2]) {
     Score *_w = &((Score *)&entries[0].w)[0];
     for (int i = 0; i < 487; i++) {
+        weights[i][0] = MgScore(_w[i]);
+        weights[i][1] = EgScore(_w[i]);
     }
 }
 
@@ -324,6 +327,7 @@ void TunerEntries::runTuner() {
     double K, error, rate = LRRATE;
 
     K = computeOptimalK();
+    initUntunedWeights(cparams);
 
     std::ofstream out("new_weights.txt");
     for (int epoch = 0; epoch < MAX_EPOCHS; epoch++) {
@@ -344,7 +348,7 @@ void TunerEntries::runTuner() {
         if (epoch && epoch % LRSTEPRATE == 0)
             rate = rate / LRDROPRATE;
         if (epoch % REPORTING == 0) {
-            printParams(params);
+            printParams(cparams, params);
 
             for (int i = 0; i < 487; i++) {
                 out << "index: " << i << ", "

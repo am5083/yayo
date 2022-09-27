@@ -20,7 +20,6 @@
 #define SEARCH_H_
 #include "board.hpp"
 #include "move.hpp"
-#include "tuned.hpp"
 #include "util.hpp"
 #include <thread>
 
@@ -292,18 +291,12 @@ template <Tracing T = NO_TRACE> class Eval {
         const auto blackRookCount   = popcount(board.pieces(ROOK, BLACK));
         const auto blackQueenCount  = popcount(board.pieces(QUEEN, BLACK));
 
-        const auto pawnVal   = (MgScore(pawnScore) * mgPhase + EgScore(pawnScore) * egPhase) / 24;
-        const auto knightVal = (MgScore(knightScore) * mgPhase + EgScore(knightScore) * egPhase) / 24;
-        const auto bishopVal = (MgScore(bishopScore) * mgPhase + EgScore(bishopScore) * egPhase) / 24;
-        const auto rookVal   = (MgScore(rookScore) * mgPhase + EgScore(bishopScore) * egPhase) / 24;
-        const auto queenVal  = (MgScore(queenScore) * mgPhase + EgScore(queenScore) * egPhase) / 24;
-
-        const auto wMaterial = (pawnVal * whitePawnCount) + (knightVal * whiteKnightCount) +
-                               (bishopVal * whiteBishopCount) + (rookVal * whiteRookCount) +
-                               (queenVal * whiteQueenCount);
-        const auto bMaterial = (pawnVal * blackPawnCount) + (knightVal * blackKnightCount) +
-                               (bishopVal * blackBishopCount) + (rookVal * blackRookCount) +
-                               (queenVal * blackQueenCount);
+        const auto wMaterial = (PAWN_VAL * whitePawnCount) + (KNIGHT_VAL * whiteKnightCount) +
+                               (BISHOP_VAL * whiteBishopCount) + (ROOK_VAL * whiteRookCount) +
+                               (QUEEN_VAL * whiteQueenCount);
+        const auto bMaterial = (PAWN_VAL * blackPawnCount) + (KNIGHT_VAL * blackKnightCount) +
+                               (BISHOP_VAL * blackBishopCount) + (ROOK_VAL * blackRookCount) +
+                               (QUEEN_VAL * blackQueenCount);
 
         if (T) {
             trace.pawnScore[WHITE] = whitePawnCount;
@@ -451,8 +444,6 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::backwardPawnSco
 
         mgScore += MgScore(backwardPawnRankBonus[RANK_OF(psq)]);
         egScore += EgScore(backwardPawnRankBonus[RANK_OF(psq)]);
-        mgScore += MgScore(t_backwardPawnRankBonus[RANK_OF(psq)]);
-        egScore += EgScore(t_backwardPawnRankBonus[RANK_OF(psq)]);
 
         if (T) {
             trace.backwardPawns[RANK_OF(psq)][C]++;
@@ -476,8 +467,6 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::isolatedPawnPen
 
             mgScore += MgScore(isolatedPawnRankBonus[RANK_OF(psq)]);
             egScore += EgScore(isolatedPawnRankBonus[RANK_OF(psq)]);
-            mgScore += MgScore(t_isolatedPawnRankBonus[RANK_OF(psq)]);
-            egScore += EgScore(t_isolatedPawnRankBonus[RANK_OF(psq)]);
 
             if (T) {
                 trace.isolatedPawns[RANK_OF(psq)][C]++;
@@ -513,8 +502,6 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::passedPawnScore
 
         mgScore += MgScore(passedPawnRankBonus[RANK_OF(psq)]);
         egScore += EgScore(passedPawnRankBonus[RANK_OF(psq)]);
-        mgScore += MgScore(t_passedPawnRankBonus[RANK_OF(psq)]);
-        egScore += EgScore(t_passedPawnRankBonus[RANK_OF(psq)]);
 
         if (T) {
             trace.passedPawn[RANK_OF(psq)][C]++;
@@ -536,8 +523,6 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::doubledPawnPena
 
         mgScore += MgScore(doubledPawnRankPenalty[RANK_OF(psq)]);
         egScore += EgScore(doubledPawnRankPenalty[RANK_OF(psq)]);
-        mgScore += MgScore(t_doubledPawnRankBonus[RANK_OF(psq)]);
-        egScore += EgScore(t_doubledPawnRankBonus[RANK_OF(psq)]);
 
         if (T) {
             trace.doubledPawns[RANK_OF(psq)][C]++;
@@ -567,8 +552,8 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::pieceSquare() {
                     (*std::data(pcSq))[pt - 1][i][WHITE] = 1;
                 }
 
-                mgScore += MgScore(pcSq[pt - 1][i]) + MgScore(t_pcSq[pt - 1][i]);
-                egScore += EgScore(pcSq[pt - 1][i]) + EgScore(t_pcSq[pt - 1][i]);
+                mgScore += MgScore(pcSq[pt - 1][i]);
+                egScore += EgScore(pcSq[pt - 1][i]);
             }
         } else if (C == BLACK) {
             if (p >= B_PAWN && p != NO_PC) {
@@ -579,8 +564,8 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::pieceSquare() {
                     (*std::data(pcSq))[pt - 1][mirror(i)][BLACK] = 1;
                 }
 
-                mgScore += MgScore(pcSq[pt - 1][mirror(i)]) + MgScore(t_pcSq[pt - 1][mirror(i)]);
-                egScore += EgScore(pcSq[pt - 1][mirror(i)]) + EgScore(t_pcSq[pt - 1][mirror(i)]);
+                mgScore += MgScore(pcSq[pt - 1][mirror(i)]);
+                egScore += EgScore(pcSq[pt - 1][mirror(i)]);
             }
         }
     }
@@ -625,8 +610,8 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::mobilityScore()
             trace.knightMobility[numMoves][C]++;
         }
 
-        mgScore += MgScore(KnightMobilityScore[numMoves]) + MgScore(t_KnightMobilityScore[numMoves]);
-        egScore += EgScore(KnightMobilityScore[numMoves]) + EgScore(t_KnightMobilityScore[numMoves]);
+        mgScore += MgScore(KnightMobilityScore[numMoves]);
+        egScore += EgScore(KnightMobilityScore[numMoves]);
 
         knights &= knights - 1;
     }
@@ -645,8 +630,6 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::mobilityScore()
 
         mgScore += MgScore(BishopMobilityScore[numMoves]);
         egScore += EgScore(BishopMobilityScore[numMoves]);
-        mgScore += MgScore(t_BishopMobilityScore[numMoves]);
-        egScore += EgScore(t_BishopMobilityScore[numMoves]);
 
         bishops &= bishops - 1;
     }
@@ -665,8 +648,6 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::mobilityScore()
 
         mgScore += MgScore(RookMobilityScore[numMoves]);
         egScore += EgScore(RookMobilityScore[numMoves]);
-        mgScore += MgScore(t_RookMobilityScore[numMoves]);
-        egScore += EgScore(t_RookMobilityScore[numMoves]);
 
         rooks &= rooks - 1;
     }
@@ -686,8 +667,6 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::mobilityScore()
 
         mgScore += MgScore(QueenMobilityScore[numMoves]);
         egScore += EgScore(QueenMobilityScore[numMoves]);
-        mgScore += MgScore(t_QueenMobilityScore[numMoves]);
-        egScore += EgScore(t_QueenMobilityScore[numMoves]);
 
         queens &= queens - 1;
     }
