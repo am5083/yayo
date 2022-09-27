@@ -130,6 +130,11 @@ int Search::quiescent(int alpha, int beta) {
     if (standPat >= beta)
         return beta;
 
+    // update this to use tapered val
+    int delta = QUEEN_VAL;
+    if (standPat < alpha - delta)
+        return alpha;
+
     if (alpha < standPat)
         alpha = standPat;
 
