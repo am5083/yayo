@@ -208,19 +208,6 @@ int Search::negaMax(int alpha, int beta, int depth) {
     if (depth <= 0)
         return quiescent(alpha, beta);
 
-    futilityPruned  = false;
-    int static_eval = 0;
-    if (depth == 1 && canFutilityPrune) {
-        Eval eval(_board);
-        static_eval = eval.eval();
-
-        int pawn_val = 200;
-        if (alpha > (static_eval + pawn_val)) {
-            futilityPruned = true;
-            return static_eval;
-        }
-    }
-
     pvTableLen[ply] = 0;
 
     if (_board.ply > 0) {
@@ -274,22 +261,28 @@ int Search::negaMax(int alpha, int beta, int depth) {
             return beta;
     }
 
-    canFutilityPrune  = true;
+    futilityPruned            = false;
+    const auto futilityMargin = std::array<int, 4>{0, 200, 300, 500};
+    const bool isPv           = (beta - alpha) > 1;
+    if (depth <= 3 && !isPv && !_board.checkPcs && (abs(alpha) < 9000)) {
+        int E = Eval(_board).eval();
+        if (E + futilityMargin[depth] <= alpha) {
+            futilityPruned = true;
+        }
+    }
+
     int bestMove      = move;
-    int prevMove      = 0;
     int movesSearched = 0;
     for (int i = 0; i < mList.nMoves; i++) {
         nodes++;
 
         mList.swapBest(i);
         const int curr_move = mList.moves[i].move;
-
         make(_board, mList.moves[i].move);
 
-        if ((getCapture(prevMove) >= CAPTURE && getCapture(prevMove) < P_KNIGHT) || getCapture(prevMove) > P_QUEEN) {
-            canFutilityPrune = false;
-        } else if (_board.checkPcs) {
-            canFutilityPrune = false;
+        if (futilityPruned && !(mList.moves[i].move >= CAPTURE) && !_board.checkPcs) {
+            unmake(_board, mList.moves[i].move);
+            continue;
         }
 
         movesSearched++;
@@ -334,8 +327,6 @@ int Search::negaMax(int alpha, int beta, int depth) {
             if (!checkForStop())
                 tpTbl.recordHash(_board.fen(), _board.ply, _board.hash(), curr_move, depth, alpha, hashFlag);
         }
-
-        prevMove = curr_move;
     }
 
     if (mList.nMoves == 0 && !futilityPruned) {

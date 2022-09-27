@@ -85,7 +85,6 @@ class Search {
     bool searched = false;
 
     bool canNullMove;
-    bool canFutilityPrune;
     bool futilityPruned;
 
     std::uint64_t nodes;
