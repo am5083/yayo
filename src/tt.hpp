@@ -45,6 +45,7 @@ struct TPTable {
     unsigned int overwrites;
     unsigned int collisions;
 
+    void clear();
     int probeHash(int ply, std::uint64_t key, int *move, int depth, int alpha, int beta);
     void recordHash(std::string fen, int ply, std::uint64_t key, int move, int depth, int score, unsigned char flag);
     int hashfull() const;

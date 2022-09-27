@@ -422,4 +422,7 @@ void Search::joinThread() {
         searchThread->join();
     }
 }
+
+void Search::clearTT() { tpTbl.clear(); }
+
 } // namespace Yayo
