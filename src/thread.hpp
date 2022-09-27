@@ -85,6 +85,7 @@ class Search {
     bool searched = false;
 
     bool canNullMove;
+    bool canFutilityPrune;
 
     std::uint64_t nodes;
     std::unique_ptr<std::thread> searchThread;
