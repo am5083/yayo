@@ -1,6 +1,6 @@
 CXX=g++-12
 CXXFLAGS=-I. -O3 -std=c++20 -fopenmp -mbmi2 -Wall -Wextra -pedantic-errors
-LDFLAGS=-L /usr/local/lib/libomp/lib/
+LDFLAGS=-L /usr/lib/llvm-14/lib/
 LDLIBS=-lomp
 EXE=yayo
 
