@@ -353,32 +353,28 @@ int Search::search() {
     abortDepth = 0;
     int depth  = info->depth;
 
-    int score;
     double start = get_time();
     int alpha = -(INF * 2), beta = INF * 2;
-    for (int j = 1; j <= depth; j++) {
+    int score = negaMax(alpha, beta, 1);
+    for (int j = 2; j <= depth; j++) {
         canNullMove = true;
-        score       = negaMax(alpha, beta, j);
 
         if (checkForStop()) {
             abortDepth = j;
             break;
         }
 
-        if (score <= alpha) {
-            alpha = -(INF * 2);
-            beta  = score + 1;
-            continue;
-        }
-
-        if (score >= beta) {
-            beta  = INF * 2;
-            alpha = score - 1;
-            continue;
-        }
-
+        // aspiration windows
+        int x = score;
         alpha = score - 50;
         beta  = score + 50;
+
+        x = negaMax(alpha, beta, j);
+        if (x <= alpha || x >= beta) {
+            x = negaMax(-(INF * 2), INF * 2, j);
+        }
+
+        score = x;
 
         double end      = ((get_time() - start) + 1) / 1000.0;
         long double nps = (nodes / (end));
