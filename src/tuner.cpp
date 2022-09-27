@@ -174,18 +174,14 @@ double TEntry::linearEval(double params[487][2]) {
 
 // clang-format off
 void TunerEntries::computeGradient(double gradient[487][2], double params[487][2], double K, int batch) {
-    #pragma omp parallel shared(gradient)
-    {
-        double local[487][2] = {{0}};
+    double local[487][2] = {{0}};
 
-        #pragma omp for schedule(static, BATCH_SIZE / 8)
-        for (int i = batch * BATCH_SIZE; i < (batch + 1) * BATCH_SIZE; i++) {
-            updateSingleGradient(entries[i], local, params, K);
+    for (int i = batch * BATCH_SIZE; i < (batch + 1) * BATCH_SIZE; i++) {
+        updateSingleGradient(entries[i], local, params, K);
 
-            for (int i = 0; i < 487; i++) {
-                gradient[i][0] += local[i][0];
-                gradient[i][1] += local[i][1];
-            }
+        for (int i = 0; i < 487; i++) {
+            gradient[i][0] += local[i][0];
+            gradient[i][1] += local[i][1];
         }
     }
 }
@@ -382,6 +378,8 @@ void TunerEntries::runTuner() {
         std::cout << "Error = [" << error << "];  "
                   << "ΔErr = [" << prev_err - error << "]"
                   << "\n";
+
+        prev_err = error;
     }
 }
 } // namespace Yayo
