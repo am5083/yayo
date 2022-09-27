@@ -125,13 +125,13 @@ int Search::quiescent(int alpha, int beta) {
         return negaMax(alpha, beta, 1);
     }
 
-    int standPat = Eval(_board).eval();
+    Eval eval(_board);
+    int standPat = eval.eval();
 
     if (standPat >= beta)
         return beta;
 
-    // update this to use tapered val
-    int delta = QUEEN_VAL;
+    int delta = (MgScore(queenScore) * eval.mgPhase + EgScore(queenScore) * eval.egPhase) / 24;
     if (standPat < alpha - delta)
         return alpha;
 
