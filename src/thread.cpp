@@ -261,12 +261,17 @@ int Search::negaMax(int alpha, int beta, int depth) {
             return beta;
     }
 
-    futilityPruned            = false;
-    const auto futilityMargin = std::array<int, 4>{0, 200, 300, 500};
-    const bool isPv           = (beta - alpha) > 1;
+    futilityPruned = false;
+    const auto pcVal =
+        std::array<Score, 4>{S(0, 0), S(2 * MgScore(pawnScore), 2 * EgScore(pawnScore)), rookScore, queenScore};
+
+    const bool isPv = (alpha < beta - 1);
     if (depth <= 3 && !isPv && !_board.checkPcs && (abs(alpha) < 9000)) {
-        int E = Eval(_board).eval();
-        if (E + futilityMargin[depth] <= alpha) {
+        Eval eval = Eval(_board);
+        int E     = eval.eval();
+
+        const auto futilityMargin = (MgScore(pcVal[depth]) * eval.mgPhase + EgScore(pcVal[depth]) * eval.egPhase) / 24;
+        if (E + futilityMargin + 20 <= alpha) {
             futilityPruned = true;
         }
     }
@@ -274,18 +279,16 @@ int Search::negaMax(int alpha, int beta, int depth) {
     int bestMove      = move;
     int movesSearched = 0;
     for (int i = 0; i < mList.nMoves; i++) {
-        nodes++;
-
         mList.swapBest(i);
         const int curr_move = mList.moves[i].move;
         make(_board, mList.moves[i].move);
 
-        if (futilityPruned && movesSearched && (getCapture(mList.moves[abs(i - 1)].move) < CAPTURE) &&
-            !_board.checkPcs) {
+        if (futilityPruned && movesSearched && !(getCapture(mList.moves[i].move) >= CAPTURE) && _board.checkPcs == 0) {
             unmake(_board, mList.moves[i].move);
             continue;
         }
 
+        nodes++;
         movesSearched++;
         if (movesSearched == 1) {
             score = -negaMax(-beta, -alpha, depth - 1);
