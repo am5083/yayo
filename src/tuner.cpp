@@ -342,7 +342,7 @@ void TunerEntries::initUntunedWeights(double weights[487][2]) {
 void TunerEntries::runTuner() {
     double params[487][2] = {0}, cparams[487][2] = {0}, adagrad[487][2] = {0};
 
-    double K, error, rate = LRRATE;
+    double K, prev_err, error, rate = LRRATE;
 
     K = computeOptimalK();
     initUntunedWeights(cparams);
@@ -379,7 +379,9 @@ void TunerEntries::runTuner() {
 
         printf("Epoch  [%d]  Rate = [%g], ", epoch, rate);
         std::cout.precision(std::numeric_limits<double>::max_digits10);
-        std::cout << "Error = [" << error << "]\n";
+        std::cout << "Error = [" << error << "];  "
+                  << "ΔErr = [" << prev_err - error << "]"
+                  << "\n";
     }
 }
 } // namespace Yayo

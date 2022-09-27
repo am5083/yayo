@@ -17,6 +17,7 @@
 */
 
 #include "tt.hpp"
+#include <cstring>
 
 namespace Yayo {
 
