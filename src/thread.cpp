@@ -415,6 +415,9 @@ void Search::_setFen(std::string fen) { _board.setFen(std::move(fen)); }
 void Search::printBoard() const { _board.print(); }
 
 void Search::stopSearch() {
+    if (info == nullptr)
+        return;
+
     if (info->timeGiven) {
         info->stopTime = 0;
     } else {
