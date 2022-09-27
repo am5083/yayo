@@ -17,6 +17,9 @@
 */
 
 #include "tt.hpp"
+#include <cstring>
+
+namespace Yayo {
 
 int Yayo::TPTable::probeHash(int ply, std::uint64_t key, int *move, int depth, int alpha, int beta) {
     TPHash &p = t[key % TP_INIT_SIZE];
@@ -69,3 +72,6 @@ void Yayo::TPTable::recordHash(std::string fen, int ply, std::uint64_t key, int 
 };
 
 int Yayo::TPTable::hashfull() const { return double(double(n - overwrites) / double(TP_INIT_SIZE)) * 1000; }
+
+void TPTable::clear() { memset(&t, 0, sizeof(t)); }
+} // namespace Yayo

@@ -122,7 +122,10 @@ void UCI::Uci() {
     std::cout << "uciok" << std::endl;
 }
 
-void UCI::NewGame() { search._setFen(START_POS); }
+void UCI::NewGame() {
+    search.clearTT();
+    search._setFen(START_POS);
+}
 
 void UCI::IsReady() { search.isReady(); }
 
