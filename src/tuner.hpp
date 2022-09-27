@@ -40,7 +40,7 @@ struct TEntry {
     double linearEval(double params[487][2]);
 };
 
-struct TunerEntries {
+class TunerEntries {
     TEntry *entries;
 
     TunerEntries(std::string file);

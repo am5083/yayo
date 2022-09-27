@@ -1,3 +1,27 @@
+/*
+**    Yayo is a UCI chess engine written by am5083 (am@kvasm.us)
+**    Copyright (C) 2022 Ahmed Mohamed (am@kvasm.us)
+**
+**    This program is free software: you can redistribute it and/or modify
+**    it under the terms of the GNU General Public License as published by
+**    the Free Software Foundation, either version 3 of the License, or
+**    (at your option) any later version.
+**
+**    This program is distributed in the hope that it will be useful,
+**    but WITHOUT ANY WARRANTY; without even the implied warranty of
+**    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**    GNU General Public License for more details.
+**
+**    You should have received a copy of the GNU General Public License
+**    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/*
+** Texel Tuning
+** Mostly ripped from Andy Grant's Ethereal
+** Credit to Ethereal, Algorythm-sxv, and dave7895
+*/
+
 #include "tuner.hpp"
 #include <limits>
 
@@ -93,8 +117,8 @@ double TEntry::linearEval(double params[487][2]) {
         linearEval += eval;
     }
 
-    int color = (turn == WHITE) ? 1 : -1;
-    return linearEval * color;
+    const auto color = turn == WHITE ? 1 : -1;
+    return color * linearEval;
 }
 
 TunerEntries::TunerEntries(std::string file) {
@@ -130,7 +154,8 @@ TunerEntries::TunerEntries(std::string file) {
 double TunerEntries::tunedEvalErrors(double params[487][2], double K) {
     double total = 0.0;
     for (int i = 0; i < NUM_ENTRIES; i++) {
-        total += pow(entries[i].result - sigmoid(K, entries[i].linearEval(params)), 2.0);
+        float result = entries[i].turn == WHITE ? entries[i].result : 1 - entries[i].result; // thanks to dave7895
+        total += pow(result - sigmoid(K, entries[i].linearEval(params)), 2.0);
     }
     return total / (double)NUM_ENTRIES;
 }
@@ -286,6 +311,12 @@ inline void printParams(double params[487][2]) {
     printf("\n};\n");
 }
 // clang-format on
+
+void TunerEntries::initUntunedWeights(double weights[487][2]) {
+    Score *_w = &((Score *)&entries[0].w)[0];
+    for (int i = 0; i < 487; i++) {
+    }
+}
 
 void TunerEntries::runTuner() {
     double params[487][2] = {0}, cparams[487][2] = {0}, adagrad[487][2] = {0};
