@@ -297,7 +297,7 @@ void UCI::Main() {
         } else if (cmd == "quit") {
             search.stopSearch();
             search.joinThread();
-            break;
+            exit(0);
         } else if (cmd == "stop") {
             Stop();
         } else if (cmd == "trace") {

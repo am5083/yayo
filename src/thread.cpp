@@ -367,7 +367,7 @@ int Search::search() {
             break;
         }
 
-        int window = 25;
+        int window = 50;
 
         if (j >= 4) {
             alpha = std::max(-INF, prevScore - window);
