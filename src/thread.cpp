@@ -367,9 +367,9 @@ int Search::search() {
             break;
         }
 
-        int window = 10;
+        int window = 50;
 
-        if (j >= 6) {
+        if (j >= 4) {
             alpha = std::max(-INF, prevScore - window);
             beta  = std::min(INF, prevScore + window);
         } else {
@@ -382,14 +382,26 @@ int Search::search() {
         while (true) {
             aspirationDepth = std::max(1, aspirationDepth);
             selDepth        = 0;
-            score           = negaMax(alpha, beta, aspirationDepth);
+            score           = negaMax(alpha, beta, j);
 
             if (checkForStop()) {
                 abortDepth = j;
                 break;
             }
 
-            if (alpha < score && score < beta) {
+            if (score <= alpha) {
+                alpha           = std::max(-INF, alpha - window);
+                aspirationDepth = j;
+            } else if (beta <= score) {
+                if (std::abs(score) < 12000)
+                    aspirationDepth--;
+                beta = std::min(INF, beta + window);
+                if (pvTableLen[0])
+                    bestMove = pvTable[0][0];
+            } else {
+                if (pvTableLen[0])
+                    bestMove = pvTable[0][0];
+
                 double end      = ((get_time() - start) + 1) / 1000.0;
                 long double nps = (nodes / (end));
 
@@ -411,24 +423,10 @@ int Search::search() {
                 std::cout << " nps " << int(nps) << " time " << int(end * 1000) << " pv ";
                 printPv();
                 std::cout << std::endl;
-            }
-
-            if (score <= alpha) {
-                alpha           = std::max(-INF, alpha - window);
-                aspirationDepth = j;
-            } else if (beta <= score) {
-                if (std::abs(score) < 12000)
-                    aspirationDepth--;
-                beta = std::min(INF, beta + window);
-                if (pvTableLen[0])
-                    bestMove = pvTable[0][0];
-            } else {
-                if (pvTableLen[0])
-                    bestMove = pvTable[0][0];
                 break;
             }
 
-            window += window / 2;
+            // window += window / 2;
         }
 
         prevScore = score;
