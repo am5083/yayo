@@ -369,7 +369,7 @@ int Search::search() {
 
         int window = 50;
 
-        if (j >= 4) {
+        if (j >= 3) {
             alpha = std::max(-INF, prevScore - window);
             beta  = std::min(INF, prevScore + window);
         } else {
@@ -382,7 +382,7 @@ int Search::search() {
         while (true) {
             aspirationDepth = std::max(1, aspirationDepth);
             selDepth        = 0;
-            score           = negaMax(alpha, beta, j);
+            score           = negaMax(alpha, beta, aspirationDepth);
 
             if (checkForStop()) {
                 abortDepth = j;
@@ -390,6 +390,7 @@ int Search::search() {
             }
 
             if (score <= alpha) {
+                beta            = (alpha + beta) / 2;
                 alpha           = std::max(-INF, alpha - window);
                 aspirationDepth = j;
             } else if (beta <= score) {
