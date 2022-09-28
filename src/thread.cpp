@@ -356,10 +356,10 @@ int Search::search() {
     double start = get_time();
 
     int alpha = -(INF * 2), beta = INF * 2;
-    int score = negaMax(alpha, beta, 1), prevScore = 0;
+    int score = 0, prevScore = 0;
     int bestMove = 0;
 
-    for (int j = 2; j <= depth; j++) {
+    for (int j = 1; j <= depth; j++) {
         canNullMove = true;
 
         if (checkForStop()) {
@@ -373,8 +373,8 @@ int Search::search() {
             alpha = std::max(-INF, prevScore - window);
             beta  = std::min(INF, prevScore + window);
         } else {
-            alpha = -INF - 1;
-            beta  = INF + 1;
+            alpha = -INF;
+            beta  = INF;
         }
 
         int numFailed       = 0;
