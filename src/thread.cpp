@@ -365,14 +365,9 @@ int Search::search() {
     for (int j = 1; j <= depth; j++) {
         canNullMove = true;
 
-        if (checkForStop()) {
-            abortDepth = j;
-            break;
-        }
+        int window = 45;
 
-        int window = 40;
-
-        if (j >= 3) {
+        if (j >= 2) {
             alpha = std::max(-INF, prevScore - window);
             beta  = std::min(INF, prevScore + window);
         } else {
@@ -397,8 +392,8 @@ int Search::search() {
                 alpha           = std::max(-INF, alpha - window);
                 aspirationDepth = j;
             } else if (beta <= score) {
-                if (std::abs(score) < 12000)
-                    aspirationDepth--;
+                // if (std::abs(score) < 12000)
+                //     aspirationDepth--;
                 beta = std::min(INF, beta + window);
                 if (pvTableLen[0])
                     bestMove = pvTable[0][0];
@@ -435,6 +430,8 @@ int Search::search() {
 
         prevScore = score;
     }
+
+    assert(bestMove == pvTable[0][0]);
 
     std::cout << "bestmove ";
     print_move(pvTable[0][0]);
