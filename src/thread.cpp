@@ -101,6 +101,9 @@ void Search::scoreMoves(moveList *mList) {
 
 int Search::quiescent(int alpha, int beta) {
     int ply = _board.ply;
+
+    pvTableLen[ply] = 0;
+
     if (ply > selDepth)
         selDepth = ply;
 
