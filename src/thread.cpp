@@ -350,59 +350,92 @@ int Search::negaMax(int alpha, int beta, int depth) {
 }
 
 int Search::search() {
-    abortDepth = 0;
-    int depth  = info->depth;
-
+    abortDepth   = 0;
+    int depth    = info->depth;
     int num      = 2;
     double start = get_time();
+
     int alpha = -(INF * 2), beta = INF * 2;
-    int score = negaMax(alpha, beta, 1);
+    int score = negaMax(alpha, beta, 1), prevScore = 0;
+    int bestMove = 0;
+
     for (int j = 2; j <= depth; j++) {
         canNullMove = true;
 
-        if (checkForStop()) {
-            abortDepth = j;
-            break;
-        }
+        // if (checkForStop()) {
+        //     abortDepth = j;
+        //     break;
+        // }
 
-        // aspiration windows
-        int x = score;
-        alpha = score - pow(35, num / 2);
-        beta  = score + pow(35, num / 2);
+        int window = 10;
 
-        x = negaMax(-alpha, beta, j);
-        if (x <= alpha || x >= beta) {
-            x = negaMax(-(INF * 2), INF * 2, j);
-            num++;
-        }
-
-        score = x;
-
-        double end      = ((get_time() - start) + 1) / 1000.0;
-        long double nps = (nodes / (end));
-
-        std::cout << std::fixed << "info depth " << j << " seldepth " << selDepth;
-        std::cout << " hashfull " << tpTbl.hashfull();
-        std::cout << " score";
-
-        if (std::abs(score) > (INF - MAX_PLY)) {
-            int tscore = score;
-            if (score < 0)
-                score = -1;
-            else
-                score = 1;
-            std::cout << " mate " << score * ((INF - std::abs(tscore)) / 2);
+        if (j >= 5) {
+            alpha = std::max(-INF, prevScore - window);
+            beta  = std::min(INF, prevScore + window);
         } else {
-            std::cout << " cp " << score;
+            alpha = -INF;
+            beta  = INF;
         }
-        std::cout << " nodes " << nodes;
-        std::cout << " nps " << int(nps) << " time " << int(end * 1000) << " pv ";
-        printPv();
-        std::cout << std::endl;
+
+        int numFailed       = 0;
+        int aspirationDepth = j;
+        while (true) {
+            aspirationDepth = std::max(1, aspirationDepth);
+            selDepth        = 0;
+            score           = negaMax(alpha, beta, aspirationDepth);
+
+            if (checkForStop()) {
+                abortDepth = j;
+                break;
+            }
+
+            if (alpha < score && score < beta) {
+                double end      = ((get_time() - start) + 1) / 1000.0;
+                long double nps = (nodes / (end));
+
+                std::cout << std::fixed << "info depth " << j << " seldepth " << selDepth;
+                std::cout << " hashfull " << tpTbl.hashfull();
+                std::cout << " score";
+
+                if (std::abs(score) > (INF - MAX_PLY)) {
+                    int tscore = score;
+                    if (score < 0)
+                        score = -1;
+                    else
+                        score = 1;
+                    std::cout << " mate " << score * ((INF - std::abs(tscore)) / 2);
+                } else {
+                    std::cout << " cp " << score;
+                }
+                std::cout << " nodes " << nodes;
+                std::cout << " nps " << int(nps) << " time " << int(end * 1000) << " pv ";
+                printPv();
+                std::cout << std::endl;
+            }
+
+            if (score <= alpha) {
+                beta            = (beta + alpha) / 2;
+                alpha           = std::max(-INF, alpha - window);
+                aspirationDepth = j;
+            } else if (beta <= score) {
+                beta = std::min(INF, beta + window);
+                aspirationDepth -= (std::abs(score) < (INF / 2));
+                if (pvTableLen[0])
+                    bestMove = pvTable[0][0];
+            } else {
+                if (pvTableLen[0])
+                    bestMove = pvTable[0][0];
+                break;
+            }
+
+            window += window / 2;
+        }
+
+        prevScore = score;
     }
 
     std::cout << "bestmove ";
-    print_move(pvTable[_board.ply][0]);
+    print_move(bestMove);
     std::cout << std::endl;
     bench_nodes += nodes;
 
