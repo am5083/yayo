@@ -414,7 +414,6 @@ int Search::search() {
             }
 
             if (score <= alpha) {
-                beta            = (beta + alpha) / 2;
                 alpha           = std::max(-INF, alpha - window);
                 aspirationDepth = j;
             } else if (beta <= score) {
