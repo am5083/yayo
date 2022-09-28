@@ -431,10 +431,10 @@ int Search::search() {
         prevScore = score;
     }
 
-    assert(bestMove == pvTable[0][0]);
+    // assert(bestMove == pvTable[0][0]);
 
     std::cout << "bestmove ";
-    print_move(pvTable[0][0]);
+    print_move(bestMove);
     std::cout << std::endl;
     bench_nodes += nodes;
 
