@@ -367,7 +367,7 @@ int Search::search() {
             break;
         }
 
-        int window = 50;
+        int window = 25;
 
         if (j >= 4) {
             alpha = std::max(-INF, prevScore - window);
@@ -426,14 +426,14 @@ int Search::search() {
                 break;
             }
 
-            // window += window / 2;
+            window += window / 2;
         }
 
         prevScore = score;
     }
 
     std::cout << "bestmove ";
-    print_move(bestMove);
+    print_move(pvTable[0][0]);
     std::cout << std::endl;
     bench_nodes += nodes;
 
