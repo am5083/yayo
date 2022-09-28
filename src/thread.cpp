@@ -418,7 +418,8 @@ int Search::search() {
                 alpha           = std::max(-INF, alpha - window);
                 aspirationDepth = j;
             } else if (beta <= score) {
-                aspirationDepth--;
+                if (std::abs(score) < 12000)
+                    aspirationDepth--;
                 beta = std::min(INF, beta + window);
                 if (pvTableLen[0])
                     bestMove = pvTable[0][0];
