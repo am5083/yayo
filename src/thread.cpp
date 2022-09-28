@@ -362,19 +362,19 @@ int Search::search() {
     for (int j = 2; j <= depth; j++) {
         canNullMove = true;
 
-        // if (checkForStop()) {
-        //     abortDepth = j;
-        //     break;
-        // }
+        if (checkForStop()) {
+            abortDepth = j;
+            break;
+        }
 
         int window = 10;
 
-        if (j >= 5) {
+        if (j >= 6) {
             alpha = std::max(-INF, prevScore - window);
             beta  = std::min(INF, prevScore + window);
         } else {
-            alpha = -INF;
-            beta  = INF;
+            alpha = -INF - 1;
+            beta  = INF + 1;
         }
 
         int numFailed       = 0;
