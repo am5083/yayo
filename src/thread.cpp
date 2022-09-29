@@ -365,7 +365,7 @@ int Search::search() {
     for (int j = 1; j <= depth; j++) {
         canNullMove = true;
 
-        int window = 10;
+        int window = 40;
 
         if (j >= 3) {
             alpha = std::max(-INF, prevScore - window);
@@ -387,24 +387,12 @@ int Search::search() {
                 break;
             }
 
-            if (score <= alpha) {
-                beta            = (alpha + beta) / 2;
-                alpha           = std::max(-INF, alpha - window);
-                aspirationDepth = j;
-            } else if (beta <= score) {
-                if (std::abs(score) < 50000)
-                    aspirationDepth--;
-                beta = std::min(INF, beta + window);
-                if (pvTableLen[0])
-                    bestMove = pvTable[0][0];
-            } else {
-                if (pvTableLen[0])
-                    bestMove = pvTable[0][0];
-
+            if (alpha < score && score < beta) {
                 double end      = ((get_time() - start) + 1) / 1000.0;
                 long double nps = (nodes / (end));
 
-                std::cout << std::fixed << "info depth " << j << " seldepth " << selDepth;
+                std::cout << std::fixed << "info depth " << aspirationDepth;
+                std::cout << " seldepth " << selDepth;
                 std::cout << " hashfull " << tpTbl.hashfull();
                 std::cout << " score";
 
@@ -418,14 +406,28 @@ int Search::search() {
                 } else {
                     std::cout << " cp " << score;
                 }
+
                 std::cout << " nodes " << nodes;
                 std::cout << " nps " << int(nps) << " time " << int(end * 1000) << " pv ";
                 printPv();
                 std::cout << std::endl;
+            }
+
+            if (score <= alpha) {
+                beta  = (alpha + beta) / 2;
+                alpha = std::max(-INF, alpha - window);
+            } else if (beta <= score) {
+                beta = std::min(INF, beta + window);
+                if (pvTableLen[0])
+                    bestMove = pvTable[0][0];
+            } else {
+                if (pvTableLen[0])
+                    bestMove = pvTable[0][0];
+
                 break;
             }
 
-            window += window;
+            window += window / 2;
         }
 
         prevScore = score;
@@ -452,8 +454,6 @@ void Search::updatePv(int ply, int move) {
 
 void Search::printPv() {
     for (int i = 0; i < pvTableLen[0]; i++) {
-        if (pvTable[0][i] == NO_MOVE)
-            break;
         print_move(pvTable[0][i]);
         std::cout << " ";
     }
