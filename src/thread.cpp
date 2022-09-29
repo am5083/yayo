@@ -425,7 +425,7 @@ int Search::search() {
                 break;
             }
 
-            window += window / 2;
+            window += window;
         }
 
         prevScore = score;
