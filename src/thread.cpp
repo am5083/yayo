@@ -199,10 +199,6 @@ int Search::quiescent(int alpha, int beta) {
         }
     }
 
-    if (!checkForStop()) {
-        tpTbl.recordHash(_board.fen(), _board.ply, _board.hash(), bestMove, selDepth, best, hashFlag);
-    }
-
     return best;
 }
 

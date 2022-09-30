@@ -73,5 +73,10 @@ void Yayo::TPTable::recordHash(std::string fen, int ply, std::uint64_t key, int 
 
 int Yayo::TPTable::hashfull() const { return double(double(n - overwrites) / double(TP_INIT_SIZE)) * 1000; }
 
-void TPTable::clear() { memset(&t, 0, sizeof(t)); }
+void TPTable::clear() {
+    n          = 0;
+    overwrites = 0;
+    collisions = 0;
+    memset(&t, 0, sizeof(t));
+}
 } // namespace Yayo
