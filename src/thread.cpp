@@ -111,6 +111,10 @@ int Search::quiescent(int alpha, int beta) {
     Eval eval(_board);
     int score = 0, best = eval.eval(), oldAlpha = alpha;
 
+    if (_board.checkPcs) {
+        return negaMax(alpha, beta, 1);
+    }
+
     // mate distance pruning
     int mate_val = INF - ply;
     if (mate_val <= beta) {
@@ -126,10 +130,6 @@ int Search::quiescent(int alpha, int beta) {
 
         if (beta <= mate_val)
             return beta;
-    }
-
-    if (_board.checkPcs) {
-        return negaMax(alpha, beta, 1);
     }
 
     if (best >= beta)
@@ -459,8 +459,6 @@ int Search::search() {
                     aspirationDepth--;
 
                 beta = std::min(INF, beta + window);
-                if (pvTableLen[0])
-                    bestMove = pvTable[0][0];
             } else {
                 if (pvTableLen[0])
                     bestMove = pvTable[0][0];
