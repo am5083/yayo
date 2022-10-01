@@ -234,7 +234,7 @@ void UCI::Main() {
             int m = parseMove(board, move);
             search._make(m);
         } else if (cmd == "go") {
-            int depth       = -1;
+            int depth       = 256;
             int movestogo   = 30;
             int movetime    = -1;
             int time        = -1;
@@ -246,7 +246,7 @@ void UCI::Main() {
 
             while (iss >> tc) {
                 if (tc == "infinite") {
-                    depth = 100;
+                    depth = 2000;
                     continue;
                 } else if (tc == "binc" && turn == BLACK) {
                     iss >> increment;
