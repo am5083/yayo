@@ -28,13 +28,14 @@ int Yayo::TPTable::probeHash(int ply, std::uint64_t key, int *move, int depth, i
         *move = p.move;
         if (p.depth >= depth) {
             const int mateScore = INF - MAX_PLY;
-            if (p.score > mateScore)
+            if (p.score > mateScore) {
                 p.score -= ply;
-            else if (p.score < -mateScore)
+            } else if (p.score < -mateScore) {
                 p.score += ply;
+            }
 
             if (p.flag == TP_EXACT) {
-                return TP_UNKNOWN;
+                return p.score;
             } else if (p.flag == TP_ALPHA && p.score <= alpha) {
                 return alpha;
             } else if (p.flag == TP_BETA && p.score >= beta) {

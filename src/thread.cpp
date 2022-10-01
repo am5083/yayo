@@ -106,6 +106,14 @@ int Search::quiescent(int alpha, int beta) {
     selDepth = std::max(selDepth, ply);
     nodes++;
 
+    int tpScore = 0;
+    int tpMove  = 0;
+    if ((tpScore = tpTbl.probeHash(_board.ply, _board.hash(), &tpMove, 0, alpha, beta)) != TP_UNKNOWN) {
+        if (!(beta - alpha < 1)) {
+            return tpScore;
+        }
+    }
+
     Eval eval(_board);
     int score = 0, best = eval.eval(), oldAlpha = alpha;
 
@@ -199,7 +207,11 @@ int Search::quiescent(int alpha, int beta) {
         }
     }
 
-    return best;
+    if (!checkForStop()) {
+        tpTbl.recordHash(_board.fen(), _board.ply, _board.hash(), bestMove, 0, best, hashFlag);
+    }
+
+    return alpha;
 }
 
 int Search::negaMax(int alpha, int beta, int depth) {
@@ -215,8 +227,10 @@ int Search::negaMax(int alpha, int beta, int depth) {
     if (depth <= 0)
         return quiescent(alpha, beta);
 
-    bool pvNode     = alpha < (beta - 1);
-    pvTableLen[ply] = 0;
+    bool pvNode = alpha < (beta - 1);
+
+    int best = -INF;
+    int move = 0;
 
     if (_board.ply > 0) {
         alpha = std::max(alpha, -INF + _board.ply);
@@ -242,16 +256,9 @@ int Search::negaMax(int alpha, int beta, int depth) {
         }
     }
 
-    moveList mList = {{{0}}};
-    generate(_board, &mList);
-    scoreMoves(&mList);
-
-    int best = -INF;
-    int move = mList.moves[0].move;
-
     if (depth != abortDepth) {
-        if ((best = tpTbl.probeHash(_board.ply, _board.key, &move, depth, alpha, beta)) != TP_UNKNOWN) {
-            if (!pvNode) {
+        if ((best = tpTbl.probeHash(_board.ply, _board.hash(), &move, depth, alpha, beta)) != TP_UNKNOWN) {
+            if (!pvNode && !futilityPruned) {
                 return best;
             }
         } else {
@@ -259,8 +266,15 @@ int Search::negaMax(int alpha, int beta, int depth) {
         }
     }
 
+    moveList mList = {{{0}}};
+    generate(_board, &mList);
+    scoreMoves(&mList);
+
+    pvTableLen[ply] = 0;
+
     if (!_board.checkPcs && canNullMove) {
-        canNullMove = false;
+        canNullMove    = false;
+        futilityPruned = true;
         makeNullMove(_board);
         int score = -negaMax(-beta, -beta + 1, depth - 1 - 2);
         unmakeNullMove(_board);
@@ -295,6 +309,11 @@ int Search::negaMax(int alpha, int beta, int depth) {
         const int curr_move = mList.moves[i].move;
         make(_board, mList.moves[i].move);
 
+        if (futilityPruned && !canNullMove) {
+            futilityPruned = false;
+        } else {
+            canNullMove = true;
+        }
         // if (futilityPruned && movesSearched && !(getCapture(mList.moves[i].move) >= CAPTURE) && _board.checkPcs == 0)
         // {
         //     unmake(_board, mList.moves[i].move);
@@ -340,9 +359,9 @@ int Search::negaMax(int alpha, int beta, int depth) {
         }
     }
 
-    if (mList.nMoves == 0 && !futilityPruned) {
+    if (mList.nMoves == 0) {
         if (_board.checkPcs) {
-            return -INF + _board.ply;
+            return -INF + ply;
         }
 
         return 0;
@@ -359,7 +378,7 @@ int Search::negaMax(int alpha, int beta, int depth) {
         tpTbl.recordHash(_board.fen(), _board.ply, _board.hash(), bestMove, depth, best, hashFlag);
     }
 
-    return best;
+    return alpha;
 }
 
 int Search::search() {
@@ -368,16 +387,18 @@ int Search::search() {
     int num      = 2;
     double start = get_time();
 
-    int alpha = -(INF * 2), beta = INF * 2;
+    int alpha = -INF, beta = INF;
     int score = 0, prevScore = 0;
     int bestMove = 0;
+    canNullMove  = false;
 
     for (int j = 1; j <= depth; j++) {
-        canNullMove = true;
+        if (j > 3) {
+            canNullMove = true;
+        }
+        int window = 60;
 
-        int window = 10;
-
-        if (j >= 3) {
+        if (j >= 2) {
             alpha = std::max(-INF, prevScore - window);
             beta  = std::min(INF, prevScore + window);
         } else {
@@ -407,14 +428,19 @@ int Search::search() {
                 std::cout << " score";
 
                 if (std::abs(score) > (INF - MAX_PLY)) {
-                    int tscore = score;
+                    int tscore = 0;
                     if (score < 0)
-                        score = -1;
+                        tscore = -1;
                     else
-                        score = 1;
-                    std::cout << " mate " << score * ((INF - std::abs(tscore)) / 2);
+                        tscore = 1;
+                    std::cout << " mate " << tscore * ((INF - std::abs(score)) / 2);
                 } else {
                     std::cout << " cp " << score;
+
+                    if (score >= beta)
+                        std::cout << "lowerbound";
+                    if (score <= alpha)
+                        std::cout << "upperbound";
                 }
 
                 std::cout << " nodes " << nodes;
@@ -425,9 +451,11 @@ int Search::search() {
 
             if (score <= alpha) {
                 beta            = (alpha + beta) / 2;
-                alpha           = std::max(-INF, alpha - window);
+                alpha           = std::max(-INF * 2, alpha - window);
                 aspirationDepth = j;
             } else if (beta <= score) {
+                if (std::abs(score) < INF / 2)
+                    aspirationDepth--;
                 beta = std::min(INF, beta + window);
                 if (pvTableLen[0])
                     bestMove = pvTable[0][0];
