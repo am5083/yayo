@@ -40,9 +40,9 @@ int Yayo::TPTable::probeHash(int ply, std::uint64_t key, int *move, int depth, i
                 else
                     return TP_UNKNOWN;
             } else if (p.flag == TP_ALPHA && p.score <= alpha) {
-                return alpha;
+                return p.score;
             } else if (p.flag == TP_BETA && p.score >= beta) {
-                return beta;
+                return p.score;
             }
         }
     }
