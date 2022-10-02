@@ -35,7 +35,7 @@ int Yayo::TPTable::probeHash(int ply, std::uint64_t key, int *move, int depth, i
             }
 
             if (p.flag == TP_EXACT) {
-                return p.score;
+                // return p.score;
             } else if (p.flag == TP_ALPHA && p.score <= alpha) {
                 return alpha;
             } else if (p.flag == TP_BETA && p.score >= beta) {

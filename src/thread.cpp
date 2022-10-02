@@ -455,9 +455,8 @@ int Search::search() {
                 alpha           = std::max(-INF, alpha - window);
                 aspirationDepth = j;
             } else if (beta <= score) {
-                if (std::abs(score) < INF / 2)
+                if (std::abs(score) < (INF / 2))
                     aspirationDepth--;
-
                 beta = std::min(INF, beta + window);
             } else {
                 if (pvTableLen[0])
