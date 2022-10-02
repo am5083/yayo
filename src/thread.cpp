@@ -115,6 +115,14 @@ int Search::quiescent(int alpha, int beta) {
         return negaMax(alpha, beta, 1);
     }
 
+    int tpScore = 0;
+    int tpMove  = 0;
+    if ((tpScore = tpTbl.probeHash(_board.ply, _board.hash(), &tpMove, 0, alpha, beta, true)) != TP_UNKNOWN) {
+        if (!(beta - alpha < 1)) {
+            return tpScore;
+        }
+    }
+
     // mate distance pruning
     int mate_val = INF - ply;
     if (mate_val <= beta) {
@@ -137,14 +145,6 @@ int Search::quiescent(int alpha, int beta) {
 
     if (!_board.checkPcs && ((best + QUEEN_VAL) < alpha)) {
         return alpha;
-    }
-
-    int tpScore = 0;
-    int tpMove  = 0;
-    if ((tpScore = tpTbl.probeHash(_board.ply, _board.hash(), &tpMove, 0, alpha, beta, true)) != TP_UNKNOWN) {
-        if (!(beta - alpha < 1)) {
-            return tpScore;
-        }
     }
 
     if (alpha < best)
@@ -203,7 +203,7 @@ int Search::quiescent(int alpha, int beta) {
 
     if (mList.nMoves == 0) {
         if (__builtin_popcountll(_board.checkPcs) > 0) {
-            return -INF + _board.ply;
+            return -INF;
         }
     }
 
@@ -280,8 +280,8 @@ int Search::negaMax(int alpha, int beta, int depth) {
         int score = -negaMax(-beta, -beta + 1, depth - 1 - 2);
         unmakeNullMove(_board);
 
-        if (checkForStop())
-            return ABORT_SCORE;
+        // if (checkForStop())
+        //     return ABORT_SCORE;
 
         if (score >= beta)
             return beta;
@@ -362,7 +362,7 @@ int Search::negaMax(int alpha, int beta, int depth) {
 
     if (mList.nMoves == 0) {
         if (_board.checkPcs) {
-            return -INF + ply;
+            return -INF;
         }
 
         return 0;
@@ -454,6 +454,9 @@ int Search::search() {
                 beta            = (alpha + beta) / 2;
                 alpha           = std::max(-INF, alpha - window);
                 aspirationDepth = j;
+
+                if (pvTableLen[0] && !bestMove)
+                    bestMove = pvTable[0][0];
             } else if (beta <= score) {
                 if (std::abs(score) < (INF / 2))
                     aspirationDepth--;
