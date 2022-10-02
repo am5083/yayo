@@ -141,7 +141,7 @@ int Search::quiescent(int alpha, int beta) {
 
     int tpScore = 0;
     int tpMove  = 0;
-    if ((tpScore = tpTbl.probeHash(_board.ply, _board.hash(), &tpMove, 0, alpha, beta)) != TP_UNKNOWN) {
+    if ((tpScore = tpTbl.probeHash(_board.ply, _board.hash(), &tpMove, 0, alpha, beta, true)) != TP_UNKNOWN) {
         if (!(beta - alpha < 1)) {
             return tpScore;
         }
@@ -458,6 +458,9 @@ int Search::search() {
                 if (std::abs(score) < (INF / 2))
                     aspirationDepth--;
                 beta = std::min(INF, beta + window);
+
+                if (pvTableLen[0] && !bestMove)
+                    bestMove = pvTable[0][0];
             } else {
                 if (pvTableLen[0])
                     bestMove = pvTable[0][0];

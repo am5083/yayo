@@ -21,7 +21,7 @@
 
 namespace Yayo {
 
-int Yayo::TPTable::probeHash(int ply, std::uint64_t key, int *move, int depth, int alpha, int beta) {
+int Yayo::TPTable::probeHash(int ply, std::uint64_t key, int *move, int depth, int alpha, int beta, bool qsearch) {
     TPHash &p = t[key % TP_INIT_SIZE];
 
     if (p.key == key) {
@@ -35,7 +35,10 @@ int Yayo::TPTable::probeHash(int ply, std::uint64_t key, int *move, int depth, i
             }
 
             if (p.flag == TP_EXACT) {
-                // return p.score;
+                if (qsearch)
+                    return p.score;
+                else
+                    return TP_UNKNOWN;
             } else if (p.flag == TP_ALPHA && p.score <= alpha) {
                 return alpha;
             } else if (p.flag == TP_BETA && p.score >= beta) {
