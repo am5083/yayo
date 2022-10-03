@@ -224,7 +224,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
     if (depth <= 0)
         return quiescent(alpha, beta);
 
-    bool pvNode = alpha < (beta - 1);
+    bool futilityPrune = false;
+    bool pvNode        = alpha < (beta - 1);
 
     int best = -INF;
     int move = 0;
@@ -280,20 +281,9 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
     generate(_board, &mList);
     scoreMoves(&mList, ttMove);
 
-    // futilityPruned = false;
-    // const auto pcVal =
-    //     std::array<Score, 4>{S(0, 0), S(2 * MgScore(pawnScore), 2 * EgScore(pawnScore)), rookScore, queenScore};
-
-    // const bool isPv = (alpha < beta - 1);
-    // if (depth <= 3 && !isPv && !_board.checkPcs && (abs(alpha) < 9000)) {
-    //     Eval eval = Eval(_board);
-    //     int E     = eval.eval();
-
-    //     const auto futilityMargin = (MgScore(pcVal[depth]) * eval.mgPhase + EgScore(pcVal[depth]) * eval.egPhase) /
-    //     24; if (E + futilityMargin + 20 <= alpha) {
-    //         futilityPruned = true;
-    //     }
-    // }
+    int futilityMargin[] = {0, 200, 615, 1210};
+    if (depth <= 3 && !pvNode && std::abs(alpha) < 9000 && Eval(_board).eval() + futilityMargin[depth] <= alpha)
+        futilityPrune = true;
 
     int score         = 0;
     int bestMove      = move;
@@ -303,11 +293,10 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
         const int curr_move = mList.moves[i].move;
         make(_board, mList.moves[i].move);
 
-        // if (futilityPruned && movesSearched && !(getCapture(mList.moves[i].move) >= CAPTURE) && _board.checkPcs == 0)
-        // {
-        //     unmake(_board, mList.moves[i].move);
-        //     continue;
-        // }
+        if (futilityPrune && getCapture(curr_move) < CAPTURE && !_board.checkPcs) {
+            unmake(_board, mList.moves[i].move);
+            continue;
+        }
 
         nodes++;
         movesSearched++;
@@ -379,7 +368,6 @@ int Search::search() {
     int alpha = -INF, beta = INF;
     int score = 0, prevScore = 0;
     int bestMove = 0;
-    canNullMove  = false;
 
     for (int j = 1; j <= depth; j++) {
         int window = 60;

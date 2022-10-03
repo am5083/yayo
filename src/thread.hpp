@@ -84,9 +84,6 @@ class Search {
     int quiescentDepth;
     bool searched = false;
 
-    bool canNullMove;
-    bool futilityPruned;
-
     std::uint64_t nodes;
     std::unique_ptr<std::thread> searchThread;
     Board _board;
