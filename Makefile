@@ -31,3 +31,4 @@ $(BUILD)/%.o: $(SRC)/%.cpp
 clean:
 	rm -f $(BUILD)/*.o
 	rm -f $(TARGET)
+	rm -rf $(BUILD)/*.o

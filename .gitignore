@@ -11,3 +11,4 @@ yayo
 /.idea/
 compile_commands.json
 /a.out
+cmake*

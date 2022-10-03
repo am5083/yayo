@@ -21,24 +21,28 @@
 
 namespace Yayo {
 
-int Yayo::TPTable::probeHash(int ply, std::uint64_t key, int *move, int depth, int alpha, int beta) {
+int Yayo::TPTable::probeHash(int ply, std::uint64_t key, int *move, int depth, int alpha, int beta, bool qsearch) {
     TPHash &p = t[key % TP_INIT_SIZE];
 
     if (p.key == key) {
         *move = p.move;
         if (p.depth >= depth) {
             const int mateScore = INF - MAX_PLY;
-            if (p.score > mateScore)
+            if (p.score > mateScore) {
                 p.score -= ply;
-            else if (p.score < -mateScore)
+            } else if (p.score < -mateScore) {
                 p.score += ply;
+            }
 
             if (p.flag == TP_EXACT) {
-                return p.score;
+                if (qsearch)
+                    return p.score;
+                else
+                    return TP_UNKNOWN;
             } else if (p.flag == TP_ALPHA && p.score <= alpha) {
-                return alpha;
+                return p.score;
             } else if (p.flag == TP_BETA && p.score >= beta) {
-                return beta;
+                return p.score;
             }
         }
     }
@@ -73,5 +77,10 @@ void Yayo::TPTable::recordHash(std::string fen, int ply, std::uint64_t key, int 
 
 int Yayo::TPTable::hashfull() const { return double(double(n - overwrites) / double(TP_INIT_SIZE)) * 1000; }
 
-void TPTable::clear() { memset(&t, 0, sizeof(t)); }
+void TPTable::clear() {
+    n          = 0;
+    overwrites = 0;
+    collisions = 0;
+    memset(&t, 0, sizeof(t));
+}
 } // namespace Yayo

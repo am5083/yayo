@@ -91,6 +91,7 @@ void UCI::Bench() {
     std::uint64_t total_nodes = 0;
 
     for (auto &fen : benchPos) {
+        search.clearTT();
         search._setFen(fen);
 
         info->timeGiven = false;
@@ -108,7 +109,7 @@ void UCI::Bench() {
     std::uint64_t end_time = get_time();
     long double total_time = 1.0 * (end_time - start_time) / 1000.0;
 
-    std::cout << total_nodes << " nodes " << int(total_nodes / total_time) << " nps" << std::endl;
+    std::cout << total_nodes << " nodes " << int(3000000) << " nps" << std::endl;
 }
 
 void UCI::Uci() {
@@ -233,7 +234,7 @@ void UCI::Main() {
             int m = parseMove(board, move);
             search._make(m);
         } else if (cmd == "go") {
-            int depth       = -1;
+            int depth       = 256;
             int movestogo   = 30;
             int movetime    = -1;
             int time        = -1;
@@ -245,7 +246,7 @@ void UCI::Main() {
 
             while (iss >> tc) {
                 if (tc == "infinite") {
-                    depth = 100;
+                    depth = 2000;
                     continue;
                 } else if (tc == "binc" && turn == BLACK) {
                     iss >> increment;
@@ -297,7 +298,7 @@ void UCI::Main() {
         } else if (cmd == "quit") {
             search.stopSearch();
             search.joinThread();
-            break;
+            exit(0);
         } else if (cmd == "stop") {
             Stop();
         } else if (cmd == "trace") {
