@@ -66,12 +66,15 @@ moveList Search::generateMoves() {
 
 Board Search::getBoard() { return _board; }
 
-void Search::scoreMoves(moveList *mList) {
+void Search::scoreMoves(moveList *mList, int ttMove) {
     for (int i = 0; i < mList->nMoves; i++) {
         int move = mList->moves[i].move;
 
         if (move == pvTable[0][_board.ply]) {
             mList->moves[i].score = 10000000 * 2;
+            continue;
+        } else if (ttMove && move == ttMove) {
+            mList->moves[i].score = INF * 2;
             continue;
         }
 
@@ -108,36 +111,24 @@ int Search::quiescent(int alpha, int beta) {
 
     pvTableLen[ply] = 0;
 
+    if (_board.isRepetition()) {
+        numRep++;
+        if (_board.numRepetition() >= 2 || numRep > 2) {
+            return 1 - (nodes & 2);
+        }
+    }
+
     Eval eval(_board);
     int score = 0, best = eval.eval(), oldAlpha = alpha;
-
-    if (_board.checkPcs) {
-        return negaMax(alpha, beta, 1);
-    }
+    int bestMove = 0;
 
     int tpScore = 0;
     int tpMove  = 0;
     if ((tpScore = tpTbl.probeHash(_board.ply, _board.hash(), &tpMove, 0, alpha, beta, true)) != TP_UNKNOWN) {
         if (!(beta - alpha < 1)) {
+            bestMove = tpMove;
             return tpScore;
         }
-    }
-
-    // mate distance pruning
-    int mate_val = INF - ply;
-    if (mate_val <= beta) {
-        beta = mate_val;
-
-        if (alpha >= beta)
-            return alpha;
-    }
-
-    mate_val = -INF + ply;
-    if (mate_val >= alpha) {
-        alpha = mate_val;
-
-        if (beta <= mate_val)
-            return beta;
     }
 
     if (best >= beta)
@@ -154,6 +145,11 @@ int Search::quiescent(int alpha, int beta) {
     generate(_board, &mList);
 
     for (int i = 0; i < mList.nMoves; i++) {
+        if (tpMove && mList.moves[i].move == tpMove) {
+            mList.moves[i].score = INF;
+            continue;
+        }
+
         if (mList.moves[i].score == 0) {
             continue;
         }
@@ -173,7 +169,6 @@ int Search::quiescent(int alpha, int beta) {
         }
     }
 
-    int bestMove = 0;
     for (int i = 0; i < mList.nMoves; i++) {
         if (mList.moves[i].score == 0)
             continue;
@@ -207,14 +202,12 @@ int Search::quiescent(int alpha, int beta) {
         }
     }
 
-    if (!checkForStop()) {
-        tpTbl.recordHash(_board.fen(), _board.ply, _board.hash(), bestMove, 0, best, hashFlag);
-    }
+    tpTbl.recordHash(_board.fen(), _board.ply, _board.hash(), bestMove, 0, best, hashFlag);
 
     return alpha;
 }
 
-int Search::negaMax(int alpha, int beta, int depth) {
+int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
     int hashFlag  = TP_ALPHA;
     const int ply = _board.ply;
 
@@ -223,6 +216,10 @@ int Search::negaMax(int alpha, int beta, int depth) {
 
     if (checkForStop())
         return ABORT_SCORE;
+
+    bool inCheck = popcount(_board.checkPcs) > 0;
+    if (inCheck)
+        depth++;
 
     if (depth <= 0)
         return quiescent(alpha, beta);
@@ -234,16 +231,6 @@ int Search::negaMax(int alpha, int beta, int depth) {
 
     pvTableLen[ply] = 0;
 
-    int ttScore = 0;
-    if (depth != abortDepth) {
-        if ((ttScore = tpTbl.probeHash(_board.ply, _board.hash(), &move, depth, alpha, beta)) != TP_UNKNOWN) {
-            if (!pvNode && !futilityPruned) {
-                best = ttScore;
-                return best;
-            }
-        }
-    }
-
     if (_board.ply > 0) {
         alpha = std::max(alpha, -INF + _board.ply);
         beta  = std::min(beta, INF - _board.ply);
@@ -254,7 +241,6 @@ int Search::negaMax(int alpha, int beta, int depth) {
                 killerMates[ply][0] = pvTable[ply][0];
             }
 
-            updatePv(ply, pvTable[ply][0]);
             return alpha;
         }
 
@@ -269,15 +255,18 @@ int Search::negaMax(int alpha, int beta, int depth) {
         }
     }
 
-    moveList mList = {{{0}}};
-    generate(_board, &mList);
-    scoreMoves(&mList);
+    int ttScore = 0;
+    int ttMove  = 0;
+    if (!nullMove &&
+        (ttScore = tpTbl.probeHash(_board.ply, _board.hash(), &ttMove, depth, alpha, beta)) != TP_UNKNOWN) {
+        if (!pvNode || (ttScore > alpha && ttScore < beta)) {
+            return ttScore;
+        }
+    }
 
-    if (!_board.checkPcs && canNullMove) {
-        canNullMove    = false;
-        futilityPruned = true;
+    if (depth > 2 && !_board.checkPcs && !pvNode && !nullMove) {
         makeNullMove(_board);
-        int score = -negaMax(-beta, -beta + 1, depth - 1 - 2);
+        int score = -negaMax(-beta, -beta + 1, depth - 1 - 2, true, false);
         unmakeNullMove(_board);
 
         // if (checkForStop())
@@ -286,6 +275,10 @@ int Search::negaMax(int alpha, int beta, int depth) {
         if (score >= beta)
             return beta;
     }
+
+    moveList mList = {{{0}}};
+    generate(_board, &mList);
+    scoreMoves(&mList, ttMove);
 
     // futilityPruned = false;
     // const auto pcVal =
@@ -310,11 +303,6 @@ int Search::negaMax(int alpha, int beta, int depth) {
         const int curr_move = mList.moves[i].move;
         make(_board, mList.moves[i].move);
 
-        if (futilityPruned && !canNullMove) {
-            futilityPruned = false;
-        } else {
-            canNullMove = true;
-        }
         // if (futilityPruned && movesSearched && !(getCapture(mList.moves[i].move) >= CAPTURE) && _board.checkPcs == 0)
         // {
         //     unmake(_board, mList.moves[i].move);
@@ -324,18 +312,18 @@ int Search::negaMax(int alpha, int beta, int depth) {
         nodes++;
         movesSearched++;
         if (movesSearched == 1) {
-            score = -negaMax(-beta, -alpha, depth - 1);
+            score = -negaMax(-beta, -alpha, depth - 1, false, false);
         } else {
             if (movesSearched >= 5 && depth >= 3 && canReduce(alpha, curr_move, mList)) {
-                score = -negaMax(-alpha - 1, -alpha, depth - 2);
+                score = -negaMax(-alpha - 1, -alpha, depth - 2, false, false);
             } else {
                 score = alpha + 1;
             }
 
             if (score > alpha) {
-                score = -negaMax(-alpha - 1, -alpha, depth - 1);
+                score = -negaMax(-alpha - 1, -alpha, depth - 1, false, false);
                 if (score > alpha && score < beta) {
-                    score = -negaMax(-beta, -alpha, depth - 1);
+                    score = -negaMax(-beta, -alpha, depth - 1, false, false);
                 }
             }
         }
@@ -394,9 +382,6 @@ int Search::search() {
     canNullMove  = false;
 
     for (int j = 1; j <= depth; j++) {
-        if (j > 3) {
-            canNullMove = true;
-        }
         int window = 60;
 
         if (j >= 3) {
@@ -412,7 +397,7 @@ int Search::search() {
         while (true) {
             aspirationDepth = std::max(1, aspirationDepth);
             selDepth        = 0;
-            score           = negaMax(alpha, beta, aspirationDepth);
+            score           = negaMax(alpha, beta, aspirationDepth, false, false);
 
             if (checkForStop()) {
                 abortDepth = j;
