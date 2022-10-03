@@ -234,6 +234,16 @@ int Search::negaMax(int alpha, int beta, int depth) {
 
     pvTableLen[ply] = 0;
 
+    int ttScore = 0;
+    if (depth != abortDepth) {
+        if ((ttScore = tpTbl.probeHash(_board.ply, _board.hash(), &move, depth, alpha, beta)) != TP_UNKNOWN) {
+            if (!pvNode && !futilityPruned) {
+                best = ttScore;
+                return best;
+            }
+        }
+    }
+
     if (_board.ply > 0) {
         alpha = std::max(alpha, -INF + _board.ply);
         beta  = std::min(beta, INF - _board.ply);
@@ -256,16 +266,6 @@ int Search::negaMax(int alpha, int beta, int depth) {
             if (_board.numRepetition() >= 2 || numRep > 2) {
                 return 1 - (nodes & 2);
             }
-        }
-    }
-
-    if (depth != abortDepth) {
-        if ((best = tpTbl.probeHash(_board.ply, _board.hash(), &move, depth, alpha, beta)) != TP_UNKNOWN) {
-            if (!pvNode && !futilityPruned) {
-                return best;
-            }
-        } else {
-            best = -INF;
         }
     }
 
