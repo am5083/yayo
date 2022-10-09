@@ -206,12 +206,6 @@ int Search::quiescent(int alpha, int beta) {
         }
     }
 
-    if (mList.nMoves == 0) {
-        if (__builtin_popcountll(_board.checkPcs) > 0) {
-            return -INF;
-        }
-    }
-
     // tpTbl.recordHash(_board.fen(), _board.ply, _board.key, bestMove, 0, best,
     //                  hashFlag);
 
