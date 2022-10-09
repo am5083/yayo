@@ -122,6 +122,7 @@ int Search::quiescent(int alpha, int beta) {
     Eval eval(_board);
     int score = 0, best = eval.eval(), oldAlpha = alpha;
     int bestMove = 0;
+    int originalEval = best;
 
     tt.prefetch(_board.key);
     int ttScore = 0, tpMove = 0;
@@ -308,7 +309,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
     generate(_board, &mList);
     scoreMoves(&mList, ttMove);
 
-    int futilityMargin[] = {0, 200, 500, 900};
+    int futilityMargin[] = {0, 100, 500, 900};
     if (depth <= 3 && !pvNode && std::abs(alpha) < 9000 &&
         Eval(_board).eval() + futilityMargin[depth] <= alpha)
         futilityPrune = true;

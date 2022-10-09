@@ -25,12 +25,6 @@ namespace Yayo {
 
 const EvalWeights evalWeights;
 
-std::unordered_map<std::uint64_t, int> pawnTable;
-std::unordered_map<std::uint64_t, int> evalTable;
-std::unordered_map<std::uint64_t, Score> mobilityTable;
-std::unordered_map<std::uint64_t, Score> safetyTable;
-std::unordered_map<std::uint64_t, Score> rookTable;
-
 int TracePeek::calculate(std::tuple<int, int, int> info) {
     int *trace = (int *)&t; // lol
     Score *weights = &((Score *)&w)[0];

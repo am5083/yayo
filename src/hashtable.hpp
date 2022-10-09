@@ -30,11 +30,11 @@ struct EvalHash {
 
     union {
         struct {
-            std::uint16_t generation;
-            std::uint16_t score;
+            std::uint32_t generation;
+            std::uint32_t score;
         } data;
 
-        std::uint32_t hash;
+        std::uint64_t hash;
     };
 
     void age(int gen) {
