@@ -159,15 +159,11 @@ int Search::quiescent(int alpha, int beta) {
         alpha = best;
 
     moveList mList = {0};
-    generate(_board, &mList);
+    generateCaptures(_board, &mList);
 
     for (int i = 0; i < mList.nMoves; i++) {
         if (tpMove && mList.moves[i].move == tpMove) {
             mList.moves[i].score = INF;
-            continue;
-        }
-
-        if (mList.moves[i].score == 0) {
             continue;
         }
 
@@ -187,9 +183,6 @@ int Search::quiescent(int alpha, int beta) {
     }
 
     for (int i = 0; i < mList.nMoves; i++) {
-        if (mList.moves[i].score == 0)
-            continue;
-
         mList.swapBest(i);
 
         make(_board, mList.moves[i].move);
@@ -444,7 +437,7 @@ int Search::search() {
             selDepth = 0;
             score = negaMax(alpha, beta, aspirationDepth, false, false);
 
-            if (checkForStop() && bestMove) {
+            if (checkForStop()) {
                 abortDepth = j;
                 break;
             }
@@ -458,7 +451,7 @@ int Search::search() {
                     aspirationDepth--;
                 beta = std::min(INF, beta + window);
 
-                if (pvTableLen[0])
+                if (pvTableLen[0] && !bestMove)
                     bestMove = pvTable[0][0];
 
             } else {
@@ -504,6 +497,13 @@ int Search::search() {
         }
 
         prevScore = score;
+    }
+
+    if (!bestMove) {
+        moveList mList = {{0}};
+        generate(_board, &mList);
+        mList.swapBest(0);
+        bestMove = mList.moves[0].move;
     }
 
     std::cout << "bestmove ";

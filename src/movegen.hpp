@@ -77,7 +77,7 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
     }
 
     //(Type == CHECK_EVASION) ? board.bCheckPcs() : (Type == M_QUIET) ? 0 :
-    //board.pieces(enemy);
+    // board.pieces(enemy);
     Bitboard singlePushPawns = board.pieces(PAWN, Turn) & ~Rank7;
     Bitboard promoPawns = board.pieces(PAWN, Turn) & Rank7;
 
@@ -112,7 +112,7 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
         Bitboard wPromoCapture = shift<wAttack>(promoPawns) & capture;
         Bitboard pushPromo = shift<Push>(promoPawns) & push;
 
-        if (Type == CHECK_EVASION) {
+        if (Type == CHECK_EVASION || Type == M_CAPTURE) {
             pushPromo &= targets;
         }
 
@@ -289,6 +289,9 @@ constexpr moveList *generateLegal(const Board &board, moveList *mList) {
             targets = LINE[kingSq][__builtin_ctzll(board.checkPcs)] &
                       ~board.pieces(C) & (orth | diag);
             targets |= board.checkPcs;
+
+            if (T == M_CAPTURE)
+                targets &= board.pieces(~C);
         } else if (__builtin_popcountll(board.bCheckPcs()) > 1) {
             targets = 0;
         }

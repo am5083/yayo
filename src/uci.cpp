@@ -248,7 +248,7 @@ void UCI::Main() {
             search._make(m);
         } else if (cmd == "go") {
             int depth = 256;
-            int movestogo = 15;
+            int movestogo = 20;
             int movetime = -1;
             int time = -1;
             int increment = 0;
