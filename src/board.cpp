@@ -279,6 +279,7 @@ void Board::setFen(const std::string fen) {
         n = n * 10 + fen[idx] - '0', idx++;
     fullMoves = n;
 
+    pawnKey ^= pieces(PAWN);
     key ^= (enPass != SQUARE_64) ? zobristEpFile[enPass % 8] : 0;
 
     color[WHITE] = pieceBB[W_PAWN] | pieceBB[W_KNIGHT] | pieceBB[W_BISHOP] |

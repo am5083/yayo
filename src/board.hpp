@@ -88,7 +88,8 @@ class Board {
     Bitboard cPieceBB[7];
 
     mutable Bitboard checkPcs;
-    uint64_t key;
+    std::uint64_t key;
+    std::uint64_t pawnKey = 0;
 
     Piece lastCapt;
     Color turn;

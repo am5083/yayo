@@ -20,6 +20,7 @@
 #define SEARCH_H_
 #include "board.hpp"
 #include "move.hpp"
+#include "src/hashtable.hpp"
 #include "util.hpp"
 #include <thread>
 #include <unordered_map>
@@ -35,144 +36,150 @@ constexpr Score blockedPassedPawnRankBonus[] = {
       S(0, 0),     S(0, 0),     S(0, 0),     S(40, 40),
       S(200, 200), S(260, 260), S(400, 400), S(0, 0)};
 
-constexpr Score pawnScore = S(94, 123);
-constexpr Score knightScore = S(376, 441);
-constexpr Score bishopScore = S(410, 462);
-constexpr Score rookScore = S(520, 812);
-constexpr Score queenScore = S(1131, 1474);
+constexpr Score pawnScore = S(93, 134);
+constexpr Score knightScore = S(382, 467);
+constexpr Score bishopScore = S(417, 490);
+constexpr Score rookScore = S(551, 866);
+constexpr Score queenScore = S(1158, 1561);
 
 constexpr Score taperedPawnPcSq[SQUARE_CT] = {
       S(0, 0),      S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0),
-      S(0, 0),      S(0, 0),    S(0, 0),    S(19, 109), S(22, 82),
-      S(-11, 97),   S(24, 42),  S(-31, 44), S(-16, 30), S(-127, 112),
-      S(-135, 137), S(-3, 99),  S(2, 97),   S(39, 44),  S(46, -7),
-      S(61, -15),   S(101, 14), S(68, 64),  S(32, 70),  S(-17, 62),
-      S(-4, 41),    S(11, 19),  S(17, -9),  S(42, -6),  S(40, 7),
-      S(22, 24),    S(16, 24),  S(-31, 31), S(-20, 22), S(-7, 8),
-      S(16, -9),    S(12, -4),  S(9, 5),    S(4, 7),    S(-4, 5),
-      S(-30, 22),   S(-24, 20), S(-9, 10),  S(-11, 14), S(8, 12),
-      S(4, 13),     S(27, 4),   S(2, 0),    S(-32, 28), S(-26, 25),
-      S(-12, 16),   S(-22, 11), S(-3, 17),  S(25, 11),  S(36, 2),
-      S(-7, 4),     S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0),
+      S(0, 0),      S(0, 0),    S(0, 0),    S(27, 107), S(22, 90),
+      S(-17, 99),   S(30, 39),  S(-32, 56), S(-16, 37), S(-141, 123),
+      S(-157, 143), S(0, 94),   S(3, 101),  S(33, 44),  S(41, -5),
+      S(56, -15),   S(98, 14),  S(64, 70),  S(39, 70),  S(-19, 61),
+      S(-13, 43),   S(3, 20),   S(10, -10), S(35, -3),  S(34, 10),
+      S(18, 30),    S(14, 25),  S(-35, 33), S(-28, 25), S(-13, 10),
+      S(4, -7),     S(1, -2),   S(5, 6),    S(-3, 9),   S(-7, 5),
+      S(-29, 23),   S(-22, 19), S(-11, 11), S(-6, 11),  S(13, 12),
+      S(6, 14),     S(25, 5),   S(6, -2),   S(-25, 26), S(-20, 25),
+      S(-9, 13),    S(-7, 16),  S(5, 15),   S(35, 10),  S(40, 2),
+      S(1, -2),     S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0),
       S(0, 0),      S(0, 0),    S(0, 0),    S(0, 0),
 };
 constexpr Score taperedKnightPcSq[SQUARE_CT] = {
-      S(-184, -67), S(-119, -35), S(-50, -14),   S(-14, -16), S(33, -11),
-      S(-81, -18),  S(-69, -32),  S(-101, -116), S(-21, -18), S(8, -1),
-      S(53, -5),    S(64, -5),    S(63, -13),    S(103, -13), S(19, -15),
-      S(56, -42),   S(-6, -1),    S(48, -2),     S(77, 23),   S(99, 17),
-      S(113, 16),   S(136, -1),   S(78, -16),    S(40, -33),  S(-2, 3),
-      S(18, 21),    S(50, 46),    S(81, 41),     S(50, 46),   S(87, 38),
-      S(26, 19),    S(52, -17),   S(-13, 14),    S(10, 13),   S(29, 45),
-      S(32, 38),    S(44, 49),    S(31, 31),     S(45, 14),   S(12, -6),
-      S(-29, -22),  S(-8, 4),     S(10, 14),     S(20, 32),   S(36, 37),
-      S(17, 9),     S(15, -5),    S(-15, -22),   S(-60, -13), S(-28, 2),
-      S(-15, -2),   S(0, 1),      S(-2, 0),      S(7, 2),     S(-7, -29),
-      S(-9, -23),   S(-106, -37), S(-40, -52),   S(-44, -15), S(-31, -10),
-      S(-26, -18),  S(-6, -26),   S(-31, -26),   S(-55, -28),
+      S(-165, -77), S(-129, -44), S(-53, -11),  S(1, -20),   S(24, -6),
+      S(-81, -10),  S(-74, -23),  S(-93, -119), S(-27, -18), S(16, 3),
+      S(59, -15),   S(78, -10),   S(67, -10),   S(115, -5),  S(40, -17),
+      S(71, -29),   S(-14, 10),   S(48, -2),    S(71, 21),   S(90, 15),
+      S(96, 13),    S(122, -3),   S(70, -17),   S(28, -12),  S(9, 10),
+      S(9, 23),     S(33, 45),    S(72, 41),    S(37, 43),   S(76, 36),
+      S(16, 22),    S(55, -6),    S(-6, 21),    S(10, 11),   S(18, 46),
+      S(29, 36),    S(40, 49),    S(32, 34),    S(54, 10),   S(20, 10),
+      S(-23, -15),  S(-16, 7),    S(2, 11),     S(14, 27),   S(30, 35),
+      S(9, 3),      S(13, -5),    S(-3, -11),   S(-49, -2),  S(-24, 9),
+      S(-10, -4),   S(2, 3),      S(7, 2),      S(15, -6),   S(6, -30),
+      S(-4, -8),    S(-102, -25), S(-22, -23),  S(-33, -8),  S(-17, 0),
+      S(-4, -12),   S(-6, -17),   S(-15, -4),   S(-45, -24),
 };
 constexpr Score taperedBishopPcSq[SQUARE_CT] = {
-      S(-9, -2), S(-59, 11), S(-41, 9),   S(-80, 16), S(-53, -1),  S(-60, 6),
-      S(-21, 2), S(-34, -6), S(-3, -16),  S(37, -3),  S(12, 1),    S(-9, 16),
-      S(34, -3), S(19, -5),  S(45, 6),    S(-5, -13), S(4, 11),    S(35, 10),
-      S(44, 9),  S(53, 3),   S(43, 12),   S(65, 13),  S(59, 8),    S(30, 4),
-      S(-10, 3), S(17, 16),  S(30, 29),   S(55, 34),  S(50, 32),   S(48, 21),
-      S(19, 21), S(-1, 9),   S(-11, 3),   S(-1, 27),  S(10, 31),   S(47, 26),
-      S(36, 34), S(15, 26),  S(8, 23),    S(14, -13), S(13, 4),    S(16, 6),
-      S(17, 23), S(20, 24),  S(26, 31),   S(18, 25),  S(17, 12),   S(20, -9),
-      S(10, -4), S(16, -4),  S(23, -2),   S(4, 8),    S(11, 13),   S(24, 5),
-      S(35, -3), S(13, -3),  S(-12, -20), S(13, 15),  S(-10, -13), S(-16, 5),
-      S(-8, 1),  S(-12, 4),  S(20, -17),  S(2, -22),
+      S(10, 10),  S(-82, 19), S(-24, 7), S(-104, 15), S(-61, -6), S(-85, 4),
+      S(-27, 9),  S(-42, -2), S(-7, -7), S(29, -4),   S(7, -9),   S(-15, 12),
+      S(28, -12), S(10, -6),  S(32, 1),  S(-3, -13),  S(-3, 14),  S(32, 7),
+      S(40, 7),   S(38, 3),   S(35, 3),  S(55, 8),    S(45, 3),   S(15, 5),
+      S(-15, 2),  S(10, 12),  S(17, 27), S(40, 33),   S(32, 31),  S(30, 24),
+      S(14, 18),  S(-15, 11), S(-10, 3), S(-16, 26),  S(1, 29),   S(35, 26),
+      S(28, 33),  S(10, 17),  S(0, 26),  S(25, -13),  S(5, 15),   S(16, 18),
+      S(13, 23),  S(18, 21),  S(28, 29), S(21, 23),   S(20, 17),  S(22, 1),
+      S(16, 4),   S(16, 0),   S(30, 0),  S(5, 19),    S(15, 12),  S(34, 6),
+      S(38, 2),   S(18, 9),   S(-1, -5), S(26, 24),   S(12, 18),  S(-2, 14),
+      S(5, 12),   S(7, 23),   S(36, -3), S(24, -9),
 };
 constexpr Score taperedRookPcSq[SQUARE_CT] = {
-      S(31, 39),  S(53, 26),  S(19, 55),  S(31, 45),  S(67, 29),  S(52, 31),
-      S(60, 36),  S(86, 19),  S(18, 28),  S(17, 41),  S(39, 44),  S(72, 29),
-      S(38, 28),  S(78, 20),  S(49, 14),  S(76, 13),  S(11, 28),  S(37, 30),
-      S(37, 27),  S(36, 28),  S(75, 10),  S(77, 0),   S(120, -3), S(77, 9),
-      S(-7, 25),  S(31, 20),  S(12, 33),  S(14, 33),  S(28, 3),   S(25, 4),
-      S(40, 8),   S(38, -2),  S(-35, 16), S(-34, 24), S(-14, 33), S(-2, 29),
-      S(2, 19),   S(-27, 13), S(7, 9),    S(-6, 12),  S(-34, 12), S(-25, 14),
-      S(-21, 11), S(-12, 15), S(-11, 21), S(-15, -4), S(27, -23), S(-4, -14),
-      S(-49, 10), S(-29, 6),  S(-9, 8),   S(-22, 11), S(-8, -3),  S(1, -7),
-      S(21, -15), S(-33, -2), S(-16, 7),  S(-17, 16), S(-6, 22),  S(1, 18),
-      S(7, 6),    S(-6, 2),   S(6, -2),   S(-18, -9),
+      S(20, 38),  S(42, 18),  S(12, 54),  S(18, 36),  S(49, 27),  S(47, 37),
+      S(67, 27),  S(89, 20),  S(7, 30),   S(-4, 40),  S(20, 45),  S(53, 25),
+      S(18, 27),  S(55, 19),  S(35, 14),  S(43, 23),  S(4, 29),   S(37, 26),
+      S(30, 28),  S(37, 34),  S(71, 4),   S(71, 4),   S(119, 2),  S(71, 12),
+      S(-14, 34), S(27, 21),  S(9, 36),   S(19, 32),  S(27, 7),   S(23, 8),
+      S(32, 17),  S(28, 0),   S(-33, 20), S(-28, 26), S(-12, 35), S(-6, 29),
+      S(1, 19),   S(-33, 22), S(0, 14),   S(-13, 17), S(-28, 19), S(-27, 28),
+      S(-18, 22), S(-13, 19), S(-9, 21),  S(-15, 1),  S(27, -13), S(-4, -8),
+      S(-46, 17), S(-18, 10), S(-6, 17),  S(-6, 14),  S(-2, 7),   S(6, -7),
+      S(24, -8),  S(-27, 3),  S(-16, 17), S(-12, 18), S(0, 19),   S(9, 16),
+      S(14, 4),   S(0, 6),    S(6, 0),    S(-15, 0),
 };
 constexpr Score taperedQueenPcSq[SQUARE_CT] = {
-      S(-55, 55), S(-25, 30),  S(-3, 73),   S(28, 81),   S(36, 70),
-      S(47, 56),  S(99, 18),   S(29, 46),   S(-8, 32),   S(-26, 46),
-      S(-11, 86), S(-23, 123), S(-11, 132), S(36, 59),   S(9, 49),
-      S(58, 45),  S(-2, 28),   S(-15, 40),  S(4, 74),    S(-3, 93),
-      S(24, 95),  S(80, 69),   S(79, 11),   S(51, 54),   S(-19, 32),
-      S(-4, 40),  S(-10, 49),  S(-3, 88),   S(10, 92),   S(16, 94),
-      S(18, 82),  S(19, 50),   S(-7, 2),    S(-14, 41),  S(-14, 56),
-      S(-5, 80),  S(-6, 89),   S(-13, 86),  S(2, 63),    S(6, 56),
-      S(-8, 5),   S(-3, 21),   S(-8, 38),   S(-4, 41),   S(-7, 64),
-      S(8, 24),   S(13, 15),   S(3, 24),    S(-15, 3),   S(-8, -8),
-      S(9, -10),  S(13, -2),   S(5, 12),    S(20, -26),  S(7, -28),
-      S(20, -63), S(-12, -9),  S(-18, -21), S(-12, -19), S(3, -14),
-      S(-8, -19), S(-24, -3),  S(-12, -36), S(-17, -16),
+      S(-68, 66),  S(-40, 23), S(-37, 63), S(3, 66),   S(14, 39),  S(27, 44),
+      S(90, -6),   S(6, 49),   S(-17, 36), S(-36, 41), S(-20, 81), S(-48, 122),
+      S(-43, 134), S(15, 45),  S(-4, 45),  S(53, 40),  S(-2, 40),  S(-12, 49),
+      S(-1, 75),   S(-21, 93), S(19, 74),  S(56, 50),  S(69, 4),   S(21, 64),
+      S(-20, 50),  S(-5, 48),  S(-13, 54), S(-19, 89), S(1, 75),   S(-5, 97),
+      S(7, 78),    S(12, 46),  S(-8, 17),  S(-20, 46), S(-23, 67), S(-16, 85),
+      S(-17, 95),  S(-16, 87), S(2, 53),   S(8, 65),   S(-9, 18),  S(-6, 35),
+      S(-5, 46),   S(-8, 57),  S(-9, 85),  S(10, 33),  S(11, 32),  S(10, 35),
+      S(-6, 1),    S(-9, 3),   S(8, 7),    S(21, 11),  S(14, 31),  S(24, -7),
+      S(16, -20),  S(37, -62), S(-5, 6),   S(-2, -1),  S(9, -5),   S(21, 11),
+      S(9, 9),     S(-10, 12), S(-3, -25), S(-2, -11),
 };
 constexpr Score taperedKingPcSq[SQUARE_CT] = {
-      S(-62, -105), S(25, -62),  S(30, -34),   S(-23, -7),  S(-53, -10),
-      S(1, 2),      S(50, 18),   S(32, -109),  S(-35, -22), S(-8, 10),
-      S(-84, 31),   S(2, 18),    S(6, 26),     S(-1, 44),   S(64, 35),
-      S(51, -2),    S(-98, 1),   S(-1, 12),    S(-46, 40),  S(-34, 57),
-      S(-36, 68),   S(39, 64),   S(61, 46),    S(9, 12),    S(-46, -10),
-      S(-42, 28),   S(-91, 44),  S(-170, 61),  S(-144, 67), S(-111, 62),
-      S(-107, 52),  S(-104, 10), S(-114, -25), S(-80, 10),  S(-155, 44),
-      S(-180, 62),  S(-202, 69), S(-137, 52),  S(-136, 32), S(-171, 15),
-      S(-58, -32),  S(-47, -1),  S(-97, 24),   S(-144, 44), S(-123, 45),
-      S(-120, 33),  S(-58, 7),   S(-86, -6),   S(47, -52),  S(-1, -18),
-      S(-17, -2),   S(-54, 6),   S(-60, 14),   S(-31, 3),   S(26, -17),
-      S(35, -39),   S(47, -113), S(73, -70),   S(39, -50),  S(-86, -28),
-      S(-7, -48),   S(-49, -27), S(51, -59),   S(51, -100),
+      S(-58, -107), S(31, -67),  S(29, -37),  S(-51, -15), S(-56, -5),
+      S(-14, -6),   S(50, 16),   S(29, -125), S(-56, -20), S(-23, 15),
+      S(-93, 30),   S(16, 23),   S(5, 28),    S(-15, 50),  S(95, 40),
+      S(61, -14),   S(-134, 9),  S(-18, 19),  S(-49, 41),  S(-50, 66),
+      S(-35, 74),   S(43, 64),   S(60, 56),   S(18, 4),    S(-48, -16),
+      S(-36, 29),   S(-107, 45), S(-192, 67), S(-169, 67), S(-126, 60),
+      S(-111, 49),  S(-125, 4),  S(-149, -9), S(-88, 14),  S(-149, 43),
+      S(-186, 62),  S(-214, 69), S(-136, 41), S(-140, 27), S(-193, 14),
+      S(-51, -31),  S(-52, -4),  S(-89, 22),  S(-141, 40), S(-105, 38),
+      S(-109, 29),  S(-46, 0),   S(-85, -10), S(57, -49),  S(10, -15),
+      S(-14, 0),    S(-54, 11),  S(-57, 19),  S(-34, 6),   S(31, -17),
+      S(30, -43),   S(53, -113), S(73, -69),  S(38, -47),  S(-77, -20),
+      S(-3, -36),   S(-40, -25), S(48, -60),  S(42, -106),
 };
 constexpr Score passedPawnRankBonus[8] = {
-      S(0, 0),  S(-7, 6),   S(-8, 10),  S(-6, 42),
-      S(9, 78), S(13, 148), S(87, 176), S(0, 0),
+      S(0, 0),  S(-2, 5),   S(-3, 13),  S(-5, 45),
+      S(2, 89), S(-3, 167), S(72, 189), S(0, 0),
 };
 constexpr Score doubledPawnRankBonus[8] = {
-      S(-10, -10), S(-7, -28),  S(-8, -18),  S(-1, -33),
-      S(15, -51),  S(-66, -62), S(-10, -10), S(-10, -10),
+      S(-10, -10), S(-5, -29),  S(-5, -22),  S(-1, -34),
+      S(15, -62),  S(-61, -83), S(-10, -10), S(-10, -10),
 };
 constexpr Score isolatedPawnRankBonus[8] = {
-      S(-6, -6),  S(-16, -8), S(-21, -15), S(-18, -12),
-      S(-7, -27), S(8, -34),  S(8, -19),   S(-6, -6),
+      S(-6, -6),  S(-16, -8), S(-23, -15), S(-18, -12),
+      S(-3, -27), S(7, -32),  S(23, -18),  S(-6, -6),
 };
 constexpr Score backwardPawnRankBonus[8] = {
-      S(-15, -15), S(-18, -6),  S(-3, -7),   S(-8, -4),
-      S(-13, -5),  S(-15, -15), S(-15, -15), S(-15, -15),
+      S(-15, -15), S(-18, -13), S(-3, -6),   S(-8, -4),
+      S(-19, -5),  S(-15, -15), S(-15, -15), S(-15, -15),
 };
 constexpr Score KnightMobilityScore[9] = {
-      S(-10, -37), S(-2, -7), S(1, 5),    S(5, 3),   S(8, 14),
-      S(13, 8),    S(20, -1), S(27, -15), S(40, 30),
+      S(-28, -41), S(-15, -7), S(-5, 3), S(4, 8),   S(13, 22),
+      S(25, 19),   S(35, 19),  S(41, 1), S(40, 30),
 };
 constexpr Score BishopMobilityScore[14] = {
-      S(-12, -60), S(5, -37), S(5, -15), S(13, -9), S(16, 0),
-      S(16, 10),   S(18, 9),  S(10, 10), S(16, 7),  S(9, 11),
-      S(23, 2),    S(14, 28), S(34, -3), S(96, 98),
+      S(-29, -74), S(-7, -46), S(0, -21), S(11, -8), S(18, 5),
+      S(23, 15),   S(24, 19),  S(29, 24), S(30, 22), S(34, 20),
+      S(39, 14),   S(9, 35),   S(37, -7), S(96, 98),
 };
 constexpr Score RookMobilityScore[15] = {
-      S(-31, -30), S(-20, -17), S(-16, -24), S(-21, -20), S(-22, -19),
-      S(-22, -8),  S(-24, -9),  S(-21, -3),  S(-14, -6),  S(-19, 4),
-      S(-23, 7),   S(-32, 21),  S(-39, 15),  S(-58, 20),  S(70, 175),
+      S(-42, -59), S(-35, -46), S(-30, -34), S(-26, -26), S(-25, -21),
+      S(-19, -7),  S(-12, -5),  S(-4, -2),   S(6, 5),     S(7, 9),
+      S(16, 14),   S(14, 26),   S(0, 30),    S(-18, 35),  S(70, 175),
 };
 constexpr Score QueenMobilityScore[28] = {
-      S(-85, -115), S(-35, -57), S(-9, -48),  S(-11, -20), S(2, -38),
-      S(8, -59),    S(10, -36),  S(16, -47),  S(21, -50),  S(15, -29),
-      S(21, -36),   S(20, -28),  S(17, -22),  S(13, -9),   S(17, -2),
-      S(0, 19),     S(-8, 24),   S(-18, 41),  S(-19, 56),  S(-30, 57),
-      S(16, 39),    S(29, 60),   S(5, 64),    S(87, 111),  S(64, 93),
-      S(86, 152),   S(78, 160),  S(119, 221),
+      S(-119, -155), S(-53, -93), S(-30, -81), S(-19, -54), S(-15, -59),
+      S(-4, -80),    S(-2, -39),  S(9, -43),   S(14, -47),  S(16, -22),
+      S(20, -22),    S(24, -19),  S(27, -11),  S(23, 2),    S(29, 5),
+      S(17, 25),     S(15, 34),   S(14, 38),   S(18, 56),   S(1, 63),
+      S(39, 36),     S(37, 55),   S(11, 38),   S(73, 49),   S(32, 33),
+      S(55, 102),    S(47, 123),  S(119, 221),
 };
 constexpr Score kingAttackersWeight[5] = {
-      S(10, -11), S(12, -1), S(20, -5), S(34, -9), S(23, -14),
+      S(-19, 19), S(-12, 4), S(-24, 5), S(-37, 8), S(-19, -18),
 };
-constexpr Score trappedRookWeight = S(1, 14);
+constexpr Score trappedRookWeight = {
+      S(-4, -6),
+};
 constexpr Score rookOnOpenFile[2] = {
-      S(19, 8),
-      S(23, 3),
+      S(16, 1),
+      S(30, 11),
 };
+constexpr Score openFileNextToKing[3] = {S(10, 30), S(-20, -15), S(-90, -100)};
+constexpr Score pawnShieldStrength[4] = {S(-100, -100), S(-50, -50), S(-5, -5),
+                                         S(100, 100)};
+
+constexpr Score pushedPawnShieldStrength[4] = {S(0, 0), S(-50, -50), S(-5, -5),
+                                               S(100, 100)};
 
 static const Score *pcSq[] = {taperedPawnPcSq,   taperedKnightPcSq,
                               taperedBishopPcSq, taperedRookPcSq,
@@ -201,151 +208,161 @@ struct Trace {
     int kingAttackers[5][NUM_COLOR] = {{0}};
     int trappedRooks[NUM_COLOR] = {0};
     int openFileRooks[2][NUM_COLOR] = {{0}};
+    int openKingFiles[3][NUM_COLOR];
+    int pawnShieldStrength[4][NUM_COLOR];
+    int pushedPawnShieldStrength[4][NUM_COLOR];
 };
 
 struct EvalWeights {
-    const Score pawnScore = S(94, 123);
-    const Score knightScore = S(376, 441);
-    const Score bishopScore = S(410, 462);
-    const Score rookScore = S(520, 812);
-    const Score queenScore = S(1131, 1474);
+    const Score pawnScore = S(93, 134);
+    const Score knightScore = S(382, 467);
+    const Score bishopScore = S(417, 490);
+    const Score rookScore = S(551, 866);
+    const Score queenScore = S(1158, 1561);
 
     const Score taperedPawnPcSq[SQUARE_CT] = {
           S(0, 0),      S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0),
-          S(0, 0),      S(0, 0),    S(0, 0),    S(19, 109), S(22, 82),
-          S(-11, 97),   S(24, 42),  S(-31, 44), S(-16, 30), S(-127, 112),
-          S(-135, 137), S(-3, 99),  S(2, 97),   S(39, 44),  S(46, -7),
-          S(61, -15),   S(101, 14), S(68, 64),  S(32, 70),  S(-17, 62),
-          S(-4, 41),    S(11, 19),  S(17, -9),  S(42, -6),  S(40, 7),
-          S(22, 24),    S(16, 24),  S(-31, 31), S(-20, 22), S(-7, 8),
-          S(16, -9),    S(12, -4),  S(9, 5),    S(4, 7),    S(-4, 5),
-          S(-30, 22),   S(-24, 20), S(-9, 10),  S(-11, 14), S(8, 12),
-          S(4, 13),     S(27, 4),   S(2, 0),    S(-32, 28), S(-26, 25),
-          S(-12, 16),   S(-22, 11), S(-3, 17),  S(25, 11),  S(36, 2),
-          S(-7, 4),     S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0),
+          S(0, 0),      S(0, 0),    S(0, 0),    S(27, 107), S(22, 90),
+          S(-17, 99),   S(30, 39),  S(-32, 56), S(-16, 37), S(-141, 123),
+          S(-157, 143), S(0, 94),   S(3, 101),  S(33, 44),  S(41, -5),
+          S(56, -15),   S(98, 14),  S(64, 70),  S(39, 70),  S(-19, 61),
+          S(-13, 43),   S(3, 20),   S(10, -10), S(35, -3),  S(34, 10),
+          S(18, 30),    S(14, 25),  S(-35, 33), S(-28, 25), S(-13, 10),
+          S(4, -7),     S(1, -2),   S(5, 6),    S(-3, 9),   S(-7, 5),
+          S(-29, 23),   S(-22, 19), S(-11, 11), S(-6, 11),  S(13, 12),
+          S(6, 14),     S(25, 5),   S(6, -2),   S(-25, 26), S(-20, 25),
+          S(-9, 13),    S(-7, 16),  S(5, 15),   S(35, 10),  S(40, 2),
+          S(1, -2),     S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0),
           S(0, 0),      S(0, 0),    S(0, 0),    S(0, 0),
     };
     const Score taperedKnightPcSq[SQUARE_CT] = {
-          S(-184, -67), S(-119, -35), S(-50, -14),   S(-14, -16), S(33, -11),
-          S(-81, -18),  S(-69, -32),  S(-101, -116), S(-21, -18), S(8, -1),
-          S(53, -5),    S(64, -5),    S(63, -13),    S(103, -13), S(19, -15),
-          S(56, -42),   S(-6, -1),    S(48, -2),     S(77, 23),   S(99, 17),
-          S(113, 16),   S(136, -1),   S(78, -16),    S(40, -33),  S(-2, 3),
-          S(18, 21),    S(50, 46),    S(81, 41),     S(50, 46),   S(87, 38),
-          S(26, 19),    S(52, -17),   S(-13, 14),    S(10, 13),   S(29, 45),
-          S(32, 38),    S(44, 49),    S(31, 31),     S(45, 14),   S(12, -6),
-          S(-29, -22),  S(-8, 4),     S(10, 14),     S(20, 32),   S(36, 37),
-          S(17, 9),     S(15, -5),    S(-15, -22),   S(-60, -13), S(-28, 2),
-          S(-15, -2),   S(0, 1),      S(-2, 0),      S(7, 2),     S(-7, -29),
-          S(-9, -23),   S(-106, -37), S(-40, -52),   S(-44, -15), S(-31, -10),
-          S(-26, -18),  S(-6, -26),   S(-31, -26),   S(-55, -28),
+          S(-165, -77), S(-129, -44), S(-53, -11),  S(1, -20),   S(24, -6),
+          S(-81, -10),  S(-74, -23),  S(-93, -119), S(-27, -18), S(16, 3),
+          S(59, -15),   S(78, -10),   S(67, -10),   S(115, -5),  S(40, -17),
+          S(71, -29),   S(-14, 10),   S(48, -2),    S(71, 21),   S(90, 15),
+          S(96, 13),    S(122, -3),   S(70, -17),   S(28, -12),  S(9, 10),
+          S(9, 23),     S(33, 45),    S(72, 41),    S(37, 43),   S(76, 36),
+          S(16, 22),    S(55, -6),    S(-6, 21),    S(10, 11),   S(18, 46),
+          S(29, 36),    S(40, 49),    S(32, 34),    S(54, 10),   S(20, 10),
+          S(-23, -15),  S(-16, 7),    S(2, 11),     S(14, 27),   S(30, 35),
+          S(9, 3),      S(13, -5),    S(-3, -11),   S(-49, -2),  S(-24, 9),
+          S(-10, -4),   S(2, 3),      S(7, 2),      S(15, -6),   S(6, -30),
+          S(-4, -8),    S(-102, -25), S(-22, -23),  S(-33, -8),  S(-17, 0),
+          S(-4, -12),   S(-6, -17),   S(-15, -4),   S(-45, -24),
     };
     const Score taperedBishopPcSq[SQUARE_CT] = {
-          S(-9, -2),  S(-59, 11),  S(-41, 9),  S(-80, 16),  S(-53, -1),
-          S(-60, 6),  S(-21, 2),   S(-34, -6), S(-3, -16),  S(37, -3),
-          S(12, 1),   S(-9, 16),   S(34, -3),  S(19, -5),   S(45, 6),
-          S(-5, -13), S(4, 11),    S(35, 10),  S(44, 9),    S(53, 3),
-          S(43, 12),  S(65, 13),   S(59, 8),   S(30, 4),    S(-10, 3),
-          S(17, 16),  S(30, 29),   S(55, 34),  S(50, 32),   S(48, 21),
-          S(19, 21),  S(-1, 9),    S(-11, 3),  S(-1, 27),   S(10, 31),
-          S(47, 26),  S(36, 34),   S(15, 26),  S(8, 23),    S(14, -13),
-          S(13, 4),   S(16, 6),    S(17, 23),  S(20, 24),   S(26, 31),
-          S(18, 25),  S(17, 12),   S(20, -9),  S(10, -4),   S(16, -4),
-          S(23, -2),  S(4, 8),     S(11, 13),  S(24, 5),    S(35, -3),
-          S(13, -3),  S(-12, -20), S(13, 15),  S(-10, -13), S(-16, 5),
-          S(-8, 1),   S(-12, 4),   S(20, -17), S(2, -22),
+          S(10, 10),  S(-82, 19), S(-24, 7),  S(-104, 15), S(-61, -6),
+          S(-85, 4),  S(-27, 9),  S(-42, -2), S(-7, -7),   S(29, -4),
+          S(7, -9),   S(-15, 12), S(28, -12), S(10, -6),   S(32, 1),
+          S(-3, -13), S(-3, 14),  S(32, 7),   S(40, 7),    S(38, 3),
+          S(35, 3),   S(55, 8),   S(45, 3),   S(15, 5),    S(-15, 2),
+          S(10, 12),  S(17, 27),  S(40, 33),  S(32, 31),   S(30, 24),
+          S(14, 18),  S(-15, 11), S(-10, 3),  S(-16, 26),  S(1, 29),
+          S(35, 26),  S(28, 33),  S(10, 17),  S(0, 26),    S(25, -13),
+          S(5, 15),   S(16, 18),  S(13, 23),  S(18, 21),   S(28, 29),
+          S(21, 23),  S(20, 17),  S(22, 1),   S(16, 4),    S(16, 0),
+          S(30, 0),   S(5, 19),   S(15, 12),  S(34, 6),    S(38, 2),
+          S(18, 9),   S(-1, -5),  S(26, 24),  S(12, 18),   S(-2, 14),
+          S(5, 12),   S(7, 23),   S(36, -3),  S(24, -9),
     };
     const Score taperedRookPcSq[SQUARE_CT] = {
-          S(31, 39),  S(53, 26),  S(19, 55),  S(31, 45),  S(67, 29),
-          S(52, 31),  S(60, 36),  S(86, 19),  S(18, 28),  S(17, 41),
-          S(39, 44),  S(72, 29),  S(38, 28),  S(78, 20),  S(49, 14),
-          S(76, 13),  S(11, 28),  S(37, 30),  S(37, 27),  S(36, 28),
-          S(75, 10),  S(77, 0),   S(120, -3), S(77, 9),   S(-7, 25),
-          S(31, 20),  S(12, 33),  S(14, 33),  S(28, 3),   S(25, 4),
-          S(40, 8),   S(38, -2),  S(-35, 16), S(-34, 24), S(-14, 33),
-          S(-2, 29),  S(2, 19),   S(-27, 13), S(7, 9),    S(-6, 12),
-          S(-34, 12), S(-25, 14), S(-21, 11), S(-12, 15), S(-11, 21),
-          S(-15, -4), S(27, -23), S(-4, -14), S(-49, 10), S(-29, 6),
-          S(-9, 8),   S(-22, 11), S(-8, -3),  S(1, -7),   S(21, -15),
-          S(-33, -2), S(-16, 7),  S(-17, 16), S(-6, 22),  S(1, 18),
-          S(7, 6),    S(-6, 2),   S(6, -2),   S(-18, -9),
+          S(20, 38),  S(42, 18),  S(12, 54),  S(18, 36),  S(49, 27),
+          S(47, 37),  S(67, 27),  S(89, 20),  S(7, 30),   S(-4, 40),
+          S(20, 45),  S(53, 25),  S(18, 27),  S(55, 19),  S(35, 14),
+          S(43, 23),  S(4, 29),   S(37, 26),  S(30, 28),  S(37, 34),
+          S(71, 4),   S(71, 4),   S(119, 2),  S(71, 12),  S(-14, 34),
+          S(27, 21),  S(9, 36),   S(19, 32),  S(27, 7),   S(23, 8),
+          S(32, 17),  S(28, 0),   S(-33, 20), S(-28, 26), S(-12, 35),
+          S(-6, 29),  S(1, 19),   S(-33, 22), S(0, 14),   S(-13, 17),
+          S(-28, 19), S(-27, 28), S(-18, 22), S(-13, 19), S(-9, 21),
+          S(-15, 1),  S(27, -13), S(-4, -8),  S(-46, 17), S(-18, 10),
+          S(-6, 17),  S(-6, 14),  S(-2, 7),   S(6, -7),   S(24, -8),
+          S(-27, 3),  S(-16, 17), S(-12, 18), S(0, 19),   S(9, 16),
+          S(14, 4),   S(0, 6),    S(6, 0),    S(-15, 0),
     };
     const Score taperedQueenPcSq[SQUARE_CT] = {
-          S(-55, 55), S(-25, 30),  S(-3, 73),   S(28, 81),   S(36, 70),
-          S(47, 56),  S(99, 18),   S(29, 46),   S(-8, 32),   S(-26, 46),
-          S(-11, 86), S(-23, 123), S(-11, 132), S(36, 59),   S(9, 49),
-          S(58, 45),  S(-2, 28),   S(-15, 40),  S(4, 74),    S(-3, 93),
-          S(24, 95),  S(80, 69),   S(79, 11),   S(51, 54),   S(-19, 32),
-          S(-4, 40),  S(-10, 49),  S(-3, 88),   S(10, 92),   S(16, 94),
-          S(18, 82),  S(19, 50),   S(-7, 2),    S(-14, 41),  S(-14, 56),
-          S(-5, 80),  S(-6, 89),   S(-13, 86),  S(2, 63),    S(6, 56),
-          S(-8, 5),   S(-3, 21),   S(-8, 38),   S(-4, 41),   S(-7, 64),
-          S(8, 24),   S(13, 15),   S(3, 24),    S(-15, 3),   S(-8, -8),
-          S(9, -10),  S(13, -2),   S(5, 12),    S(20, -26),  S(7, -28),
-          S(20, -63), S(-12, -9),  S(-18, -21), S(-12, -19), S(3, -14),
-          S(-8, -19), S(-24, -3),  S(-12, -36), S(-17, -16),
+          S(-68, 66), S(-40, 23),  S(-37, 63),  S(3, 66),   S(14, 39),
+          S(27, 44),  S(90, -6),   S(6, 49),    S(-17, 36), S(-36, 41),
+          S(-20, 81), S(-48, 122), S(-43, 134), S(15, 45),  S(-4, 45),
+          S(53, 40),  S(-2, 40),   S(-12, 49),  S(-1, 75),  S(-21, 93),
+          S(19, 74),  S(56, 50),   S(69, 4),    S(21, 64),  S(-20, 50),
+          S(-5, 48),  S(-13, 54),  S(-19, 89),  S(1, 75),   S(-5, 97),
+          S(7, 78),   S(12, 46),   S(-8, 17),   S(-20, 46), S(-23, 67),
+          S(-16, 85), S(-17, 95),  S(-16, 87),  S(2, 53),   S(8, 65),
+          S(-9, 18),  S(-6, 35),   S(-5, 46),   S(-8, 57),  S(-9, 85),
+          S(10, 33),  S(11, 32),   S(10, 35),   S(-6, 1),   S(-9, 3),
+          S(8, 7),    S(21, 11),   S(14, 31),   S(24, -7),  S(16, -20),
+          S(37, -62), S(-5, 6),    S(-2, -1),   S(9, -5),   S(21, 11),
+          S(9, 9),    S(-10, 12),  S(-3, -25),  S(-2, -11),
     };
     const Score taperedKingPcSq[SQUARE_CT] = {
-          S(-62, -105), S(25, -62),  S(30, -34),   S(-23, -7),  S(-53, -10),
-          S(1, 2),      S(50, 18),   S(32, -109),  S(-35, -22), S(-8, 10),
-          S(-84, 31),   S(2, 18),    S(6, 26),     S(-1, 44),   S(64, 35),
-          S(51, -2),    S(-98, 1),   S(-1, 12),    S(-46, 40),  S(-34, 57),
-          S(-36, 68),   S(39, 64),   S(61, 46),    S(9, 12),    S(-46, -10),
-          S(-42, 28),   S(-91, 44),  S(-170, 61),  S(-144, 67), S(-111, 62),
-          S(-107, 52),  S(-104, 10), S(-114, -25), S(-80, 10),  S(-155, 44),
-          S(-180, 62),  S(-202, 69), S(-137, 52),  S(-136, 32), S(-171, 15),
-          S(-58, -32),  S(-47, -1),  S(-97, 24),   S(-144, 44), S(-123, 45),
-          S(-120, 33),  S(-58, 7),   S(-86, -6),   S(47, -52),  S(-1, -18),
-          S(-17, -2),   S(-54, 6),   S(-60, 14),   S(-31, 3),   S(26, -17),
-          S(35, -39),   S(47, -113), S(73, -70),   S(39, -50),  S(-86, -28),
-          S(-7, -48),   S(-49, -27), S(51, -59),   S(51, -100),
+          S(-58, -107), S(31, -67),  S(29, -37),  S(-51, -15), S(-56, -5),
+          S(-14, -6),   S(50, 16),   S(29, -125), S(-56, -20), S(-23, 15),
+          S(-93, 30),   S(16, 23),   S(5, 28),    S(-15, 50),  S(95, 40),
+          S(61, -14),   S(-134, 9),  S(-18, 19),  S(-49, 41),  S(-50, 66),
+          S(-35, 74),   S(43, 64),   S(60, 56),   S(18, 4),    S(-48, -16),
+          S(-36, 29),   S(-107, 45), S(-192, 67), S(-169, 67), S(-126, 60),
+          S(-111, 49),  S(-125, 4),  S(-149, -9), S(-88, 14),  S(-149, 43),
+          S(-186, 62),  S(-214, 69), S(-136, 41), S(-140, 27), S(-193, 14),
+          S(-51, -31),  S(-52, -4),  S(-89, 22),  S(-141, 40), S(-105, 38),
+          S(-109, 29),  S(-46, 0),   S(-85, -10), S(57, -49),  S(10, -15),
+          S(-14, 0),    S(-54, 11),  S(-57, 19),  S(-34, 6),   S(31, -17),
+          S(30, -43),   S(53, -113), S(73, -69),  S(38, -47),  S(-77, -20),
+          S(-3, -36),   S(-40, -25), S(48, -60),  S(42, -106),
     };
     const Score passedPawnRankBonus[8] = {
-          S(0, 0),  S(-7, 6),   S(-8, 10),  S(-6, 42),
-          S(9, 78), S(13, 148), S(87, 176), S(0, 0),
+          S(0, 0),  S(-2, 5),   S(-3, 13),  S(-5, 45),
+          S(2, 89), S(-3, 167), S(72, 189), S(0, 0),
     };
     const Score doubledPawnRankBonus[8] = {
-          S(-10, -10), S(-7, -28),  S(-8, -18),  S(-1, -33),
-          S(15, -51),  S(-66, -62), S(-10, -10), S(-10, -10),
+          S(-10, -10), S(-5, -29),  S(-5, -22),  S(-1, -34),
+          S(15, -62),  S(-61, -83), S(-10, -10), S(-10, -10),
     };
     const Score isolatedPawnRankBonus[8] = {
-          S(-6, -6),  S(-16, -8), S(-21, -15), S(-18, -12),
-          S(-7, -27), S(8, -34),  S(8, -19),   S(-6, -6),
+          S(-6, -6),  S(-16, -8), S(-23, -15), S(-18, -12),
+          S(-3, -27), S(7, -32),  S(23, -18),  S(-6, -6),
     };
     const Score backwardPawnRankBonus[8] = {
-          S(-15, -15), S(-18, -6),  S(-3, -7),   S(-8, -4),
-          S(-13, -5),  S(-15, -15), S(-15, -15), S(-15, -15),
+          S(-15, -15), S(-18, -13), S(-3, -6),   S(-8, -4),
+          S(-19, -5),  S(-15, -15), S(-15, -15), S(-15, -15),
     };
     const Score KnightMobilityScore[9] = {
-          S(-10, -37), S(-2, -7), S(1, 5),    S(5, 3),   S(8, 14),
-          S(13, 8),    S(20, -1), S(27, -15), S(40, 30),
+          S(-28, -41), S(-15, -7), S(-5, 3), S(4, 8),   S(13, 22),
+          S(25, 19),   S(35, 19),  S(41, 1), S(40, 30),
     };
     const Score BishopMobilityScore[14] = {
-          S(-12, -60), S(5, -37), S(5, -15), S(13, -9), S(16, 0),
-          S(16, 10),   S(18, 9),  S(10, 10), S(16, 7),  S(9, 11),
-          S(23, 2),    S(14, 28), S(34, -3), S(96, 98),
+          S(-29, -74), S(-7, -46), S(0, -21), S(11, -8), S(18, 5),
+          S(23, 15),   S(24, 19),  S(29, 24), S(30, 22), S(34, 20),
+          S(39, 14),   S(9, 35),   S(37, -7), S(96, 98),
     };
     const Score RookMobilityScore[15] = {
-          S(-31, -30), S(-20, -17), S(-16, -24), S(-21, -20), S(-22, -19),
-          S(-22, -8),  S(-24, -9),  S(-21, -3),  S(-14, -6),  S(-19, 4),
-          S(-23, 7),   S(-32, 21),  S(-39, 15),  S(-58, 20),  S(70, 175),
+          S(-42, -59), S(-35, -46), S(-30, -34), S(-26, -26), S(-25, -21),
+          S(-19, -7),  S(-12, -5),  S(-4, -2),   S(6, 5),     S(7, 9),
+          S(16, 14),   S(14, 26),   S(0, 30),    S(-18, 35),  S(70, 175),
     };
     const Score QueenMobilityScore[28] = {
-          S(-85, -115), S(-35, -57), S(-9, -48),  S(-11, -20), S(2, -38),
-          S(8, -59),    S(10, -36),  S(16, -47),  S(21, -50),  S(15, -29),
-          S(21, -36),   S(20, -28),  S(17, -22),  S(13, -9),   S(17, -2),
-          S(0, 19),     S(-8, 24),   S(-18, 41),  S(-19, 56),  S(-30, 57),
-          S(16, 39),    S(29, 60),   S(5, 64),    S(87, 111),  S(64, 93),
-          S(86, 152),   S(78, 160),  S(119, 221),
+          S(-119, -155), S(-53, -93), S(-30, -81), S(-19, -54), S(-15, -59),
+          S(-4, -80),    S(-2, -39),  S(9, -43),   S(14, -47),  S(16, -22),
+          S(20, -22),    S(24, -19),  S(27, -11),  S(23, 2),    S(29, 5),
+          S(17, 25),     S(15, 34),   S(14, 38),   S(18, 56),   S(1, 63),
+          S(39, 36),     S(37, 55),   S(11, 38),   S(73, 49),   S(32, 33),
+          S(55, 102),    S(47, 123),  S(119, 221),
     };
     const Score kingAttackersWeight[5] = {
-          S(10, -11), S(12, -1), S(20, -5), S(34, -9), S(23, -14),
+          S(-19, 19), S(-12, 4), S(-24, 5), S(-37, 8), S(-19, -18),
     };
-    const Score trappedRookWeight = S(1, 14);
+    const Score trappedRookWeight = {
+          S(-4, -6),
+    };
     const Score rookOnOpenFile[2] = {
-          S(19, 8),
-          S(23, 3),
+          S(16, 1),
+          S(30, 11),
     };
+    const Score openFileNextToKing[3] = {S(10, 30), S(-20, -15), S(-90, -100)};
+    const Score pawnShieldStrength[4] = {S(-100, -100), S(-50, -50), S(-5, -5),
+                                         S(100, 100)};
+    const Score pushedPawnShieldStrength[4] = {S(0, 0), S(-50, -50), S(-5, -5),
+                                               S(100, 100)};
 };
 
 struct TracePeek {
@@ -363,6 +380,8 @@ struct TracePeek {
 extern const EvalWeights evalWeights;
 static Trace tempTrace;
 
+extern std::unordered_map<std::uint64_t, int> pawnTable;
+
 enum Tracing : bool { NO_TRACE, TRACE };
 
 template <Tracing T = NO_TRACE> class Eval {
@@ -371,9 +390,13 @@ template <Tracing T = NO_TRACE> class Eval {
     Eval(Board &b, Trace &t) : board(b), trace(t) { init(); }
 
     int eval() {
+        if (!T) {
+            evalHashTable.prefetch(board.key);
 
-        if (evalTable.contains(board.key)) {
-            return evalTable[board.key];
+            HashTable::EvalHash entry = {0};
+            if (evalHashTable.probe(board.key, entry)) {
+                // return entry.score();
+            }
         }
 
         const Score wPcSq = pieceSquare<WHITE>();
@@ -393,11 +416,17 @@ template <Tracing T = NO_TRACE> class Eval {
         const int mgSafety = MgScore(wKingSafety) - MgScore(bKingSafety);
         const int egSafety = EgScore(wKingSafety) - EgScore(bKingSafety);
 
+        const Score wKS = kingSafety<WHITE>();
+        const Score bKS = kingSafety<BLACK>();
+        const int mgKS = MgScore(wKS) - MgScore(bKS);
+        const int egKS = EgScore(wKS) - EgScore(bKS);
+
         const Score wRookEval = rookEval<WHITE>();
         const Score bRookEval = rookEval<BLACK>();
         const int mgRookEval = MgScore(wRookEval) - MgScore(bRookEval);
         const int egRookEval = EgScore(wRookEval) - EgScore(bRookEval);
 
+        pawnHashTable.prefetch(board.pawnKey);
         const auto color = (board.turn == WHITE) ? 1 : -1;
         const auto materialScore = materialEval();
         const auto pawnStructureEval = pawnStructure();
@@ -406,13 +435,16 @@ template <Tracing T = NO_TRACE> class Eval {
         const int mobilityEval =
               (mgMobility * mgPhase + egMobility * egPhase) / 24;
         const int safetyEval = (mgSafety * mgPhase + egSafety * egPhase) / 24;
+        const int KSEval = (mgKS * mgPhase + egKS * egPhase) / 24;
         const int rookEval = (mgRookEval * mgPhase + egRookEval * egPhase) / 24;
 
         auto eval = TEMPO;
         eval += materialScore + pcSqEval + pawnStructureEval + mobilityEval +
-                rookEval + safetyEval;
+                rookEval + safetyEval + KSEval;
 
-        evalTable[board.key] = eval * color;
+        if (!T) {
+            evalHashTable.record(board.key, eval * color);
+        }
 
         return eval * color;
     }
@@ -427,12 +459,6 @@ template <Tracing T = NO_TRACE> class Eval {
     Trace &trace;
 
   private:
-    std::unordered_map<std::uint64_t, int> pawnTable;
-    std::unordered_map<std::uint64_t, int> evalTable;
-    std::unordered_map<std::uint64_t, Score> mobilityTable;
-    std::unordered_map<std::uint64_t, Score> safetyTable;
-    std::unordered_map<std::uint64_t, Score> rookTable;
-
   private:
     constexpr int materialEval();
     constexpr int pawnStructure();
@@ -448,6 +474,7 @@ template <Tracing T = NO_TRACE> class Eval {
     template <Color C> constexpr Score pieceSquare();
     template <Color C> constexpr Score mobilityScore();
     template <Color C> constexpr Score kingAttackers();
+    template <Color C> constexpr Score kingSafety();
     template <Color C> constexpr Score rookEval();
 
   private:
@@ -471,8 +498,6 @@ template <Tracing T = NO_TRACE> class Eval {
 };
 
 template <Tracing T> template <Color C> constexpr Score Eval<T>::rookEval() {
-    if (rookTable.contains(board.key))
-        return rookTable[board.key];
 
     const Direction Up = pushDirection(C);
     const Rank startRank = C == WHITE ? RANK_1 : RANK_8;
@@ -485,6 +510,11 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::rookEval() {
         Square rookSquare = Square(lsb_index(temp));
         Bitboard rookMask = SQUARE_BB(rookSquare);
         File rookFile = FILE_OF(rookSquare);
+
+        if (popcount(getRookAttacks(rookSquare, board.pieces())) > 3) {
+            temp &= temp - 1;
+            continue;
+        }
 
         int open = 0;
         if (FILE_BB(rookFile) & board.pieces(PAWN, C)) {
@@ -526,7 +556,59 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::rookEval() {
     int mgScore = MgScore(trappedRookWeight) * numTrapped;
     int egScore = EgScore(trappedRookWeight) * numTrapped;
 
-    rookTable[board.key] = S(mgScore, egScore);
+    return S(mgScore, egScore);
+}
+
+template <Tracing T> template <Color C> constexpr Score Eval<T>::kingSafety() {
+    constexpr Direction Up = C == WHITE ? NORTH : SOUTH;
+    Bitboard ourKing = board.pieces(KING, C);
+    Square kingSquare = Sq(ourKing);
+
+    int mgScore = 0, egScore = 0;
+    if (FILE_OF(kingSquare) < 3 || FILE_OF(kingSquare) >= 5) {
+        Bitboard shieldMask =
+              FILE_OF(kingSquare) < 3
+                    ? (SQUARE_BB(A2) | SQUARE_BB(B2) | SQUARE_BB(C2))
+                    : (SQUARE_BB(F2) | SQUARE_BB(G2) | SQUARE_BB(H2));
+
+        if (C)
+            shieldMask >>= 8 * 5;
+
+        Bitboard pawnShield = board.pieces(PAWN, C) & shieldMask;
+        mgScore += MgScore(pawnShieldStrength[popcount(pawnShield)]);
+        egScore += EgScore(pawnShieldStrength[popcount(pawnShield)]);
+
+        shieldMask = shift<Up>(shieldMask);
+        Bitboard pushedPawnShield = board.pieces(PAWN, C) & pushedPawnShield;
+        mgScore +=
+              MgScore(pushedPawnShieldStrength[popcount(pushedPawnShield)]);
+        egScore +=
+              EgScore(pushedPawnShieldStrength[popcount(pushedPawnShield)]);
+
+        if (T) {
+            trace.pushedPawnShieldStrength[popcount(pushedPawnShield)][C]++;
+            trace.pawnShieldStrength[popcount(pawnShield)][C]++;
+        }
+    }
+
+    int emptyFiles = 0;
+    Bitboard rightShift = shift<EAST>(ourKing);
+    Bitboard leftShift = shift<WEST>(ourKing);
+    Bitboard rightFile = FILE_BB(FILE_OF(Sq(rightShift)));
+    Bitboard leftFile = FILE_BB(FILE_OF(Sq(leftShift)));
+
+    if (!(board.pieces(PAWN) & rightFile))
+        emptyFiles++;
+
+    if (!(board.pieces(PAWN) & leftFile))
+        emptyFiles++;
+
+    mgScore += MgScore(openFileNextToKing[emptyFiles]);
+    egScore += EgScore(openFileNextToKing[emptyFiles]);
+
+    if (T) {
+        trace.openKingFiles[emptyFiles][C]++;
+    }
 
     return S(mgScore, egScore);
 }
@@ -534,17 +616,15 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::rookEval() {
 template <Tracing T>
 template <Color C>
 constexpr Score Eval<T>::kingAttackers() {
-    if (safetyTable.contains(board.key))
-        return safetyTable[board.key];
 
-    const Bitboard king = board.pieces(KING, ~C);
+    const Bitboard king = board.pieces(KING, C);
     const Square kingSquare = Sq(king);
     Bitboard kingArea = kingAttacks[kingSquare];
 
     int mgScore = 0, egScore = 0;
     while (kingArea) {
         Square areaSq = Square(lsb_index(kingArea));
-        Bitboard attackPcs = board.attacksToKing<C>(areaSq, board.pieces());
+        Bitboard attackPcs = board.attacksToKing<~C>(areaSq, board.pieces());
 
         while (attackPcs) {
             Square attacker = Square(lsb_index(attackPcs));
@@ -562,15 +642,15 @@ constexpr Score Eval<T>::kingAttackers() {
         kingArea &= kingArea - 1;
     }
 
-    safetyTable[board.key] = S(mgScore, egScore);
-
     return S(mgScore, egScore);
 }
 
 template <Tracing T> constexpr int Eval<T>::pawnStructure() {
-    Bitboard key = board.pieces(PAWN, WHITE) ^ board.pieces(PAWN, BLACK);
-    if (pawnTable.contains(key)) {
-        return pawnTable.at(key);
+    if (!T) {
+        HashTable::EvalHash entry = {0};
+        if (pawnHashTable.probe(board.pawnKey, entry)) {
+            // return entry.score();
+        }
     }
 
     const Score wPassedPawn = passedPawnScore<WHITE>();
@@ -605,7 +685,7 @@ template <Tracing T> constexpr int Eval<T>::pawnStructure() {
     const auto pawnStructure = passedPawnEval + doubledPawnEval +
                                isolatedPawnEval + backwardPawnEval;
 
-    pawnTable[key] = pawnStructure;
+    pawnHashTable.record(board.pawnKey, pawnStructure);
 
     return pawnStructure;
 }
@@ -818,7 +898,7 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::pieceSquare() {
     int egScore = 0;
 
     for (int i = 0; i < 64; i++) {
-        Piece p = board.board[i];
+        Piece &p = board.board[i];
         PieceT pt = getPcType(p);
 
         if (C == WHITE) {
@@ -857,9 +937,6 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::pieceSquare() {
 template <Tracing T>
 template <Color C>
 constexpr Score Eval<T>::mobilityScore() {
-    if (mobilityTable.contains(board.key))
-        return mobilityTable[board.key];
-
     constexpr Direction Up = pushDirection(C);
     constexpr Direction Down = pushDirection(~C);
 
@@ -961,8 +1038,6 @@ constexpr Score Eval<T>::mobilityScore() {
 
         queens &= queens - 1;
     }
-
-    mobilityTable[board.key] = S(mgScore, egScore);
 
     return S(mgScore, egScore);
 }

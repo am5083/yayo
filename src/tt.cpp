@@ -105,9 +105,9 @@ void TTable::record(std::uint64_t key, int ply, int move, int depth, int score,
         if (((bucket + i)->key ^ (bucket + i)->hash) == key) {
             if (flag == TP_EXACT || depth >= (bucket + i)->depth() - 3) {
                 *(bucket + i) = temp;
-            } else if ((bucket + i)->generation() < rep->generation()) {
-                rep = (bucket + i);
             }
+        } else if ((bucket + i)->generation() < rep->generation()) {
+            rep = (bucket + i);
         }
     }
 

@@ -428,6 +428,30 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     }
     printf("\n};\n");
 
+    printf("constexpr Score openFileNextToKing[3] = {");
+    for (int i = 0, start = 495; i < 3; i++) {
+        if (!(i % 4))
+            printf("\n");
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
+    }
+    printf("\n};\n");
+
+    printf("constexpr Score pawnShieldStrength[4] = {");
+    for (int i = 0, start = 498; i < 4; i++) {
+        if (!(i % 4))
+            printf("\n");
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
+    }
+    printf("\n};\n");
+
+    printf("constexpr Score pushedPawnShieldStrength[4] = {");
+    for (int i = 0, start = 502; i < 4; i++) {
+        if (!(i % 4))
+            printf("\n");
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
+    }
+    printf("\n};\n");
+
 }
 // clang-format on
 

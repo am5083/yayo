@@ -320,6 +320,10 @@ void make(Board &board, unsigned short move) {
     board.turn = ~board.turn;
     board.key ^= 1;
 
+    if (getPcType(fromPc) == PAWN || getPcType(toPc) == PAWN) {
+        board.pawnKey ^= board.pieces(PAWN);
+    }
+
     board.checkPcs =
           board.turn == WHITE
                 ? board.attacksToKing<BLACK>(Sq(board.pieces(KING, board.turn)),

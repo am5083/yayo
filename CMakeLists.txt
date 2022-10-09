@@ -21,6 +21,7 @@ add_executable(
   ${CMAKE_SOURCE_DIR}/src/thread.cpp
   ${CMAKE_SOURCE_DIR}/src/uci.cpp
   ${CMAKE_SOURCE_DIR}/src/tuner.cpp
+  ${CMAKE_SOURCE_DIR}/src/hashtable.cpp
   )
 
 target_include_directories(yayo PRIVATE ./)
