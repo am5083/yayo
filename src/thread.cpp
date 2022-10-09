@@ -385,6 +385,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
         }
     }
 
+    tt.prefetch(_board.key);
+
     if (mList.nMoves == 0) {
         if (_board.checkPcs) {
             return -INF;
