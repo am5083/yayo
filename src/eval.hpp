@@ -370,8 +370,10 @@ template <Tracing T = NO_TRACE> class Eval {
         const int mgMobility = MgScore(wMobility) - MgScore(bMobility);
         const int egMobility = EgScore(wMobility) - EgScore(bMobility);
 
-        const Score wKingSafety = kingAttackers<WHITE>();
-        const Score bKingSafety = kingAttackers<BLACK>();
+        // const Score wKingSafety = kingAttackers<WHITE>();
+        // const Score bKingSafety = kingAttackers<BLACK>();
+        const Score wKingSafety = S(0, 0);
+        const Score bKingSafety = wKingSafety;
         const int mgSafety = MgScore(wKingSafety) - MgScore(bKingSafety);
         const int egSafety = EgScore(wKingSafety) - EgScore(bKingSafety);
 
