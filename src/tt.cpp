@@ -32,7 +32,7 @@ void TTHash::age(int gen) {
 
 TTable::TTable() {
     maxEntries = 0;
-    init(TP_INIT_SIZE / 2);
+    init(TP_INIT_SIZE);
 }
 
 TTable::~TTable() { delete[] table; }
@@ -55,13 +55,13 @@ void TTable::init(std::uint64_t len) {
 }
 
 void TTable::prefetch(std::uint64_t key) {
-    int idx = (key & maxEntries) * NUM_BUCKETS;
+    int idx = (key % maxEntries) * NUM_BUCKETS;
     TTHash *bucket = table + idx;
     __builtin_prefetch(bucket);
 }
 
 bool TTable::probe(std::uint64_t key, TTHash &out) {
-    int idx = (key & maxEntries) * NUM_BUCKETS;
+    int idx = (key % maxEntries) * NUM_BUCKETS;
     TTHash *bucket = table + idx;
 
     for (int i = 0; i < NUM_BUCKETS; i++) {
@@ -77,7 +77,7 @@ bool TTable::probe(std::uint64_t key, TTHash &out) {
 
 void TTable::record(std::uint64_t key, int ply, int move, int depth, int score,
                     unsigned char flag) {
-    std::uint64_t index = (key & maxEntries) * NUM_BUCKETS;
+    std::uint64_t index = (key % maxEntries) * NUM_BUCKETS;
     TTHash *bucket = table + index;
 
     if (score >= INF)
@@ -86,12 +86,12 @@ void TTable::record(std::uint64_t key, int ply, int move, int depth, int score,
         score = -TP_INF + ply;
 
     TTHash temp = {0};
-    temp.key = key ^ temp.hash;
     temp.data.depth = depth;
     temp.data.move = move;
     temp.data.score = score;
     temp.data.generation = age;
     temp.data.flag = flag;
+    temp.key = key ^ temp.hash;
 
     if ((bucket->key ^ bucket->hash) == key) {
         if (flag == TP_EXACT || depth >= bucket->depth() - 3) {
@@ -112,6 +112,12 @@ void TTable::record(std::uint64_t key, int ply, int move, int depth, int score,
     }
 
     *rep = temp;
+}
+
+void TTable::reset() {
+    for (int i = 0; i < maxEntries * NUM_BUCKETS; i++) {
+        table[i].age(0);
+    }
 }
 
 void TTable::increaseAge() {

@@ -130,6 +130,7 @@ void UCI::Uci() {
 }
 
 void UCI::NewGame() {
+    tt.reset();
     search.clearTT();
     search._setFen(START_POS);
 }
@@ -137,7 +138,7 @@ void UCI::NewGame() {
 void UCI::IsReady() { search.isReady(); }
 
 void UCI::Go(Info *info) {
-    // tt.increaseAge();
+    tt.increaseAge();
     search.startSearch(info);
 }
 
@@ -178,6 +179,8 @@ void UCI::Main() {
 
     std::cout << "Yayo Engine - Verision 0.1.0" << std::endl;
     std::cout << std::endl;
+
+    NewGame();
 
     // std::cout << "uciok" << std::endl;
 

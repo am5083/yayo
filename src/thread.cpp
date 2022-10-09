@@ -334,6 +334,12 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
         const int curr_move = mList.moves[i].move;
         make(_board, mList.moves[i].move);
 
+        // if (!pvNode && depth >= 3 && movesSearched >= 5 &&
+        //     getCapture(curr_move) < CAPTURE && !_board.checkPcs) {
+        //     unmake(_board, mList.moves[i].move);
+        //     continue;
+        // }
+
         if (futilityPrune && getCapture(curr_move) < CAPTURE &&
             !_board.checkPcs) {
             unmake(_board, mList.moves[i].move);
@@ -436,7 +442,7 @@ int Search::search() {
             selDepth = 0;
             score = negaMax(alpha, beta, aspirationDepth, false, false);
 
-            if (checkForStop()) {
+            if (checkForStop() && bestMove) {
                 abortDepth = j;
                 break;
             }

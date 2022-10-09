@@ -27,7 +27,7 @@
 #define TP_ALPHA 1
 #define TP_BETA 2
 #define TP_UNKNOWN 9999999
-#define TP_INIT_SIZE 256
+#define TP_INIT_SIZE 128
 
 #define TP_INF 30000
 #define NUM_BUCKETS 4
@@ -89,7 +89,7 @@ class TTable {
     void record(std::uint64_t key, int ply, int move, int depth, int score,
                 unsigned char flag);
 
-    void clearAge();
+    void reset();
     void increaseAge();
     int percentFull();
 };

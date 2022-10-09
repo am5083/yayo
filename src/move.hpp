@@ -68,11 +68,17 @@ constexpr unsigned short encodeMove(Square from, Square to, MoveFlag flags) {
 
 constexpr Square getFrom(Move move) { return Square(move.move & 63); };
 constexpr Square getTo(Move move) { return Square((move.move >> 6) & 63); };
-constexpr MoveFlag getCapture(Move move) { return MoveFlag((move.move >> 12) & 0x0f); };
+constexpr MoveFlag getCapture(Move move) {
+    return MoveFlag((move.move >> 12) & 0x0f);
+};
 
 constexpr Square getFrom(unsigned short move) { return Square(move & 63); };
-constexpr Square getTo(unsigned short move) { return Square((move >> 6) & 63); };
-constexpr MoveFlag getCapture(unsigned short move) { return MoveFlag((move >> 12) & 0x0f); };
+constexpr Square getTo(unsigned short move) {
+    return Square((move >> 6) & 63);
+};
+constexpr MoveFlag getCapture(unsigned short move) {
+    return MoveFlag((move >> 12) & 0x0f);
+};
 
 static inline std::string move_str(unsigned short move) {
     int to = getTo(move), from = getFrom(move), flags = getCapture(move);
@@ -114,6 +120,13 @@ struct moveList {
             j++;
         }
         return *this;
+    }
+
+    void print() {
+        for (int i = 0; i < nMoves; i++) {
+            print_move(moves[i].move);
+            std::cout << ": " << moves[i].score << "\n";
+        }
     }
 };
 
