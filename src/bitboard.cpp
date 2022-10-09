@@ -52,15 +52,18 @@ constexpr Bitboard genBishopAttacks(Square square, Bitboard bb);
 void initMasks(const PieceT pc, Bitboard attack_table[], Magic mask[]) {
     int size = 0;
     for (int sq = 0; sq < 64; sq++) {
-        Magic *magic   = &mask[sq];
-        magic->mask    = (pc == ROOK) ? maskRookOccupancy(Square(sq)) : maskBishopOccupancy(Square(sq));
-        magic->attacks = (sq == SQUARE_0) ? attack_table : (mask[sq - 1].attacks + size);
+        Magic *magic = &mask[sq];
+        magic->mask = (pc == ROOK) ? maskRookOccupancy(Square(sq))
+                                   : maskBishopOccupancy(Square(sq));
+        magic->attacks =
+              (sq == SQUARE_0) ? attack_table : (mask[sq - 1].attacks + size);
 
         Bitboard b = size = 0;
         do {
             size++;
             magic->attacks[magic->index(b)] =
-                (pc == ROOK) ? genRookAttacks(Square(sq), b) : genBishopAttacks(Square(sq), b);
+                  (pc == ROOK) ? genRookAttacks(Square(sq), b)
+                               : genBishopAttacks(Square(sq), b);
             b = (b - magic->mask) & magic->mask;
         } while (b);
     }
@@ -78,7 +81,8 @@ void Bitboards::init_arrays() {
 
     for (int i = 0; i < 16; i++) {
         for (int j = 0; j < 4; j++)
-            zobristCastleRights[i] ^= (zobristCastle[j / 2][j % 2] * ((i >> j) & 1));
+            zobristCastleRights[i] ^=
+                  (zobristCastle[j / 2][j % 2] * ((i >> j) & 1));
 
         for (int j = 0; j < 64; j++) {
             zobristPieceSq[i][j] = random_u64();
@@ -93,7 +97,7 @@ void Bitboards::init_arrays() {
         northPassedPawns[i] = passedPawnMask<WHITE>(Square(i));
         southPassedPawns[i] = passedPawnMask<BLACK>(Square(i));
 
-        File file        = FILE_OF(Square(i));
+        File file = FILE_OF(Square(i));
         Bitboard rFileBB = 0;
         Bitboard lFileBB = 0;
         if (file < FILE_H)
@@ -114,13 +118,16 @@ void Bitboards::init_arrays() {
             Bitboard bishAtk = genBishopAttacks(Square(i), 0);
 
             if (rookAtk & SQUARE_BB(Square(to))) {
-                LINE[i][to] = (rookAtk & genRookAttacks(Square(to), SQUARE_BB(Square(i)))) | SQUARE_BB(Square(i)) |
-                              SQUARE_BB(Square(to));
+                LINE[i][to] = (rookAtk & genRookAttacks(Square(to),
+                                                        SQUARE_BB(Square(i)))) |
+                              SQUARE_BB(Square(i)) | SQUARE_BB(Square(to));
             }
 
             if (bishAtk & SQUARE_BB(Square(to))) {
-                LINE[i][to] = (bishAtk & genBishopAttacks(Square(to), SQUARE_BB(Square(i)))) | SQUARE_BB(Square(i)) |
-                              SQUARE_BB(Square(to));
+                LINE[i][to] =
+                      (bishAtk &
+                       genBishopAttacks(Square(to), SQUARE_BB(Square(i)))) |
+                      SQUARE_BB(Square(i)) | SQUARE_BB(Square(to));
             }
         }
     }

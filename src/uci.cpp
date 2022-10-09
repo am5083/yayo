@@ -24,7 +24,7 @@ static inline int parseMove(Board &board, std::string move) {
     generate(board, &mList);
 
     int fromSq = (move[0] - 'a') + (8 - (move[1] - '0')) * 8;
-    int toSq   = (move[2] - 'a') + (8 - (move[3] - '0')) * 8;
+    int toSq = (move[2] - 'a') + (8 - (move[3] - '0')) * 8;
     int promPc = 0;
 
     for (int i = 0; i < mList.nMoves; i++) {
@@ -35,11 +35,14 @@ static inline int parseMove(Board &board, std::string move) {
             if (promPc >= P_KNIGHT) {
                 if ((promPc == CP_QUEEN || promPc == P_QUEEN) && move[4] == 'q')
                     return mv;
-                else if ((promPc == CP_ROOK || promPc == P_ROOK) && move[4] == 'r')
+                else if ((promPc == CP_ROOK || promPc == P_ROOK) &&
+                         move[4] == 'r')
                     return mv;
-                else if ((promPc == CP_BISHOP || promPc == P_BISHOP) && move[4] == 'b')
+                else if ((promPc == CP_BISHOP || promPc == P_BISHOP) &&
+                         move[4] == 'b')
                     return mv;
-                else if ((promPc == CP_KNIGHT || promPc == P_KNIGHT) && move[4] == 'n')
+                else if ((promPc == CP_KNIGHT || promPc == P_KNIGHT) &&
+                         move[4] == 'n')
                     return mv;
                 continue;
             }
@@ -87,7 +90,7 @@ void UCI::Bench() {
 
     Info info[1];
 
-    std::uint64_t start_time  = get_time();
+    std::uint64_t start_time = get_time();
     std::uint64_t total_nodes = 0;
 
     for (auto &fen : benchPos) {
@@ -95,7 +98,7 @@ void UCI::Bench() {
         search._setFen(fen);
 
         info->timeGiven = false;
-        info->depth     = 5;
+        info->depth = 5;
         info->startTime = start_time;
         search.startSearch(info);
 
@@ -109,7 +112,8 @@ void UCI::Bench() {
     std::uint64_t end_time = get_time();
     long double total_time = 1.0 * (end_time - start_time) / 1000.0;
 
-    std::cout << total_nodes << " nodes " << int(3000000) << " nps" << std::endl;
+    std::cout << total_nodes << " nodes " << int(3000000) << " nps"
+              << std::endl;
 }
 
 void UCI::Uci() {
@@ -117,8 +121,10 @@ void UCI::Uci() {
     std::cout << "id author kv3732" << std::endl;
     std::cout << std::endl;
 
-    std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
-    std::cout << "option name Hash type spin default 400 min 400 max 1024" << std::endl;
+    std::cout << "option name Threads type spin default 1 min 1 max 1"
+              << std::endl;
+    std::cout << "option name Hash type spin default 400 min 400 max 1024"
+              << std::endl;
     std::cout << "option name Ponder type check default False" << std::endl;
     std::cout << "uciok" << std::endl;
 }
@@ -130,7 +136,10 @@ void UCI::NewGame() {
 
 void UCI::IsReady() { search.isReady(); }
 
-void UCI::Go(Info *info) { search.startSearch(info); }
+void UCI::Go(Info *info) {
+    // tt.increaseAge();
+    search.startSearch(info);
+}
 
 void UCI::Stop() { search.stopSearch(); }
 
@@ -140,7 +149,7 @@ void UCI::Perft(int depth) {
     unsigned long long n;
     if (depth == 1) {
         moveList mList = {0};
-        n              = divide(board, &mList, depth, depth);
+        n = divide(board, &mList, depth, depth);
 
         for (int i = 0; i < mList.nMoves; i++) {
             print_move(mList.moves[i].move);
@@ -219,7 +228,8 @@ void UCI::Main() {
             iss >> move;
             int m = parseMove(board, move);
             std::cout << "static exchange evaluation: "
-                      << board.see(getTo(m), board.board[getTo(m)], getFrom(m), board.board[getFrom(m)]);
+                      << board.see(getTo(m), board.board[getTo(m)], getFrom(m),
+                                   board.board[getFrom(m)]);
             std::cout << std::endl;
         } else if (cmd == "mirror") {
             std::string move;
@@ -234,12 +244,12 @@ void UCI::Main() {
             int m = parseMove(board, move);
             search._make(m);
         } else if (cmd == "go") {
-            int depth       = 256;
-            int movestogo   = 30;
-            int movetime    = -1;
-            int time        = -1;
-            int increment   = 0;
-            bool turn       = board.turn;
+            int depth = 256;
+            int movestogo = 15;
+            int movetime = -1;
+            int time = -1;
+            int increment = 0;
+            bool turn = board.turn;
             info->timeGiven = false;
 
             std::string tc;
@@ -271,20 +281,21 @@ void UCI::Main() {
             }
 
             info->startTime = get_time();
-            info->depth     = depth;
+            info->depth = depth;
 
             int cStopTime, hStopTime;
 
             if (time != -1) {
                 cStopTime = time / (movestogo + 1) + increment;
-                hStopTime = std::min(cStopTime * 5, time / std::min(4, movestogo));
+                hStopTime =
+                      std::min(cStopTime * 5, time / std::min(4, movestogo));
 
-                hStopTime            = std::max(10, std::min(hStopTime, time));
-                cStopTime            = std::max(1, std::min(cStopTime, hStopTime));
-                info->timeControl    = cStopTime;
+                hStopTime = std::max(10, std::min(hStopTime, time));
+                cStopTime = std::max(1, std::min(cStopTime, hStopTime));
+                info->timeControl = cStopTime;
                 info->maxTimeControl = hStopTime;
-                info->stopTime       = info->startTime + cStopTime;
-                info->timeGiven      = true;
+                info->stopTime = info->startTime + cStopTime;
+                info->timeGiven = true;
             }
 
             if (depth == -1) {
@@ -307,7 +318,7 @@ void UCI::Main() {
             int evaluate = Eval<TRACE>(board, trace).eval();
             TracePeek tp(trace, ev);
 
-            int phase   = 0;
+            int phase = 0;
             int mgPhase = 0;
             int egPhase = 0;
 
@@ -340,7 +351,7 @@ void UCI::Main() {
             unsigned long long n;
             if (depth == 1) {
                 moveList mList = {0};
-                n              = divide(board, &mList, depth, depth);
+                n = divide(board, &mList, depth, depth);
 
                 for (int i = 0; i < mList.nMoves; i++) {
                     print_move(mList.moves[i].move);

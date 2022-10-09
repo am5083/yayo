@@ -36,7 +36,7 @@ namespace Yayo {
 class Search {
   public:
     Search() { info = nullptr; }
-    Search(const Search &)            = delete;
+    Search(const Search &) = delete;
     Search &operator=(const Search &) = delete;
 
   public:
@@ -67,8 +67,6 @@ class Search {
     int killerMoves[MAX_PLY + 6][2];
     int killerMates[MAX_PLY + 6][2];
     int historyMoves[2][64][64];
-
-    TPTable tpTbl;
 
     void updatePv(int ply, int move);
     void printPv();

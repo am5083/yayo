@@ -27,16 +27,79 @@
 #define TP_ALPHA 1
 #define TP_BETA 2
 #define TP_UNKNOWN 9999999
-#define TP_INIT_SIZE 16000000
+#define TP_INIT_SIZE 256
+
+#define TP_INF 30000
+#define NUM_BUCKETS 4
 
 namespace Yayo {
+
+/*
+** 0000 0000 0000 0000
+**    gen
+*/
+
+struct TTHash {
+    std::uint64_t key;
+    union {
+        struct {
+            std::uint8_t old;
+            std::uint8_t flag;
+            std::uint8_t generation;
+            std::uint8_t depth;
+            std::uint16_t move;
+            std::int16_t score;
+        } data;
+
+        std::uint64_t hash = 0;
+    };
+
+    int score(int ply) const {
+        if (data.score >= TP_INF) {
+            return INF - ply;
+        } else if (data.score <= -TP_INF) {
+            return -INF + ply;
+        }
+
+        return data.score;
+    }
+
+    void age(int gen);
+    int flag() const { return data.flag; }
+    int depth() const { return data.depth; }
+    int move() const { return data.move; }
+    int generation() const { return data.generation; }
+};
+
+class TTable {
+  public:
+    TTHash *table;
+
+    std::uint64_t maxEntries;
+    int age = 1;
+
+    TTable();
+    ~TTable();
+
+    void init(std::uint64_t len);
+
+    void prefetch(std::uint64_t key);
+
+    bool probe(std::uint64_t key, TTHash &out);
+    void record(std::uint64_t key, int ply, int move, int depth, int score,
+                unsigned char flag);
+
+    void clearAge();
+    void increaseAge();
+    int percentFull();
+};
 
 struct TPHash {
     std::uint64_t key;
     short depth = 0;
-    short move  = 0;
-    int flag    = 0;
-    int score   = 0;
+    short move = 0;
+    int flag = 0;
+    int score = 0;
 };
 
 struct TPTable {
@@ -46,10 +109,14 @@ struct TPTable {
     unsigned int collisions;
 
     void clear();
-    int probeHash(int ply, std::uint64_t key, int *move, int depth, int alpha, int beta, bool qsearch = false);
-    void recordHash(std::string fen, int ply, std::uint64_t key, int move, int depth, int score, unsigned char flag);
+    int probeHash(int ply, std::uint64_t key, int *move, int depth, int alpha,
+                  int beta, bool qsearch = false);
+    void recordHash(std::string fen, int ply, std::uint64_t key, int move,
+                    int depth, int score, unsigned char flag);
     int hashfull() const;
 };
+
+extern TTable tt;
 
 } // namespace Yayo
 

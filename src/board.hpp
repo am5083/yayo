@@ -21,7 +21,6 @@
 #include "bitboard.hpp"
 #include "move.hpp"
 #include "util.hpp"
-#include <cassert>
 #include <cstdint>
 #include <string>
 
@@ -137,8 +136,6 @@ class Board {
         queenRooks |= pieces(ROOK, C);
         queenBishops |= pieces(BISHOP, C);
 
-        assert(sq < 64 && sq >= 0);
-
         return (pawnAttacks[~C][sq] & pieces(PAWN, C)) | (knightAttacks[sq] & knights) | (kingAttacks[sq] & kings) |
                (getBishopAttacks(sq, occ) & queenBishops) | (getRookAttacks(sq, occ) & queenRooks);
     }
@@ -238,10 +235,6 @@ constexpr int Board::see(Square toSq, Piece toPc, Square from, Piece fromPc) {
     Bitboard xRayPcs   = pieces(PAWN) | pieces(BISHOP) | pieces(ROOK) | pieces(QUEEN);
     Bitboard fromMap   = SQUARE_BB(from);
     Bitboard atkDefMap = (turn == WHITE) ? attacksToKing<BLACK>(toSq, pieces()) : attacksToKing<WHITE>(toSq, pieces());
-
-    assert(toPc <= B_KING);
-    assert(getPcType(toPc) >= 0);
-    assert(getPcType(toPc) < 8);
 
     int pcVal[] = {0, PAWN_VAL, KNIGHT_VAL, BISHOP_VAL, ROOK_VAL, QUEEN_VAL, KING_VAL, 0};
     gain[ply]   = pcVal[getPcType(toPc)];
