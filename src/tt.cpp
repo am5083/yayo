@@ -69,10 +69,6 @@ bool TTable::probe(std::uint64_t key, TTHash &out) {
             (bucket + i)->age(age);
             out = *(bucket + i);
             return true;
-        } else if ((bucket + i)->key == key) {
-            out = *(bucket + i);
-            ;
-            return true;
         }
     }
 

@@ -12,3 +12,5 @@ yayo
 compile_commands.json
 /a.out
 cmake*
+*.o
+/output
