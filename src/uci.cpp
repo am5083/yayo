@@ -230,9 +230,13 @@ void UCI::Main() {
             std::string move;
             iss >> move;
             int m = parseMove(board, move);
+            std::cout << getTo(m) << std::endl;
+            Square toSq = getTo(m);
+            Square fromSq = getFrom(m);
+            Piece toPc = board.board[toSq];
+            Piece fromPc = board.board[fromSq];
             std::cout << "static exchange evaluation: "
-                      << board.see(getTo(m), board.board[getTo(m)], getFrom(m),
-                                   board.board[getFrom(m)]);
+                      << board.see(toSq, toPc, fromSq, fromPc);
             std::cout << std::endl;
         } else if (cmd == "mirror") {
             std::string move;
@@ -248,7 +252,7 @@ void UCI::Main() {
             search._make(m);
         } else if (cmd == "go") {
             int depth = 256;
-            int movestogo = 20;
+            int movestogo = 30;
             int movetime = -1;
             int time = -1;
             int increment = 0;

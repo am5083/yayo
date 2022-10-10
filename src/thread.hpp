@@ -55,7 +55,8 @@ class Search {
     void _make(std::uint16_t move);
     void scoreMoves(moveList *mList, int ttMove = 0);
     int quiescent(int alpha, int beta);
-    int negaMax(int alpha, int beta, int depth, bool nullMove, bool pvNode);
+    int negaMax(int alpha, int beta, int depth, bool nullMove, bool pvNode,
+                bool checkExtension = false);
     moveList generateMoves();
     Board getBoard();
 
@@ -93,9 +94,9 @@ constexpr bool Search::canReduce(int alpha, int move, moveList &mList) {
         return false;
     if (getCapture(move) >= CAPTURE)
         return false;
-    if (historyMoves[_board.turn][getFrom(move)][getTo(move)] > 1500)
+    if (historyMoves[_board.turn][getFrom(move)][getTo(move)] > 2000)
         return false;
-    // if (eval(_board, mList) > alpha)
+    // if (Eval(_board).eval() > alpha)
     //     return false;
 
     return true;

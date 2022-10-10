@@ -41,7 +41,7 @@ int quiescent(Board &_board, int alpha, int beta) {
     int bestMove = 0;
 
     if (best >= beta)
-        return beta;
+        return best;
 
     if (!_board.checkPcs && ((best + QUEEN_VAL) < alpha)) {
         return alpha;
@@ -61,11 +61,7 @@ int quiescent(Board &_board, int alpha, int beta) {
 
         if (getPcType(fromPc) > getPcType(toPc)) {
             int see = _board.see(toSq, toPc, fromSq, fromPc);
-            if (see < 0) {
-                mList.moves[i].score = (see / 1000) + 50;
-            } else {
-                mList.moves[i].score = see;
-            }
+            mList.moves[i].score = see;
         }
     }
 

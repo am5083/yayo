@@ -109,6 +109,9 @@ int Search::quiescent(int alpha, int beta) {
     selDepth = std::max(selDepth, ply);
     nodes++;
 
+    if (checkForStop())
+        return ABORT_SCORE;
+
     pvTableLen[ply] = 0;
 
     if (_board.isRepetition()) {
@@ -118,19 +121,19 @@ int Search::quiescent(int alpha, int beta) {
         }
     }
 
+    tt.prefetch(_board.key);
     bool pvNode = (beta - alpha) < 1;
     Eval eval(_board);
     int score = 0, best = eval.eval(), oldAlpha = alpha;
     int bestMove = 0;
     int originalEval = best;
 
-    tt.prefetch(_board.key);
-    int ttScore = 0, tpMove = 0;
+    int ttScore = 0, tpMove = 0, flag = -1;
     TTHash entry = {0};
     if (tt.probe(_board.key, entry)) {
         ttScore = entry.score(_board.ply);
         tpMove = entry.move();
-        int flag = entry.flag();
+        flag = entry.flag();
 
         if (!pvNode && flag == TP_EXACT ||
             (flag == TP_BETA && ttScore >= beta) ||
@@ -139,18 +142,13 @@ int Search::quiescent(int alpha, int beta) {
         }
     }
 
-    // int tpScore = 0;
-    // int tpMove = 0;
-    // if ((tpScore = tpTbl.probeHash(_board.ply, _board.key, &tpMove, 0, alpha,
-    //                                beta, true)) != TP_UNKNOWN) {
-    //     if (!(beta - alpha < 1)) {
-    //         bestMove = tpMove;
-    //         return tpScore;
-    //     }
-    // }
+    if (flag == TP_EXACT || (flag == TP_BETA && ttScore >= beta) ||
+        (flag == TP_ALPHA && ttScore <= alpha)) {
+        best = ttScore;
+    }
 
     if (best >= beta)
-        return beta;
+        return best;
 
     if (!_board.checkPcs && ((best + QUEEN_VAL) < alpha)) {
         return alpha;
@@ -162,6 +160,8 @@ int Search::quiescent(int alpha, int beta) {
     moveList mList = {0};
     generateCaptures(_board, &mList);
 
+    auto pcVal = std::array{0,        PAWN_VAL,  KNIGHT_VAL, BISHOP_VAL,
+                            ROOK_VAL, QUEEN_VAL, KING_VAL,   0};
     for (int i = 0; i < mList.nMoves; i++) {
         if (tpMove && mList.moves[i].move == tpMove) {
             mList.moves[i].score = INF;
@@ -175,17 +175,15 @@ int Search::quiescent(int alpha, int beta) {
 
         if (getPcType(fromPc) > getPcType(toPc)) {
             int see = _board.see(toSq, toPc, fromSq, fromPc);
-            if (see < 0) {
-                mList.moves[i].score = (see / 1000) + 50;
-            } else {
-                mList.moves[i].score = see;
-            }
+            mList.moves[i].score = see; //(see / 1000) + 50;
         }
     }
 
+    int movesSearched = 0;
     for (int i = 0; i < mList.nMoves; i++) {
-        mList.swapBest(i);
+        movesSearched++;
 
+        mList.swapBest(i);
         make(_board, mList.moves[i].move);
         score = -quiescent(-beta, -alpha);
         unmake(_board, mList.moves[i].move);
@@ -212,10 +210,11 @@ int Search::quiescent(int alpha, int beta) {
 
     tt.record(_board.key, _board.ply, bestMove, 0, best, hashFlag);
 
-    return alpha;
+    return best;
 }
 
-int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
+int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
+                    bool checkExtension) {
 
     nodes++;
     int hashFlag = TP_ALPHA;
@@ -228,7 +227,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
         return ABORT_SCORE;
 
     bool inCheck = popcount(_board.checkPcs) > 0;
-    if (inCheck)
+    if (inCheck && !checkExtension)
         depth++;
 
     if (depth <= 0)

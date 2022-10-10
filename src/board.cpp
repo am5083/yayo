@@ -295,6 +295,45 @@ void Board::setFen(const std::string fen) {
                                             color[WHITE] | color[BLACK]);
 }
 
+int Board::see(Square toSq, Piece toPc, Square from, Piece fromPc) {
+    int gain[32];
+    int ply = 0;
+
+    Bitboard occ = pieces();
+    Bitboard xRayPcs =
+          pieces(PAWN) | pieces(BISHOP) | pieces(ROOK) | pieces(QUEEN);
+    Bitboard fromMap = SQUARE_BB(from);
+    Bitboard atkDefMap = attacksToSq(toSq, occ);
+
+    auto pcVal = std::array{0,        PAWN_VAL,  KNIGHT_VAL, BISHOP_VAL,
+                            ROOK_VAL, QUEEN_VAL, KING_VAL,   0};
+    gain[ply] = pcVal[getPcType(toPc)];
+
+    do {
+        ply++;
+
+        gain[ply] = pcVal[getPcType(fromPc)] - gain[ply - 1];
+        if (std::max(-gain[ply - 1], ply) < 0)
+            break;
+
+        atkDefMap ^= fromMap;
+        occ ^= fromMap;
+
+        if (fromMap & xRayPcs) {
+            xRayPcs ^= fromMap;
+            atkDefMap |= xRayAtks(toSq, occ);
+        }
+
+        fromMap = getLVA(Color(ply ^ 1), atkDefMap, &fromPc);
+    } while (fromMap && ply < 32);
+
+    while (--ply && (ply - 1) >= 0) {
+        gain[ply - 1] = -std::max(-gain[ply - 1], gain[ply]);
+    }
+
+    return gain[0];
+}
+
 std::uint64_t Board::hash() const {
     std::uint64_t h = 0;
     h ^= turn * 1;
