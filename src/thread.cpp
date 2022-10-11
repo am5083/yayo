@@ -116,7 +116,7 @@ int Search::quiescent(int alpha, int beta) {
 
     if (_board.isRepetition()) {
         numRep++;
-        if (_board.numRepetition() >= 2 || numRep > 2) {
+        if (_board.numRepetition() >= 2) {
             return 1 - (nodes & 2);
         }
     }
@@ -267,7 +267,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
 
         if (_board.isRepetition()) {
             numRep++;
-            if (_board.numRepetition() >= 2 || numRep > 2) {
+            if (_board.numRepetition() >= 2) {
                 return 1 - (nodes & 2);
             }
         }
