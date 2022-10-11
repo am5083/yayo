@@ -309,6 +309,8 @@ int Board::see(Square toSq, Piece toPc, Square from, Piece fromPc) {
                             ROOK_VAL, QUEEN_VAL, KING_VAL,   0};
     gain[ply] = pcVal[getPcType(toPc)];
 
+    char startTurn = turn;
+
     do {
         ply++;
 
@@ -324,7 +326,8 @@ int Board::see(Square toSq, Piece toPc, Square from, Piece fromPc) {
             atkDefMap |= xRayAtks(toSq, occ);
         }
 
-        fromMap = getLVA(Color(ply ^ 1), atkDefMap, &fromPc);
+        startTurn ^= 1;
+        fromMap = getLVA(Color(startTurn), atkDefMap, &fromPc);
     } while (fromMap && ply < 32);
 
     while (--ply && (ply - 1) >= 0) {
