@@ -114,12 +114,11 @@ int Search::quiescent(int alpha, int beta) {
 
     pvTableLen[ply] = 0;
 
-    if (_board.isRepetition()) {
-        numRep++;
-        if (_board.numRepetition() >= 2) {
-            return 1 - (nodes & 2);
-        }
-    }
+    // if (_board.isRepetition()) {
+    //     if (_board.numRepetition() >= 2) {
+    //         return 0;
+    //     }
+    // }
 
     tt.prefetch(_board.key);
     bool pvNode = (beta - alpha) < 1;
@@ -150,7 +149,14 @@ int Search::quiescent(int alpha, int beta) {
     if (best >= beta)
         return best;
 
-    if (!_board.checkPcs && ((best + QUEEN_VAL) < alpha)) {
+    auto pcVal = std::array{S(0, 0),   pawnScore,  knightScore, bishopScore,
+                            rookScore, queenScore, S(0, 0),     S(0, 0)};
+
+    int queenScore = MgScore(pcVal[QUEEN]) * eval.mgPhase +
+                     EgScore(pcVal[QUEEN]) * eval.egPhase;
+
+    queenScore /= 24;
+    if (!_board.checkPcs && ((best + queenScore) < alpha)) {
         return alpha;
     }
 
@@ -160,8 +166,10 @@ int Search::quiescent(int alpha, int beta) {
     moveList mList = {0};
     generateCaptures(_board, &mList);
 
-    auto pcVal = std::array{0,        PAWN_VAL,  KNIGHT_VAL, BISHOP_VAL,
-                            ROOK_VAL, QUEEN_VAL, KING_VAL,   0};
+    int rookVal = MgScore(pcVal[ROOK]) * eval.mgPhase +
+                  EgScore(pcVal[ROOK]) * eval.egPhase;
+    rookVal /= 24;
+
     for (int i = 0; i < mList.nMoves; i++) {
         if (tpMove && mList.moves[i].move == tpMove) {
             mList.moves[i].score = INF;
@@ -173,7 +181,7 @@ int Search::quiescent(int alpha, int beta) {
         Square fromSq = getFrom(c_move), toSq = getTo(c_move);
         Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
 
-        if (getPcType(fromPc) > getPcType(toPc)) {
+        if (getPcType(fromPc) >= getPcType(toPc)) {
             int see = _board.see(toSq, toPc, fromSq, fromPc);
             mList.moves[i].score = see; //(see / 1000) + 50;
         }
@@ -181,16 +189,27 @@ int Search::quiescent(int alpha, int beta) {
 
     int movesSearched = 0;
     for (int i = 0; i < mList.nMoves; i++) {
-        movesSearched++;
 
         mList.swapBest(i);
+        if (mList.moves[i].score <= -(rookVal + 5)) {
+            continue;
+        }
+
         make(_board, mList.moves[i].move);
 
+<<<<<<< HEAD
         if (!_board.checkPcs && mList.moves[i].score < -100) {
+=======
+        if (movesSearched && !_board.checkPcs && mList.moves[i].score <= -5) {
+            unmake(_board, mList.moves[i].move);
+            continue;
+        } else if (mList.moves[i].score <= -150 && movesSearched) {
+>>>>>>> contempt
             unmake(_board, mList.moves[i].move);
             continue;
         }
 
+        movesSearched++;
         score = -quiescent(-beta, -alpha);
         unmake(_board, mList.moves[i].move);
 
@@ -263,12 +282,12 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
 
         if (_board.halfMoves >= 100 || _board.isDraw())
-            return 1 - (nodes & 2);
+            return 1; //- (nodes & 3);
 
         if (_board.isRepetition()) {
             numRep++;
             if (_board.numRepetition() >= 2) {
-                return 1 - (nodes & 2);
+                return 5;
             }
         }
     }
@@ -287,16 +306,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             }
         }
     }
-
-    // int ttScore = 0;
-    // int ttMove = 0;
-    // if (!nullMove &&
-    //     (ttScore = tpTbl.probeHash(_board.ply, _board.key, &ttMove, depth,
-    //                                alpha, beta)) != TP_UNKNOWN) {
-    //     if (!pvNode || (ttScore > alpha && ttScore < beta)) {
-    //         return ttScore;
-    //     }
-    // }
 
     if (depth > 2 && !_board.checkPcs && !pvNode && !nullMove) {
         makeNullMove(_board);
@@ -385,7 +394,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             return -INF;
         }
 
-        return 1 - (nodes & 2);
+        return 10;
     }
 
     if (best >= beta && getCapture(bestMove) < CAPTURE) {
