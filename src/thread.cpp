@@ -114,12 +114,11 @@ int Search::quiescent(int alpha, int beta) {
 
     pvTableLen[ply] = 0;
 
-    if (_board.isRepetition()) {
-        numRep++;
-        if (_board.numRepetition() >= 2) {
-            return 1 - (nodes & 2);
-        }
-    }
+    // if (_board.isRepetition()) {
+    //     if (_board.numRepetition() >= 2) {
+    //         return 0;
+    //     }
+    // }
 
     tt.prefetch(_board.key);
     bool pvNode = (beta - alpha) < 1;
@@ -173,7 +172,7 @@ int Search::quiescent(int alpha, int beta) {
         Square fromSq = getFrom(c_move), toSq = getTo(c_move);
         Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
 
-        if (getPcType(fromPc) > getPcType(toPc)) {
+        if (getPcType(fromPc) >= getPcType(toPc)) {
             int see = _board.see(toSq, toPc, fromSq, fromPc);
             mList.moves[i].score = see; //(see / 1000) + 50;
         }
@@ -186,10 +185,10 @@ int Search::quiescent(int alpha, int beta) {
         mList.swapBest(i);
         make(_board, mList.moves[i].move);
 
-        // if (!_board.checkPcs && mList.moves[i].score < 50) {
-        //     unmake(_board, mList.moves[i].move);
-        //     continue;
-        // }
+        if (!_board.checkPcs && mList.moves[i].score <= -10) {
+            unmake(_board, mList.moves[i].move);
+            continue;
+        }
 
         score = -quiescent(-beta, -alpha);
         unmake(_board, mList.moves[i].move);
@@ -263,12 +262,12 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
 
         if (_board.halfMoves >= 100 || _board.isDraw())
-            return 1 - (nodes & 2);
+            return 1; //- (nodes & 3);
 
         if (_board.isRepetition()) {
             numRep++;
             if (_board.numRepetition() >= 2) {
-                return 1 - (nodes & 2);
+                return 5;
             }
         }
     }
@@ -287,16 +286,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             }
         }
     }
-
-    // int ttScore = 0;
-    // int ttMove = 0;
-    // if (!nullMove &&
-    //     (ttScore = tpTbl.probeHash(_board.ply, _board.key, &ttMove, depth,
-    //                                alpha, beta)) != TP_UNKNOWN) {
-    //     if (!pvNode || (ttScore > alpha && ttScore < beta)) {
-    //         return ttScore;
-    //     }
-    // }
 
     if (depth > 2 && !_board.checkPcs && !pvNode && !nullMove) {
         makeNullMove(_board);
@@ -385,7 +374,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             return -INF;
         }
 
-        return 1 - (nodes & 2);
+        return 10;
     }
 
     if (best >= beta && getCapture(bestMove) < CAPTURE) {
