@@ -191,19 +191,20 @@ int Search::quiescent(int alpha, int beta) {
     for (int i = 0; i < mList.nMoves; i++) {
 
         mList.swapBest(i);
-        if (mList.moves[i].score <= -(rookVal + 5)) {
-            continue;
-        }
+        // if (mList.moves[i].score <= -(rookVal + 5)) {
+        //     continue;
+        // }
 
         make(_board, mList.moves[i].move);
 
-        if (movesSearched && !_board.checkPcs && mList.moves[i].score <= -5) {
-            unmake(_board, mList.moves[i].move);
-            continue;
-        } else if (mList.moves[i].score <= -150 && movesSearched) {
-            unmake(_board, mList.moves[i].move);
-            continue;
-        }
+        // if (movesSearched && !_board.checkPcs && mList.moves[i].score <= -5)
+        // {
+        //     unmake(_board, mList.moves[i].move);
+        //     continue;
+        // } else if (mList.moves[i].score <= -150 && movesSearched) {
+        //     unmake(_board, mList.moves[i].move);
+        //     continue;
+        // }
 
         movesSearched++;
         score = -quiescent(-beta, -alpha);
