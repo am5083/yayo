@@ -197,14 +197,10 @@ int Search::quiescent(int alpha, int beta) {
 
         make(_board, mList.moves[i].move);
 
-<<<<<<< HEAD
-        if (!_board.checkPcs && mList.moves[i].score < -100) {
-=======
         if (movesSearched && !_board.checkPcs && mList.moves[i].score <= -5) {
             unmake(_board, mList.moves[i].move);
             continue;
         } else if (mList.moves[i].score <= -150 && movesSearched) {
->>>>>>> contempt
             unmake(_board, mList.moves[i].move);
             continue;
         }
@@ -230,7 +226,8 @@ int Search::quiescent(int alpha, int beta) {
         }
     }
 
-    // tpTbl.recordHash(_board.fen(), _board.ply, _board.key, bestMove, 0, best,
+    // tpTbl.recordHash(_board.fen(), _board.ply, _board.key, bestMove, 0,
+    // best,
     //                  hashFlag);
 
     tt.record(_board.key, _board.ply, bestMove, 0, best, hashFlag);
