@@ -385,7 +385,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             return -INF;
         }
 
-        return 0;
+        return 1 - (nodes & 2);
     }
 
     if (best >= beta && getCapture(bestMove) < CAPTURE) {
