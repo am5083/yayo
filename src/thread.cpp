@@ -183,12 +183,14 @@ int Search::quiescent(int alpha, int beta) {
     for (int i = 0; i < mList.nMoves; i++) {
         movesSearched++;
 
-        if (mList.moves[i].score <= 0)
-            continue;
-
         mList.swapBest(i);
         make(_board, mList.moves[i].move);
-        int move = mList.moves[i].move;
+
+        if (!_board.checkPcs && mList.moves[i].score <= -10) {
+            unmake(_board, mList.moves[i].move);
+            continue;
+        }
+
         score = -quiescent(-beta, -alpha);
         unmake(_board, mList.moves[i].move);
 
