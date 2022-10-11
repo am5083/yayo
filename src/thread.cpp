@@ -149,7 +149,14 @@ int Search::quiescent(int alpha, int beta) {
     if (best >= beta)
         return best;
 
-    if (!_board.checkPcs && ((best + QUEEN_VAL) < alpha)) {
+    auto pcVal = std::array{S(0, 0),   pawnScore,  knightScore, bishopScore,
+                            rookScore, queenScore, S(0, 0),     S(0, 0)};
+
+    int queenScore = MgScore(pcVal[QUEEN]) * eval.mgPhase +
+                     EgScore(pcVal[QUEEN]) * eval.egPhase;
+
+    queenScore /= 24;
+    if (!_board.checkPcs && ((best + queenScore) < alpha)) {
         return alpha;
     }
 
@@ -159,8 +166,10 @@ int Search::quiescent(int alpha, int beta) {
     moveList mList = {0};
     generateCaptures(_board, &mList);
 
-    auto pcVal = std::array{0,        PAWN_VAL,  KNIGHT_VAL, BISHOP_VAL,
-                            ROOK_VAL, QUEEN_VAL, KING_VAL,   0};
+    int rookVal = MgScore(pcVal[ROOK]) * eval.mgPhase +
+                  EgScore(pcVal[ROOK]) * eval.egPhase;
+    rookVal /= 24;
+
     for (int i = 0; i < mList.nMoves; i++) {
         if (tpMove && mList.moves[i].move == tpMove) {
             mList.moves[i].score = INF;
@@ -180,16 +189,23 @@ int Search::quiescent(int alpha, int beta) {
 
     int movesSearched = 0;
     for (int i = 0; i < mList.nMoves; i++) {
-        movesSearched++;
 
         mList.swapBest(i);
+        if (mList.moves[i].score <= -(rookVal + 5)) {
+            continue;
+        }
+
         make(_board, mList.moves[i].move);
 
-        if (!_board.checkPcs && mList.moves[i].score <= -10) {
+        if (movesSearched && !_board.checkPcs && mList.moves[i].score <= -5) {
+            unmake(_board, mList.moves[i].move);
+            continue;
+        } else if (mList.moves[i].score <= -150 && movesSearched) {
             unmake(_board, mList.moves[i].move);
             continue;
         }
 
+        movesSearched++;
         score = -quiescent(-beta, -alpha);
         unmake(_board, mList.moves[i].move);
 
