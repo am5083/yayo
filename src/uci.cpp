@@ -342,7 +342,7 @@ void UCI::Main() {
             egPhase = 24 - mgPhase;
 
             tp.calculate(std::make_tuple(board.turn, mgPhase, egPhase));
-            // tp.print();
+            tp.print();
             std::cout << "eval score: " << evaluate << std::endl;
         } else if (cmd == "uci") {
             Uci();
