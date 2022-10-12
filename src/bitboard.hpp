@@ -39,12 +39,11 @@ struct Magic {
     Bitboard magic;
     Bitboard *attacks;
     unsigned int shift;
-    int idx = 0;
 
     constexpr uint64_t index(Bitboard occ) const {
         if (std::is_constant_evaluated()) {
             occ &= mask;
-            occ *= g_rookMagics[idx];
+            occ *= magic;
             occ = occ >> shift;
 
             return occ;

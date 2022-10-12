@@ -42,12 +42,10 @@ std::uint64_t zobristCastle[2][2];
 std::uint64_t zobristCastleRights[16];
 std::uint64_t zobristPieceSq[16][64];
 
-namespace {
 constexpr Bitboard maskRookOccupancy(Square sq);
 constexpr Bitboard maskBishopOccupancy(Square sq);
 constexpr Bitboard genRookAttacks(Square square, Bitboard bb);
 constexpr Bitboard genBishopAttacks(Square square, Bitboard bb);
-} // namespace
 
 void initMasks(const PieceT pc, Bitboard attack_table[], Magic mask[]) {
     int size = 0;
@@ -55,7 +53,7 @@ void initMasks(const PieceT pc, Bitboard attack_table[], Magic mask[]) {
         Magic *magic = &mask[sq];
         magic->mask = (pc == ROOK) ? maskRookOccupancy(Square(sq))
                                    : maskBishopOccupancy(Square(sq));
-        magic->idx = sq;
+        magic->magic = (pc == ROOK) ? g_rookMagics[sq] : g_bishopMagics[sq];
         magic->attacks =
               (sq == SQUARE_0) ? attack_table : (mask[sq - 1].attacks + size);
 
@@ -69,6 +67,29 @@ void initMasks(const PieceT pc, Bitboard attack_table[], Magic mask[]) {
         } while (b);
     }
 }
+
+// constexpr std::array<Bitboard, R_ATK_TBL_SIZE> rookAtk = {[]() constexpr {
+//     std::array<Bitboard, R_ATK_TBL_SIZE> arr;
+
+//     int size = 0;
+//     for (int sq = 0; sq < 64; sq++) {
+//         Magic *magic = &rookMagics[sq];
+//         magic->mask = maskRookOccupancy(Square(sq));
+//         magic->magic = g_rookMagics[sq];
+//         magic->attacks =
+//               (sq == SQUARE_0) ? &arr[0] : (rookMagics[sq - 1].attacks +
+//               size);
+
+//         Bitboard b = size = 0;
+//         do {
+//             size++;
+//             magic->attacks[magic->index(b)] = genRookAttacks(Square(sq), b);
+//             b = (b - magic->mask) & magic->mask;
+//         } while (b);
+//     }
+
+//     return arr;
+// }()}; // namespace Yayo
 
 void Bitboards::init_arrays() {
     initMasks(ROOK, rookAttacks, rookMagics);
@@ -162,8 +183,6 @@ void Bitboards::print_bitboard(Bitboard bitboard) {
 
     printf("\n");
 }
-
-namespace {
 
 constexpr Bitboard maskRookOccupancy(Square sq) {
     Bitboard occ = 0;
@@ -270,6 +289,5 @@ constexpr Bitboard genBishopAttacks(Square sq, Bitboard blocks) {
 
     return occ;
 }
-} // namespace
 
 } // namespace Yayo

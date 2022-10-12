@@ -194,6 +194,20 @@ constexpr Score pushedPawnShieldStrength[4] = {
       S(-5, -5),
       S(100, 100),
 };
+constexpr Score kingAttackersDistance[8] = {
+      S(0, 0),     S(-100, -100), S(-80, -80), S(-50, -50),
+      S(-30, -30), S(-10, -10),   S(-5, -5),   S(0, 0),
+};
+constexpr Score xRayKingAttackersDistance[8] = {
+      S(0, 0),     S(-100, -100), S(-80, -80), S(-50, -50),
+      S(-30, -30), S(-10, -10),   S(-5, -5),   S(0, 0),
+};
+constexpr Score xRayKingAttackPieceWeight[5] = {
+      S(-23, 22), S(-16, 6), S(-29, 8), S(-36, 8), S(-21, -20),
+};
+constexpr Score hangingPieceWeight[5] = {
+      S(-10, -10), S(-25, -25), S(-27, -27), S(-50, -50), S(-100, -100),
+};
 static const Score *pcSq[] = {taperedPawnPcSq,   taperedKnightPcSq,
                               taperedBishopPcSq, taperedRookPcSq,
                               taperedQueenPcSq,  taperedKingPcSq};
@@ -221,9 +235,13 @@ struct Trace {
     int kingAttackers[5][NUM_COLOR] = {{0}};
     int trappedRooks[NUM_COLOR] = {0};
     int openFileRooks[2][NUM_COLOR] = {{0}};
-    int openKingFiles[3][NUM_COLOR];
-    int pawnShieldStrength[4][NUM_COLOR];
-    int pushedPawnShieldStrength[4][NUM_COLOR];
+    int openKingFiles[3][NUM_COLOR] = {{0}};
+    int pawnShieldStrength[4][NUM_COLOR] = {{0}};
+    int pushedPawnShieldStrength[4][NUM_COLOR] = {{0}};
+    int kingAttackersDistance[8][NUM_COLOR] = {{0}};
+    int xRayKingAttackersDistance[8][NUM_COLOR] = {{0}};
+    int xRayKingAttackPieceWeight[5][NUM_COLOR] = {{0}};
+    int hangingPieceWeight[5][NUM_COLOR] = {{0}};
 };
 
 struct EvalWeights {
@@ -388,6 +406,20 @@ struct EvalWeights {
           S(-5, -5),
           S(100, 100),
     };
+    const Score kingAttackersDistance[8] = {
+          S(0, 0),     S(-100, -100), S(-80, -80), S(-50, -50),
+          S(-30, -30), S(-10, -10),   S(-5, -5),   S(0, 0),
+    };
+    const Score xRayKingAttackersDistance[8] = {
+          S(0, 0),     S(-100, -100), S(-80, -80), S(-50, -50),
+          S(-30, -30), S(-10, -10),   S(-5, -5),   S(0, 0),
+    };
+    const Score xRayKingAttackPieceWeight[5] = {
+          S(-23, 22), S(-16, 6), S(-29, 8), S(-36, 8), S(-21, -20),
+    };
+    const Score hangingPieceWeight[5] = {
+          S(-10, -10), S(-25, -25), S(-27, -27), S(-50, -50), S(-100, -100),
+    };
 };
 struct TracePeek {
     TracePeek(Trace &ts, EvalWeights &ws) : t(ts), w(ws){};
@@ -482,6 +514,7 @@ template <Tracing T = NO_TRACE> class Eval {
     template <Color C> constexpr Score pieceSquare();
     template <Color C> constexpr Score mobilityScore();
     template <Color C> constexpr Score kingAttackers();
+    template <Color C> constexpr Score kingXrayAttackers();
     template <Color C> constexpr Score kingSafety();
     template <Color C> constexpr Score rookEval();
 
@@ -622,6 +655,44 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::kingSafety() {
 
 template <Tracing T>
 template <Color C>
+constexpr Score Eval<T>::kingXrayAttackers() {
+    const Bitboard king = board.pieces(KING, C);
+    const Square kingSquare = Sq(king);
+
+    int mgScore = 0, egScore = 0;
+    Bitboard xRayPieces = board.pieces(BISHOP, ~C) | board.pieces(ROOK, ~C) |
+                          board.pieces(QUEEN, ~C);
+    while (xRayPieces) {
+        Square xRayPcSq = Square(lsb_index(xRayPieces));
+        Bitboard betweenMask = rectArray[kingSquare][xRayPcSq];
+
+        int n = popcount(betweenMask & board.pieces());
+        if (n > 1 || n < 1) {
+            xRayPieces &= xRayPieces - 1;
+            continue;
+        }
+
+        int distanceToKing = popcount(betweenMask);
+        PieceT xRayPc = getPcType(board.board[xRayPcSq]);
+
+        mgScore += MgScore(xRayKingAttackersDistance[distanceToKing]);
+        egScore += EgScore(xRayKingAttackersDistance[distanceToKing]);
+        mgScore += MgScore(xRayKingAttackPieceWeight[xRayPc]);
+        egScore += EgScore(xRayKingAttackPieceWeight[xRayPc]);
+
+        if (T) {
+            trace.xRayKingAttackersDistance[distanceToKing][C]++;
+            trace.xRayKingAttackPieceWeight[xRayPc][C]++;
+        }
+
+        xRayPieces &= xRayPieces - 1;
+    }
+
+    return S(mgScore, egScore);
+}
+
+template <Tracing T>
+template <Color C>
 constexpr Score Eval<T>::kingAttackers() {
 
     const Bitboard king = board.pieces(KING, C);
@@ -639,10 +710,17 @@ constexpr Score Eval<T>::kingAttackers() {
 
             if (T == TRACE) {
                 trace.kingAttackers[piece - 1][C]++;
+                trace.kingAttackersDistance[popcount(
+                      rectArray[kingSquare][attacker])][C]++;
             }
 
             mgScore += MgScore(kingAttackersWeight[piece - 1]);
             egScore += EgScore(kingAttackersWeight[piece - 1]);
+            mgScore += MgScore(kingAttackersDistance[popcount(
+                  rectArray[kingSquare][attacker])]);
+            egScore += EgScore(kingAttackersDistance[popcount(
+                  rectArray[kingSquare][attacker])]);
+
             attackPcs &= attackPcs - 1;
         }
 

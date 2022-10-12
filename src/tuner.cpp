@@ -282,11 +282,11 @@ void TunerEntries::updateSingleGradient(TEntry &entry,
 // clang-format off
 inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATURES][2]) {
     printf("\n");
-    printf("constexpr Score pawnScore   = S(%4d, %4d)\n", (int)cparams[0][0] + (int)params[0][0], (int)cparams[0][1] + (int)params[0][1]);
-    printf("constexpr Score knightScore = S(%4d, %4d)\n", (int)cparams[1][0] + (int)params[1][0], (int)cparams[1][1] + (int)params[1][1]);
-    printf("constexpr Score bishopScore = S(%4d, %4d)\n", (int)cparams[2][0] + (int)params[2][0], (int)cparams[2][1] + (int)params[2][1]);
-    printf("constexpr Score rookScore   = S(%4d, %4d)\n", (int)cparams[3][0] + (int)params[3][0], (int)cparams[3][1] + (int)params[3][1]);
-    printf("constexpr Score queenScore  = S(%4d, %4d)\n\n", (int)cparams[4][0] + (int)params[4][0], (int)cparams[4][1] + (int)params[4][1]);
+    printf("constexpr Score pawnScore   = S(%4d, %4d);\n", (int)cparams[0][0] + (int)params[0][0], (int)cparams[0][1] + (int)params[0][1]);
+    printf("constexpr Score knightScore = S(%4d, %4d);\n", (int)cparams[1][0] + (int)params[1][0], (int)cparams[1][1] + (int)params[1][1]);
+    printf("constexpr Score bishopScore = S(%4d, %4d);\n", (int)cparams[2][0] + (int)params[2][0], (int)cparams[2][1] + (int)params[2][1]);
+    printf("constexpr Score rookScore   = S(%4d, %4d);\n", (int)cparams[3][0] + (int)params[3][0], (int)cparams[3][1] + (int)params[3][1]);
+    printf("constexpr Score queenScore  = S(%4d, %4d);\n\n", (int)cparams[4][0] + (int)params[4][0], (int)cparams[4][1] + (int)params[4][1]);
 
     printf("constexpr Score taperedPawnPcSq[SQUARE_CT] = {");
     for (int i = 0, start = 5; i < 64; i++) {
@@ -442,6 +442,14 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
 
     printf("constexpr Score pushedPawnShieldStrength[4] = {");
     for (int i = 0, start = 502; i < 4; i++) {
+        if (!(i % 4))
+            printf("\n");
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
+    }
+    printf("\n};\n");
+
+    printf("constexpr Score kingAttackersDistance[8] = {");
+    for (int i = 0, start = 506; i < 8; i++) {
         if (!(i % 4))
             printf("\n");
         printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
