@@ -417,9 +417,9 @@ struct EvalWeights {
     const Score xRayKingAttackPieceWeight[5] = {
           S(-23, 22), S(-16, 6), S(-29, 8), S(-36, 8), S(-21, -20),
     };
-    const Score hangingPieceWeight[5] = {
-          S(-10, -10), S(-25, -25), S(-27, -27), S(-50, -50), S(-100, -100),
-    };
+    // const Score hangingPieceWeight[5] = {
+    //       S(-10, -10), S(-25, -25), S(-27, -27), S(-50, -50), S(-100, -100),
+    // };
 };
 struct TracePeek {
     TracePeek(Trace &ts, EvalWeights &ws) : t(ts), w(ws){};
@@ -456,10 +456,13 @@ template <Tracing T = NO_TRACE> class Eval {
 
         const Score wKingSafety = kingAttackers<WHITE>();
         const Score bKingSafety = kingAttackers<BLACK>();
-        // const Score wKingSafety = S(0, 0);
-        // const Score bKingSafety = wKingSafety;
         const int mgSafety = MgScore(wKingSafety) - MgScore(bKingSafety);
         const int egSafety = EgScore(wKingSafety) - EgScore(bKingSafety);
+
+        const Score wKingXrayAtks = kingXrayAttackers<WHITE>();
+        const Score bKingXrayAtks = kingXrayAttackers<BLACK>();
+        const int mgXrayAtks = MgScore(wKingXrayAtks) - MgScore(bKingXrayAtks);
+        const int egXrayAtks = EgScore(wKingXrayAtks) - EgScore(bKingXrayAtks);
 
         const Score wKS = kingSafety<WHITE>();
         const Score bKS = kingSafety<BLACK>();
@@ -481,10 +484,12 @@ template <Tracing T = NO_TRACE> class Eval {
         const int safetyEval = (mgSafety * mgPhase + egSafety * egPhase) / 24;
         const int KSEval = (mgKS * mgPhase + egKS * egPhase) / 24;
         const int rookEval = (mgRookEval * mgPhase + egRookEval * egPhase) / 24;
+        const int kingXrayAtks =
+              (mgXrayAtks * mgPhase + egXrayAtks * egPhase) / 24;
 
         auto eval = TEMPO;
         eval += materialScore + pcSqEval + pawnStructureEval + mobilityEval +
-                rookEval + safetyEval + KSEval;
+                rookEval + safetyEval + KSEval + kingXrayAtks;
 
         return eval * color;
     }
@@ -517,6 +522,7 @@ template <Tracing T = NO_TRACE> class Eval {
     template <Color C> constexpr Score kingXrayAttackers();
     template <Color C> constexpr Score kingSafety();
     template <Color C> constexpr Score rookEval();
+    template <Color C> constexpr Score hangingPiecePenalty();
 
   private:
     void init() {

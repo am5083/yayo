@@ -12,7 +12,7 @@
 #define LRDROPRATE 1.00
 #define LRSTEPRATE 250
 #define REPORTING 50
-#define NUM_FEATURES 514
+#define NUM_FEATURES 527
 
 namespace Yayo {
 double sigmoid(double K, double E);

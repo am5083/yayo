@@ -456,6 +456,30 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     }
     printf("\n};\n");
 
+    printf("constexpr Score kingAttackersDistance[8] = {");
+    for (int i = 0, start = 506; i < 8; i++) {
+        if (!(i % 4))
+            printf("\n");
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
+    }
+    printf("\n};\n");
+
+    printf("constexpr Score xRayKingAttackersDistance[8] = {");
+    for (int i = 0, start = 514; i < 8; i++) {
+        if (!(i % 4))
+            printf("\n");
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
+    }
+    printf("\n};\n");
+
+
+    printf("constexpr Score xRayKingAttackPieceWeight[5] = {");
+    for (int i = 0, start = 522; i < 5; i++) {
+        if (!(i % 4))
+            printf("\n");
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
+    }
+    printf("\n};\n");
 }
 // clang-format on
 
