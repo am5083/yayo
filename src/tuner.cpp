@@ -129,6 +129,7 @@ TunerEntries::TunerEntries(std::string file) {
 void TEntry::init(Board &board) {
     Trace trace = Trace();
     Eval<TRACE> eval(board, trace);
+    Search search(board);
     turn = board.turn;
 
     // clang-format off
@@ -144,7 +145,7 @@ void TEntry::init(Board &board) {
     egPhase = 24 - mgPhase;
 
     eval.eval();
-    staticEval = quiescent(board, -INF + 1, INF - 1);
+    staticEval = search.quiescent(-INF + 1, INF - 1);
 
     int *TraceArray = (int *)&trace; // lol
     TTuple temp_tuples[NUM_FEATURES * 2];
