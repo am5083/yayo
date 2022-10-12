@@ -459,11 +459,10 @@ template <Tracing T = NO_TRACE> class Eval {
         const int mgSafety = MgScore(wKingSafety) - MgScore(bKingSafety);
         const int egSafety = EgScore(wKingSafety) - EgScore(bKingSafety);
 
-        // const Score wKingXrayAtks = kingXrayAttackers<WHITE>();
-        // const Score bKingXrayAtks = kingXrayAttackers<BLACK>();
-        // const int mgXrayAtks = MgScore(wKingXrayAtks) -
-        // MgScore(bKingXrayAtks); const int egXrayAtks = EgScore(wKingXrayAtks)
-        // - EgScore(bKingXrayAtks);
+        const Score wKingXrayAtks = kingXrayAttackers<WHITE>();
+        const Score bKingXrayAtks = kingXrayAttackers<BLACK>();
+        const int mgXrayAtks = MgScore(wKingXrayAtks) - MgScore(bKingXrayAtks);
+        const int egXrayAtks = EgScore(wKingXrayAtks) - EgScore(bKingXrayAtks);
 
         const Score wKS = kingSafety<WHITE>();
         const Score bKS = kingSafety<BLACK>();
