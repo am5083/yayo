@@ -681,14 +681,16 @@ constexpr Score Eval<T>::kingXrayAttackers() {
         int distanceToKing = popcount(betweenMask);
         PieceT xRayPc = getPcType(board.board[xRayPcSq]);
 
-        mgScore += MgScore(xRayKingAttackersDistance[distanceToKing]);
-        egScore += EgScore(xRayKingAttackersDistance[distanceToKing]);
-        mgScore += MgScore(xRayKingAttackPieceWeight[xRayPc]);
-        egScore += EgScore(xRayKingAttackPieceWeight[xRayPc]);
+        if (xRayPc - 2 >= 0) {
+            mgScore += MgScore(xRayKingAttackersDistance[distanceToKing]);
+            egScore += EgScore(xRayKingAttackersDistance[distanceToKing]);
+            mgScore += MgScore(xRayKingAttackPieceWeight[xRayPc - 2]);
+            egScore += EgScore(xRayKingAttackPieceWeight[xRayPc - 2]);
 
-        if (T) {
-            trace.xRayKingAttackersDistance[distanceToKing][C]++;
-            trace.xRayKingAttackPieceWeight[xRayPc][C]++;
+            if (T) {
+                trace.xRayKingAttackersDistance[distanceToKing][C]++;
+                trace.xRayKingAttackPieceWeight[xRayPc - 2][C]++;
+            }
         }
 
         xRayPieces &= xRayPieces - 1;
@@ -714,18 +716,21 @@ constexpr Score Eval<T>::kingAttackers() {
             Square attacker = Square(lsb_index(attackPcs));
             PieceT piece = getPcType(board.board[attacker]);
 
+            const int distance = popcount(rectArray[kingSquare][attacker]);
             if (T == TRACE) {
-                trace.kingAttackers[piece - 1][C]++;
-                trace.kingAttackersDistance[popcount(
-                      rectArray[kingSquare][attacker])][C]++;
+                if (piece - 2 >= 0) {
+                    trace.kingAttackers[piece - 2][C]++;
+                }
+                trace.kingAttackersDistance[distance][C];
             }
 
-            mgScore += MgScore(kingAttackersWeight[piece - 1]);
-            egScore += EgScore(kingAttackersWeight[piece - 1]);
-            mgScore += MgScore(kingAttackersDistance[popcount(
-                  rectArray[kingSquare][attacker])]);
-            egScore += EgScore(kingAttackersDistance[popcount(
-                  rectArray[kingSquare][attacker])]);
+            auto pcValue = 0;
+            if (piece - 2 >= 0) {
+                mgScore += MgScore(kingAttackersWeight[piece - 2]);
+                egScore += EgScore(kingAttackersWeight[piece - 2]);
+                mgScore += MgScore(kingAttackersDistance[distance]);
+                egScore += EgScore(kingAttackersDistance[distance]);
+            }
 
             attackPcs &= attackPcs - 1;
         }

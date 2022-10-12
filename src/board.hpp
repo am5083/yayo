@@ -107,7 +107,7 @@ class Board {
     constexpr bool isRepetition() const;
 
     void print() const;
-    void setFen(const std::string fen);
+    bool setFen(const std::string fen);
     std::string fen() const;
 
     constexpr Bitboard pieces() const { return this->color[WHITE] | this->color[BLACK]; }

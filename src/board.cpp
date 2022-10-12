@@ -160,7 +160,7 @@ std::string Board::fen() const {
     return fen;
 }
 
-void Board::setFen(const std::string fen) {
+bool Board::setFen(const std::string fen) {
     key = 0;
     ply = 0;
     gamePly = 0;
@@ -234,6 +234,11 @@ void Board::setFen(const std::string fen) {
                 idx++;
         }
     }
+
+    if (popcount(pieces(KING)) != 2) {
+        return false;
+    }
+
     idx++;
 
     if (fen[idx] == 'w')
@@ -293,6 +298,8 @@ void Board::setFen(const std::string fen) {
                                             color[WHITE] | color[BLACK])
                      : attacksToKing<WHITE>(Sq(pieces(KING, BLACK)),
                                             color[WHITE] | color[BLACK]);
+
+    return true;
 }
 
 int Board::see(Square toSq, Piece toPc, Square from, Piece fromPc) {

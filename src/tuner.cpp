@@ -114,8 +114,11 @@ TunerEntries::TunerEntries(std::string file) {
         else if (line.find("[0.0]") != std::string::npos)
             entries[i].result = 0.0;
 
-        board.setFen(line);
-        entries[i].init(board);
+        if (!board.setFen(line)) {
+            entries[i].result = -INF * 2;
+        } else {
+            entries[i].init(board);
+        }
 
         if (!(i % 50000)) {
             std::cout << "initializing tuner entry #" << i << " of "

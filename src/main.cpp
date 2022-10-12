@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[1], "tune") == 0) {
             init_arrays();
             initMvvLva();
-            TunerEntries tuner("lichess-big3-resolved.book");
+            TunerEntries tuner("selfplay.pgn");
             tuner.runTuner();
             return 0;
         }
