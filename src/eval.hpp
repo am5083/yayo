@@ -459,10 +459,11 @@ template <Tracing T = NO_TRACE> class Eval {
         const int mgSafety = MgScore(wKingSafety) - MgScore(bKingSafety);
         const int egSafety = EgScore(wKingSafety) - EgScore(bKingSafety);
 
-        const Score wKingXrayAtks = kingXrayAttackers<WHITE>();
-        const Score bKingXrayAtks = kingXrayAttackers<BLACK>();
-        const int mgXrayAtks = MgScore(wKingXrayAtks) - MgScore(bKingXrayAtks);
-        const int egXrayAtks = EgScore(wKingXrayAtks) - EgScore(bKingXrayAtks);
+        // const Score wKingXrayAtks = kingXrayAttackers<WHITE>();
+        // const Score bKingXrayAtks = kingXrayAttackers<BLACK>();
+        // const int mgXrayAtks = MgScore(wKingXrayAtks) -
+        // MgScore(bKingXrayAtks); const int egXrayAtks = EgScore(wKingXrayAtks)
+        // - EgScore(bKingXrayAtks);
 
         const Score wKS = kingSafety<WHITE>();
         const Score bKS = kingSafety<BLACK>();
@@ -484,8 +485,9 @@ template <Tracing T = NO_TRACE> class Eval {
         const int safetyEval = (mgSafety * mgPhase + egSafety * egPhase) / 24;
         const int KSEval = (mgKS * mgPhase + egKS * egPhase) / 24;
         const int rookEval = (mgRookEval * mgPhase + egRookEval * egPhase) / 24;
-        const int kingXrayAtks =
-              (mgXrayAtks * mgPhase + egXrayAtks * egPhase) / 24;
+        const int kingXrayAtks = 0;
+        // const int kingXrayAtks =
+        //       (mgXrayAtks * mgPhase + egXrayAtks * egPhase) / 24;
 
         auto eval = TEMPO;
         eval += materialScore + pcSqEval + pawnStructureEval + mobilityEval +
