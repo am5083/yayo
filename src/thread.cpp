@@ -245,8 +245,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     if (ply > selDepth)
         selDepth = ply;
 
-    // if (checkForStop())
-    //     return ABORT_SCORE;
+    if (checkForStop())
+        return ABORT_SCORE;
 
     bool inCheck = popcount(_board.checkPcs) > 0;
     if (inCheck && !checkExtension)
