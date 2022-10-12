@@ -109,8 +109,8 @@ int Search::quiescent(int alpha, int beta) {
     selDepth = std::max(selDepth, ply);
     nodes++;
 
-    // if (checkForStop())
-    //     return ABORT_SCORE;
+    if (checkForStop())
+        return ABORT_SCORE;
 
     pvTableLen[ply] = 0;
 
