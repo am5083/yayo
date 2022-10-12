@@ -31,66 +31,6 @@ double sigmoid(double K, double E) {
     return 1.0 / (1.0 + exp(-K * E / 400.00));
 }
 
-int quiescent(Board &_board, int alpha, int beta) {
-    int hashFlag = TP_ALPHA;
-    int ply = _board.ply;
-
-    bool pvNode = (beta - alpha) < 1;
-    Eval eval(_board);
-    int score = 0, best = eval.eval(), oldAlpha = alpha;
-    int bestMove = 0;
-
-    if (best >= beta)
-        return best;
-
-    if (!_board.checkPcs && ((best + QUEEN_VAL) < alpha)) {
-        return alpha;
-    }
-
-    if (alpha < best)
-        alpha = best;
-
-    moveList mList = {0};
-    generateCaptures(_board, &mList);
-
-    for (int i = 0; i < mList.nMoves; i++) {
-        const int c_move = mList.moves[i].move;
-
-        Square fromSq = getFrom(c_move), toSq = getTo(c_move);
-        Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
-
-        if (getPcType(fromPc) > getPcType(toPc)) {
-            int see = _board.see(toSq, toPc, fromSq, fromPc);
-            mList.moves[i].score = see;
-        }
-    }
-
-    for (int i = 0; i < mList.nMoves; i++) {
-        mList.swapBest(i);
-
-        make(_board, mList.moves[i].move);
-        score = -quiescent(_board, -beta, -alpha);
-        unmake(_board, mList.moves[i].move);
-
-        if (score > best) {
-            best = score;
-            bestMove = mList.moves[i].move;
-
-            if (score > alpha) {
-                hashFlag = TP_EXACT;
-                alpha = score;
-
-                if (alpha >= beta) {
-                    hashFlag = TP_BETA;
-                    break;
-                }
-            }
-        }
-    }
-
-    return alpha;
-}
-
 TunerEntries::TunerEntries(std::string file) {
     entries = new TEntry[NUM_ENTRIES];
 
