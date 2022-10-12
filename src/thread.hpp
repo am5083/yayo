@@ -37,7 +37,8 @@ class Search {
   public:
     Search() { info = nullptr; }
     Search(Board &board) {
-        info = nullptr;
+        Info inf{0};
+        info = &inf;
         _board = board;
     }
     Search(const Search &) = delete;
