@@ -452,6 +452,10 @@ void TunerEntries::runTuner() {
         error = tunedEvalErrors(params, K);
         if (epoch && epoch % LRSTEPRATE == 0)
             rate = rate / LRDROPRATE;
+
+        if (rate == 1 && epoch == 15)
+            rate = 0.5;
+
         if (epoch % REPORTING == 0) {
             printParams(cparams, params);
 
