@@ -71,10 +71,11 @@ template <Tracing T = NO_TRACE> class Eval {
         const int mgSafety = MgScore(wKingSafety) - MgScore(bKingSafety);
         const int egSafety = EgScore(wKingSafety) - EgScore(bKingSafety);
 
-        const Score wKingXrayAtks = kingXrayAttackers<WHITE>();
-        const Score bKingXrayAtks = kingXrayAttackers<BLACK>();
-        const int mgXrayAtks = MgScore(wKingXrayAtks) - MgScore(bKingXrayAtks);
-        const int egXrayAtks = EgScore(wKingXrayAtks) - EgScore(bKingXrayAtks);
+        // const Score wKingXrayAtks = kingXrayAttackers<WHITE>();
+        // const Score bKingXrayAtks = kingXrayAttackers<BLACK>();
+        // const int mgXrayAtks = MgScore(wKingXrayAtks) -
+        // MgScore(bKingXrayAtks); const int egXrayAtks = EgScore(wKingXrayAtks)
+        // - EgScore(bKingXrayAtks);
 
         const Score wKS = kingSafety<WHITE>();
         const Score bKS = kingSafety<BLACK>();
@@ -96,12 +97,12 @@ template <Tracing T = NO_TRACE> class Eval {
         const int safetyEval = (mgSafety * mgPhase + egSafety * egPhase) / 24;
         const int KSEval = (mgKS * mgPhase + egKS * egPhase) / 24;
         const int rookEval = (mgRookEval * mgPhase + egRookEval * egPhase) / 24;
-        const int kingXrayAtks =
-              (mgXrayAtks * mgPhase + egXrayAtks * egPhase) / 24;
+        // const int kingXrayAtks =
+        //       (mgXrayAtks * mgPhase + egXrayAtks * egPhase) / 24;
 
         auto eval = TEMPO;
         eval += materialScore + pcSqEval + pawnStructureEval + mobilityEval +
-                rookEval + safetyEval + KSEval + kingXrayAtks;
+                rookEval + safetyEval + KSEval;
 
         return eval * color;
     }
@@ -236,15 +237,7 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::kingSafety() {
         mgScore += MgScore(pawnShieldStrength[popcount(pawnShield)]);
         egScore += EgScore(pawnShieldStrength[popcount(pawnShield)]);
 
-        shieldMask = shift<Up>(shieldMask);
-        Bitboard pushedPawnShield = board.pieces(PAWN, C) & pushedPawnShield;
-        mgScore +=
-              MgScore(pushedPawnShieldStrength[popcount(pushedPawnShield)]);
-        egScore +=
-              EgScore(pushedPawnShieldStrength[popcount(pushedPawnShield)]);
-
         if (T) {
-            trace.pushedPawnShieldStrength[popcount(pushedPawnShield)][C]++;
             trace.pawnShieldStrength[popcount(pawnShield)][C]++;
         }
     }
@@ -271,43 +264,43 @@ template <Tracing T> template <Color C> constexpr Score Eval<T>::kingSafety() {
     return S(mgScore, egScore);
 }
 
-template <Tracing T>
-template <Color C>
-constexpr Score Eval<T>::kingXrayAttackers() {
-    const Bitboard king = board.pieces(KING, C);
-    const Square kingSquare = Sq(king);
+// template <Tracing T>
+// template <Color C>
+// constexpr Score Eval<T>::kingXrayAttackers() {
+//     const Bitboard king = board.pieces(KING, C);
+//     const Square kingSquare = Sq(king);
 
-    int mgScore = 0, egScore = 0;
-    Bitboard xRayPieces = board.pieces(BISHOP, ~C) | board.pieces(ROOK, ~C) |
-                          board.pieces(QUEEN, ~C);
-    while (xRayPieces) {
-        Square xRayPcSq = Square(lsb_index(xRayPieces));
-        Bitboard betweenMask = rectArray[kingSquare][xRayPcSq];
+//     int mgScore = 0, egScore = 0;
+//     Bitboard xRayPieces = board.pieces(BISHOP, ~C) | board.pieces(ROOK, ~C) |
+//                           board.pieces(QUEEN, ~C);
+//     while (xRayPieces) {
+//         Square xRayPcSq = Square(lsb_index(xRayPieces));
+//         Bitboard betweenMask = rectArray[kingSquare][xRayPcSq];
 
-        int n = popcount(betweenMask & board.pieces());
-        if (n > 1) {
-            xRayPieces &= xRayPieces - 1;
-            continue;
-        }
+//         int n = popcount(betweenMask & board.pieces());
+//         if (n > 1) {
+//             xRayPieces &= xRayPieces - 1;
+//             continue;
+//         }
 
-        int distanceToKing = popcount(betweenMask);
-        PieceT xRayPc = getPcType(board.board[xRayPcSq]);
+//         int distanceToKing = popcount(betweenMask);
+//         PieceT xRayPc = getPcType(board.board[xRayPcSq]);
 
-        mgScore += MgScore(xRayKingAttackersDistance[distanceToKing]);
-        egScore += EgScore(xRayKingAttackersDistance[distanceToKing]);
-        mgScore += MgScore(xRayKingAttackPieceWeight[xRayPc]);
-        egScore += EgScore(xRayKingAttackPieceWeight[xRayPc]);
+//         mgScore += MgScore(xRayKingAttackersDistance[distanceToKing]);
+//         egScore += EgScore(xRayKingAttackersDistance[distanceToKing]);
+//         mgScore += MgScore(xRayKingAttackPieceWeight[xRayPc]);
+//         egScore += EgScore(xRayKingAttackPieceWeight[xRayPc]);
 
-        if (T) {
-            trace.xRayKingAttackersDistance[distanceToKing][C]++;
-            trace.xRayKingAttackPieceWeight[xRayPc][C]++;
-        }
+//         if (T) {
+//             trace.xRayKingAttackersDistance[distanceToKing][C]++;
+//             trace.xRayKingAttackPieceWeight[xRayPc][C]++;
+//         }
 
-        xRayPieces &= xRayPieces - 1;
-    }
+//         xRayPieces &= xRayPieces - 1;
+//     }
 
-    return S(mgScore, egScore);
-}
+//     return S(mgScore, egScore);
+// }
 
 template <Tracing T>
 template <Color C>
@@ -338,13 +331,11 @@ constexpr Score Eval<T>::kingAttackers() {
             const int distance = popcount(rectArray[kingSquare][attacker]);
             if (T == TRACE) {
                 trace.kingAttackers[piece][C]++;
-                trace.kingAttackersDistance[distance][C]++;
+                // trace.kingAttackersDistance[distance][C]++;
             }
 
             mgScore += MgScore(kingAttackersWeight[piece]);
             egScore += EgScore(kingAttackersWeight[piece]);
-            mgScore += MgScore(kingAttackersDistance[distance]);
-            egScore += EgScore(kingAttackersDistance[distance]);
 
             attackPcs &= attackPcs - 1;
         }

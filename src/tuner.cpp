@@ -381,37 +381,37 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     }
     printf("\n};\n");
 
-    printf("constexpr Score pushedPawnShieldStrength[4] = {");
-    for (int i = 0, start = 504; i < 4; i++) {
-        if (!(i % 4))
-            printf("\n");
-        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
-    }
-    printf("\n};\n");
+    // printf("constexpr Score pushedPawnShieldStrength[4] = {");
+    // for (int i = 0, start = 504; i < 4; i++) {
+    //     if (!(i % 4))
+    //         printf("\n");
+    //     printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
+    // }
+    // printf("\n};\n");
 
-    printf("constexpr Score kingAttackersDistance[8] = {");
-    for (int i = 0, start = 508; i < 8; i++) {
-        if (!(i % 4))
-            printf("\n");
-        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
-    }
-    printf("\n};\n");
+    // printf("constexpr Score kingAttackersDistance[8] = {");
+    // for (int i = 0, start = 508; i < 8; i++) {
+    //     if (!(i % 4))
+    //         printf("\n");
+    //     printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
+    // }
+    // printf("\n};\n");
 
-    printf("constexpr Score xRayKingAttackersDistance[8] = {");
-    for (int i = 0, start = 516; i < 8; i++) {
-        if (!(i % 4))
-            printf("\n");
-        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
-    }
-    printf("\n};\n");
+    // printf("constexpr Score xRayKingAttackersDistance[8] = {");
+    // for (int i = 0, start = 516; i < 8; i++) {
+    //     if (!(i % 4))
+    //         printf("\n");
+    //     printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
+    // }
+    // printf("\n};\n");
 
-    printf("constexpr Score xRayKingAttackPieceWeight[7] = {");
-    for (int i = 0, start = 524; i < 7; i++) {
-        if (!(i % 4))
-            printf("\n");
-        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
-    }
-    printf("\n};\n");
+    // printf("constexpr Score xRayKingAttackPieceWeight[7] = {");
+    // for (int i = 0, start = 524; i < 7; i++) {
+    //     if (!(i % 4))
+    //         printf("\n");
+    //     printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
+    // }
+    // printf("\n};\n");
 }
 // clang-format on
 
@@ -455,6 +455,8 @@ void TunerEntries::runTuner() {
 
         if (rate == 1 && epoch == 15)
             rate = 0.5;
+        else if (rate <= 0.05)
+            rate = 0.05;
 
         if (epoch % REPORTING == 0) {
             printParams(cparams, params);

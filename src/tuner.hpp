@@ -5,14 +5,14 @@
 #include "thread.hpp"
 #include <fstream>
 
-#define NUM_ENTRIES 250000
+#define NUM_ENTRIES 500000
 #define MAX_EPOCHS 100000
-#define BATCH_SIZE 250000
+#define BATCH_SIZE 500000
 #define LRRATE 1
 #define LRDROPRATE 1.5
 #define LRSTEPRATE 500
 #define REPORTING 50
-#define NUM_FEATURES 531
+#define NUM_FEATURES 504
 
 namespace Yayo {
 double sigmoid(double K, double E);
