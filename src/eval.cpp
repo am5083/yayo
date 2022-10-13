@@ -20,6 +20,7 @@
 #include "board.hpp"
 #include "movegen.hpp"
 #include "util.hpp"
+#include "weights.hpp"
 
 namespace Yayo {
 

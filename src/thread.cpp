@@ -109,8 +109,8 @@ int Search::quiescent(int alpha, int beta) {
     selDepth = std::max(selDepth, ply);
     nodes++;
 
-    // if (checkForStop())
-    //     return ABORT_SCORE;
+    if (checkForStop())
+        return ABORT_SCORE;
 
     pvTableLen[ply] = 0;
 
@@ -127,24 +127,24 @@ int Search::quiescent(int alpha, int beta) {
     int bestMove = 0;
     int originalEval = best;
 
-    // int ttScore = 0, tpMove = 0, flag = -1;
-    // TTHash entry = {0};
-    // if (tt.probe(_board.key, entry)) {
-    //     ttScore = entry.score(_board.ply);
-    //     tpMove = entry.move();
-    //     flag = entry.flag();
+    int ttScore = 0, tpMove = 0, flag = -1;
+    TTHash entry = {0};
+    if (tt.probe(_board.key, entry)) {
+        ttScore = entry.score(_board.ply);
+        tpMove = entry.move();
+        flag = entry.flag();
 
-    //     if (!pvNode && flag == TP_EXACT ||
-    //         (flag == TP_BETA && ttScore >= beta) ||
-    //         (flag == TP_ALPHA && ttScore <= alpha)) {
-    //         return ttScore;
-    //     }
-    // }
+        if (!pvNode && flag == TP_EXACT ||
+            (flag == TP_BETA && ttScore >= beta) ||
+            (flag == TP_ALPHA && ttScore <= alpha)) {
+            return ttScore;
+        }
+    }
 
-    // if (flag == TP_EXACT || (flag == TP_BETA && ttScore >= beta) ||
-    //     (flag == TP_ALPHA && ttScore <= alpha)) {
-    //     best = ttScore;
-    // }
+    if (flag == TP_EXACT || (flag == TP_BETA && ttScore >= beta) ||
+        (flag == TP_ALPHA && ttScore <= alpha)) {
+        best = ttScore;
+    }
 
     if (best >= beta)
         return best;
@@ -160,10 +160,10 @@ int Search::quiescent(int alpha, int beta) {
     generateCaptures(_board, &mList);
 
     for (int i = 0; i < mList.nMoves; i++) {
-        // if (tpMove && mList.moves[i].move == tpMove) {
-        //     mList.moves[i].score = INF;
-        //     continue;
-        // }
+        if (tpMove && mList.moves[i].move == tpMove) {
+            mList.moves[i].score = INF;
+            continue;
+        }
 
         const int c_move = mList.moves[i].move;
 
