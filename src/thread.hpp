@@ -36,10 +36,10 @@ namespace Yayo {
 class Search {
   public:
     Search() { info = nullptr; }
-    Search(Board &board) {
+    Search(Board board) {
         Info inf{0};
         info = &inf;
-        _board = board;
+        _board = Board(board);
     }
     Search(const Search &) = delete;
     Search &operator=(const Search &) = delete;

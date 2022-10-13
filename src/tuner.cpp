@@ -54,11 +54,8 @@ TunerEntries::TunerEntries(std::string file) {
         else if (line.find("[0.0]") != std::string::npos)
             entries[i].result = 0.0;
 
-        if (!board.setFen(line)) {
-            entries[i].result = -INF * 2;
-        } else {
-            entries[i].init(board);
-        }
+        board.setFen(line);
+        entries[i].init(board);
 
         if (!(i % 50000)) {
             std::cout << "initializing tuner entry #" << i << " of "
@@ -88,7 +85,7 @@ void TEntry::init(Board &board) {
     egPhase = 24 - mgPhase;
 
     eval.eval();
-    staticEval = search.quiescent(-INF + 1, INF - 1);
+    staticEval = search.quiescent(-INF, INF);
 
     int *TraceArray = (int *)&trace; // lol
     TTuple temp_tuples[NUM_FEATURES * 2];
@@ -344,8 +341,8 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     }
     printf("\n};\n");
 
-    printf("constexpr Score kingAttackersWeight[5] = {");
-    for (int i = 0, start = 487; i < 5; i++) {
+    printf("constexpr Score kingAttackersWeight[7] = {");
+    for (int i = 0, start = 487; i < 7; i++) {
         if (!(i % 4))
             printf("\n");
         printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
@@ -353,7 +350,7 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     printf("\n};\n");
 
     printf("constexpr Score trappedRookWeight = {");
-    for (int i = 0, start = 492; i < 1; i++) {
+    for (int i = 0, start = 494; i < 1; i++) {
         if (!(i % 4))
             printf("\n");
         printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
@@ -361,7 +358,7 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     printf("\n};\n");
 
     printf("constexpr Score rookOnOpenFile[2] = {");
-    for (int i = 0, start = 493; i < 2; i++) {
+    for (int i = 0, start = 495; i < 2; i++) {
         if (!(i % 4))
             printf("\n");
         printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
@@ -369,7 +366,7 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     printf("\n};\n");
 
     printf("constexpr Score openFileNextToKing[3] = {");
-    for (int i = 0, start = 495; i < 3; i++) {
+    for (int i = 0, start = 497; i < 3; i++) {
         if (!(i % 4))
             printf("\n");
         printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
@@ -377,7 +374,7 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     printf("\n};\n");
 
     printf("constexpr Score pawnShieldStrength[4] = {");
-    for (int i = 0, start = 498; i < 4; i++) {
+    for (int i = 0, start = 500; i < 4; i++) {
         if (!(i % 4))
             printf("\n");
         printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
@@ -385,7 +382,7 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     printf("\n};\n");
 
     printf("constexpr Score pushedPawnShieldStrength[4] = {");
-    for (int i = 0, start = 502; i < 4; i++) {
+    for (int i = 0, start = 504; i < 4; i++) {
         if (!(i % 4))
             printf("\n");
         printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
@@ -393,25 +390,23 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     printf("\n};\n");
 
     printf("constexpr Score kingAttackersDistance[8] = {");
-    for (int i = 0, start = 506; i < 8; i++) {
+    for (int i = 0, start = 508; i < 8; i++) {
         if (!(i % 4))
             printf("\n");
         printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
     }
     printf("\n};\n");
-
 
     printf("constexpr Score xRayKingAttackersDistance[8] = {");
-    for (int i = 0, start = 514; i < 8; i++) {
+    for (int i = 0, start = 516; i < 8; i++) {
         if (!(i % 4))
             printf("\n");
         printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
     }
     printf("\n};\n");
 
-
-    printf("constexpr Score xRayKingAttackPieceWeight[5] = {");
-    for (int i = 0, start = 522; i < 5; i++) {
+    printf("constexpr Score xRayKingAttackPieceWeight[7] = {");
+    for (int i = 0, start = 524; i < 7; i++) {
         if (!(i % 4))
             printf("\n");
         printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
