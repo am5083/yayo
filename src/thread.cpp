@@ -481,6 +481,13 @@ int Search::search() {
         prevScore = score;
     }
 
+    if (!bestMove) {
+        moveList mList = {{0}};
+        generate(_board, &mList);
+        mList.swapBest(0);
+        bestMove = mList.moves[0].move;
+    }
+
     std::cout << "bestmove ";
     print_move(bestMove);
     std::cout << std::endl;
