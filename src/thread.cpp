@@ -141,18 +141,8 @@ int Search::quiescent(int alpha, int beta) {
         }
     }
 
-    // int tpScore = 0;
-    // int tpMove = 0;
-    // if ((tpScore = tpTbl.probeHash(_board.ply, _board.key, &tpMove, 0, alpha,
-    //                                beta, true)) != TP_UNKNOWN) {
-    //     if (!(beta - alpha < 1)) {
-    //         bestMove = tpMove;
-    //         return tpScore;
-    //     }
-    // }
-
     if (best >= beta)
-        return beta;
+        return best;
 
     if (!_board.checkPcs && ((best + QUEEN_VAL) < alpha)) {
         return alpha;
@@ -222,12 +212,9 @@ int Search::quiescent(int alpha, int beta) {
         }
     }
 
-    // tpTbl.recordHash(_board.fen(), _board.ply, _board.key, bestMove, 0, best,
-    //                  hashFlag);
-
     tt.record(_board.key, _board.ply, bestMove, 0, best, hashFlag);
 
-    return alpha;
+    return best;
 }
 
 int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
