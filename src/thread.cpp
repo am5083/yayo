@@ -144,10 +144,6 @@ int Search::quiescent(int alpha, int beta) {
     if (best >= beta)
         return best;
 
-    if (!_board.checkPcs && ((best + QUEEN_VAL) < alpha)) {
-        return alpha;
-    }
-
     if (alpha < best)
         alpha = best;
 
@@ -168,6 +164,12 @@ int Search::quiescent(int alpha, int beta) {
 
         Square fromSq = getFrom(c_move), toSq = getTo(c_move);
         Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
+
+        if (!_board.checkPcs &&
+            (best + _board.see(toSq, toPc, fromSq, fromPc) + 200) <= alpha) {
+            mList.moves[i].score = -2000;
+            continue;
+        }
 
         if (getPcType(fromPc) >= getPcType(toPc)) {
             int see = _board.see(toSq, toPc, fromSq, fromPc);
