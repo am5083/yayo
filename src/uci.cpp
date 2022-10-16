@@ -112,8 +112,8 @@ void UCI::Bench() {
     std::uint64_t end_time = get_time();
     long double total_time = 1.0 * (end_time - start_time) / 1000.0;
 
-    std::cout << total_nodes << " nodes " << int(3000000) << " nps"
-              << std::endl;
+    std::cout << total_nodes << " nodes " << (total_nodes / total_time)
+              << " nps" << std::endl;
 }
 
 void UCI::Uci() {
@@ -248,7 +248,7 @@ void UCI::Main() {
             search._make(m);
         } else if (cmd == "go") {
             int depth = 256;
-            int movestogo = 15;
+            int movestogo = 30;
             int movetime = -1;
             int time = -1;
             int increment = 0;
