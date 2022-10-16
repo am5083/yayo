@@ -205,7 +205,7 @@ constexpr bool Board::isRepetition() const {
 
 constexpr int Board::numRepetition() const {
     int num_rep = 0;
-    for (int i = 0; i < gamePly; i++) {
+    for (int i = gamePly - halfMoves; i < gamePly; i++) {
         if (this->key == hist[i].key)
             num_rep++;
     }
