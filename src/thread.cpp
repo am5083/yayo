@@ -401,9 +401,9 @@ int Search::search() {
     double totalTime = 0;
     for (int j = 1; j <= depth; j++) {
         double start = get_time();
-        int window = 60;
+        int window = 5;
 
-        if (j >= 3) {
+        if (j >= 5) {
             alpha = std::max(-INF, prevScore - window);
             beta = std::min(INF, prevScore + window);
         } else {
