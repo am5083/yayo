@@ -419,7 +419,7 @@ int Search::search() {
             selDepth = 0;
             score = negaMax(alpha, beta, aspirationDepth, false, false);
 
-            if (checkForStop() && bestMove) {
+            if (checkForStop()) {
                 abortDepth = j;
                 break;
             }
@@ -433,7 +433,7 @@ int Search::search() {
                     aspirationDepth--;
                 beta = std::min(INF, beta + window);
 
-                if (pvTableLen[0])
+                if (pvTableLen[0] && !bestMove)
                     bestMove = pvTable[0][0];
 
             } else {
