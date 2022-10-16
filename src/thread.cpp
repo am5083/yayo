@@ -285,8 +285,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
         int score = -negaMax(-beta, -beta + 1, depth - 1 - 2, true, false);
         unmakeNullMove(_board);
 
-        if (checkForStop())
-            return ABORT_SCORE;
+        // if (checkForStop())
+        //     return ABORT_SCORE;
 
         if (score >= beta)
             return beta;
@@ -296,7 +296,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
     generate(_board, &mList);
     scoreMoves(&mList, ttMove);
 
-    int futilityMargin[] = {0, 200, 500, 900};
+    int futilityMargin[] = {0, 100, 500, 900};
     if (depth <= 3 && !pvNode && std::abs(alpha) < 9000 &&
         Eval(_board).eval() + futilityMargin[depth] <= alpha)
         futilityPrune = true;
