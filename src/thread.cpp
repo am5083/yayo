@@ -114,6 +114,7 @@ int Search::quiescent(int alpha, int beta) {
 
     pvTableLen[ply] = 0;
 
+    tt.prefetch(_board.key);
     if (_board.isRepetition()) {
         numRep++;
         if (_board.numRepetition() >= 2 || numRep > 2) {
@@ -126,7 +127,6 @@ int Search::quiescent(int alpha, int beta) {
     int score = 0, best = eval.eval(), oldAlpha = alpha;
     int bestMove = 0;
 
-    tt.prefetch(_board.key);
     int ttScore = 0, tpMove = 0;
     TTHash entry = {0};
     if (tt.probe(_board.key, entry)) {
