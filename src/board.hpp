@@ -139,6 +139,19 @@ class Board {
         return (pawnAttacks[~C][sq] & pieces(PAWN, C)) | (knightAttacks[sq] & knights) | (kingAttacks[sq] & kings) |
                (getBishopAttacks(sq, occ) & queenBishops) | (getRookAttacks(sq, occ) & queenRooks);
     }
+
+    constexpr Bitboard attacksToSq(Square sq, Bitboard occ) const {
+        Bitboard knights, kings, queenRooks, queenBishops;
+        knights = pieces(KNIGHT);
+        kings = pieces(KING);
+        queenRooks = queenBishops = pieces(QUEEN);
+        queenRooks |= pieces(ROOK);
+        queenBishops |= pieces(BISHOP);
+        Bitboard pawns = pawnAttacks[WHITE][sq] | pawnAttacks[BLACK][sq];
+
+        return (pawns & pieces(PAWN)) | (knightAttacks[sq] & knights) | (kingAttacks[sq] & kings) | (getBishopAttacks(sq, occ) & queenBishops)
+            | (getRookAttacks(sq, occ) & queenRooks);
+    }
 };
 
 constexpr bool Board::isDraw() {
