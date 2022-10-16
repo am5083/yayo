@@ -169,18 +169,14 @@ int Search::quiescent(int alpha, int beta) {
         Square fromSq = getFrom(c_move), toSq = getTo(c_move);
         Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
 
-        if (getPcType(fromPc) > getPcType(toPc)) {
+        if (getPcType(fromPc) >= getPcType(toPc)) {
             int see = _board.see(toSq, toPc, fromSq, fromPc);
-            if (see < 0) {
-                mList.moves[i].score = (see / 1000) + 50;
-            } else {
-                mList.moves[i].score = see;
-            }
+            mList.moves[i].score = see;
         }
     }
 
     for (int i = 0; i < mList.nMoves; i++) {
-        if (mList.moves[i].score == 0)
+        if (mList.moves[i].score <= 0)
             continue;
 
         mList.swapBest(i);
@@ -242,10 +238,9 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
     int best = -INF;
     int move = 0;
 
-    pvTableLen[ply] = 0;
-
     tt.prefetch(_board.key);
 
+    pvTableLen[ply] = 0;
     if (_board.ply > 0) {
         alpha = std::max(alpha, -INF + _board.ply);
         beta = std::min(beta, INF - _board.ply);
