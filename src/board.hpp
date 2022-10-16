@@ -104,6 +104,7 @@ class Board {
 
     constexpr int numRepetition() const;
     constexpr bool isRepetition() const;
+    constexpr bool isTMR() const;
 
     void print() const;
     void setFen(const std::string fen);
@@ -200,6 +201,18 @@ constexpr bool Board::isRepetition() const {
             return true;
     }
 
+    return false;
+}
+
+constexpr bool Board::isTMR() const {
+    int n = 1;
+    for (int i = gamePly - 2; i >= 0; i -= 2) {
+        if (i < gamePly - halfMoves) break;
+        if (key == hist[i].key) {
+            if (i > gamePly - ply) return true;
+            if (n == 3) return true;
+        }
+    }
     return false;
 }
 

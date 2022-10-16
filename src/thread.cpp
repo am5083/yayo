@@ -106,22 +106,22 @@ int Search::quiescent(int alpha, int beta) {
     int hashFlag = TP_ALPHA;
     int ply = _board.ply;
 
+    pvTableLen[ply] = 0;
+
+    if (_board.halfMoves >= 100 || _board.isDraw())
+        return 1 - (nodes & 2);
+
+    if (_board.isTMR()) {
+        return 1 - (nodes & 2);
+    }
+
     if (checkForStop())
         return ABORT_SCORE;
 
     selDepth = std::max(selDepth, ply);
     nodes++;
 
-    pvTableLen[ply] = 0;
-
     tt.prefetch(_board.key);
-    if (_board.isRepetition()) {
-        numRep++;
-        if (_board.numRepetition() >= 2 || numRep > 2) {
-            return 1 - (nodes & 2);
-        }
-    }
-
     bool pvNode = (beta - alpha) < 1;
     Eval eval(_board);
     int score = 0, best = eval.eval(), oldAlpha = alpha;
@@ -244,6 +244,14 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
 
     pvTableLen[ply] = 0;
     if (_board.ply > 0) {
+
+        if (_board.halfMoves >= 100 || _board.isDraw())
+            return 1 - (nodes & 2);
+
+        if (_board.numRepetition() >= 2) {
+            return 1 - (nodes & 2);
+        }
+
         alpha = std::max(alpha, -INF + _board.ply);
         beta = std::min(beta, INF - _board.ply);
 
@@ -254,16 +262,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
             }
 
             return alpha;
-        }
-
-        if (_board.halfMoves >= 100 || _board.isDraw())
-            return 1 - (nodes & 2);
-
-        if (_board.isRepetition()) {
-            numRep++;
-            if (_board.numRepetition() >= 2 || numRep > 2) {
-                return 1 - (nodes & 2);
-            }
         }
     }
 
