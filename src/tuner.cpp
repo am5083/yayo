@@ -27,7 +27,9 @@
 
 namespace Yayo {
 
-double sigmoid(double K, double E) { return 1.0 / (1.0 + exp(-K * E / 400.00)); }
+double sigmoid(double K, double E) {
+    return 1.0 / (1.0 + exp(-K * E / 400.00));
+}
 
 TunerEntries::TunerEntries(std::string file) {
     entries = new TEntry[NUM_ENTRIES];
@@ -54,6 +56,11 @@ TunerEntries::TunerEntries(std::string file) {
 
         board.setFen(line);
         entries[i].init(board);
+
+        if (!(i % 50000)) {
+            std::cout << "initializing tuner entry #" << i << " of "
+                      << NUM_ENTRIES << "\n";
+        }
     }
 
     games.close();
@@ -79,11 +86,11 @@ void TEntry::init(Board &board) {
     staticEval = eval.eval();
 
     int *TraceArray = (int *)&trace; // lol
-    TTuple temp_tuples[974];
+    TTuple temp_tuples[NUM_FEATURES * 2];
 
-    for (int i = 0, w = 0; w < 487; i += 2, w++) {
+    for (int i = 0, w = 0; w < NUM_FEATURES; i += 2, w++) {
         if (TraceArray[i] - TraceArray[i + 1]) {
-            temp_tuples[nTuples].index      = w;
+            temp_tuples[nTuples].index = w;
             temp_tuples[nTuples].whiteScore = TraceArray[i];
             temp_tuples[nTuples].blackScore = TraceArray[i + 1];
 
@@ -107,7 +114,7 @@ double TunerEntries::computeOptimalK() {
 
         while (curr < end) {
             curr = curr + step;
-            err  = staticEvalErrors(curr);
+            err = staticEvalErrors(curr);
             if (err <= best) {
                 best = err, start = curr;
             }
@@ -115,9 +122,9 @@ double TunerEntries::computeOptimalK() {
 
         printf("Epoch [%d] K = [%.9f] E = [%.9f]\n", i, start, best);
 
-        end   = start + step;
+        end = start + step;
         start = start - step;
-        step  = step / 10.0;
+        step = step / 10.0;
     }
 
     return start;
@@ -138,7 +145,7 @@ double TunerEntries::staticEvalErrors(double K) {
     return total / (double)NUM_ENTRIES;
 }
 
-double TunerEntries::tunedEvalErrors(double params[487][2], double K) {
+double TunerEntries::tunedEvalErrors(double params[NUM_FEATURES][2], double K) {
     double total = 0.0;
 
     #pragma omp parallel shared(total)
@@ -153,18 +160,20 @@ double TunerEntries::tunedEvalErrors(double params[487][2], double K) {
 }
 // clang-format on
 
-double TEntry::linearEval(double params[487][2]) {
+double TEntry::linearEval(double params[NUM_FEATURES][2]) {
     Score *weights = &((Score *)&w)[0];
     int mgScore = 0, egScore = 0;
 
     double linearEval = 0;
     for (int i = 0; i < nTuples; i++) {
-        int Fi  = tuples[i].whiteScore - tuples[i].blackScore;
+        int Fi = tuples[i].whiteScore - tuples[i].blackScore;
         Score s = weights[tuples[i].index];
 
-        double eval = Fi * ((double)(mgPhase * (MgScore(s) + params[tuples[i].index][0]) +
-                                     egPhase * (EgScore(s) + params[tuples[i].index][1])) /
-                            24);
+        double eval =
+              Fi *
+              ((double)(mgPhase * (MgScore(s) + params[tuples[i].index][0]) +
+                        egPhase * (EgScore(s) + params[tuples[i].index][1])) /
+               24);
 
         linearEval += eval;
     }
@@ -173,13 +182,13 @@ double TEntry::linearEval(double params[487][2]) {
 }
 
 // clang-format off
-void TunerEntries::computeGradient(double gradient[487][2], double params[487][2], double K, int batch) {
-    double local[487][2] = {{0}};
+void TunerEntries::computeGradient(double gradient[NUM_FEATURES][2], double params[NUM_FEATURES][2], double K, int batch) {
+    double local[NUM_FEATURES][2] = {{0}};
 
     for (int i = batch * BATCH_SIZE; i < (batch + 1) * BATCH_SIZE; i++) {
         updateSingleGradient(entries[i], local, params, K);
 
-        for (int i = 0; i < 487; i++) {
+        for (int i = 0; i < NUM_FEATURES; i++) {
             gradient[i][0] += local[i][0];
             gradient[i][1] += local[i][1];
         }
@@ -187,7 +196,10 @@ void TunerEntries::computeGradient(double gradient[487][2], double params[487][2
 }
 // clang-format on
 
-void TunerEntries::updateSingleGradient(TEntry &entry, double gradient[487][2], double params[487][2], double K) {
+void TunerEntries::updateSingleGradient(TEntry &entry,
+                                        double gradient[NUM_FEATURES][2],
+                                        double params[NUM_FEATURES][2],
+                                        double K) {
     double E = entry.linearEval(params);
     double S = sigmoid(K, E);
     double X = (entry.result - S) * S * (1 - S);
@@ -195,17 +207,19 @@ void TunerEntries::updateSingleGradient(TEntry &entry, double gradient[487][2], 
     double mgBase = X * entry.mgPhase, egBase = X * entry.egPhase;
 
     for (int i = 0; i < entry.nTuples; i++) {
-        int idx    = entry.tuples[i].index;
+        int idx = entry.tuples[i].index;
         int wcoeff = entry.tuples[i].whiteScore;
         int bcoeff = entry.tuples[i].blackScore;
 
-        gradient[idx][0] = (wcoeff - bcoeff) * mgBase * ((double)entry.mgPhase / 24);
-        gradient[idx][1] = (wcoeff - bcoeff) * egBase * ((double)entry.egPhase / 24);
+        gradient[idx][0] =
+              (wcoeff - bcoeff) * mgBase * ((double)entry.mgPhase / 24);
+        gradient[idx][1] =
+              (wcoeff - bcoeff) * egBase * ((double)entry.egPhase / 24);
     }
 }
 
 // clang-format off
-inline void printParams(double cparams[487][2], double params[487][2]) {
+inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATURES][2]) {
     printf("\n");
     printf("constexpr Score pawnScore   = S(%4d, %4d)\n", (int)cparams[0][0] + (int)params[0][0], (int)cparams[0][1] + (int)params[0][1]);
     printf("constexpr Score knightScore = S(%4d, %4d)\n", (int)cparams[1][0] + (int)params[1][0], (int)cparams[1][1] + (int)params[1][1]);
@@ -327,16 +341,17 @@ inline void printParams(double cparams[487][2], double params[487][2]) {
 }
 // clang-format on
 
-void TunerEntries::initUntunedWeights(double weights[487][2]) {
+void TunerEntries::initUntunedWeights(double weights[NUM_FEATURES][2]) {
     Score *_w = &((Score *)&entries[0].w)[0];
-    for (int i = 0; i < 487; i++) {
+    for (int i = 0; i < NUM_FEATURES; i++) {
         weights[i][0] = MgScore(_w[i]);
         weights[i][1] = EgScore(_w[i]);
     }
 }
 
 void TunerEntries::runTuner() {
-    double params[487][2] = {0}, cparams[487][2] = {0}, adagrad[487][2] = {0};
+    double params[NUM_FEATURES][2] = {0}, cparams[NUM_FEATURES][2] = {0},
+           adagrad[NUM_FEATURES][2] = {0};
 
     double K, prev_err, error, rate = LRRATE;
 
@@ -346,15 +361,17 @@ void TunerEntries::runTuner() {
     std::ofstream out("new_weights.txt");
     for (int epoch = 0; epoch < MAX_EPOCHS; epoch++) {
         for (int batch = 0; batch < NUM_ENTRIES / BATCH_SIZE; batch++) {
-            double gradient[487][2] = {0};
+            double gradient[NUM_FEATURES][2] = {0};
             computeGradient(gradient, params, K, batch);
 
-            for (int i = 0; i < 487; i++) {
+            for (int i = 0; i < NUM_FEATURES; i++) {
                 adagrad[i][0] += pow(2.0 * gradient[i][0] / BATCH_SIZE, 2.0);
                 adagrad[i][1] += pow(2.0 * gradient[i][1] / BATCH_SIZE, 2.0);
 
-                params[i][0] += (K * 2.0 / BATCH_SIZE) * gradient[i][0] * (rate / sqrt(1e-8 + adagrad[i][0]));
-                params[i][1] += (K * 2.0 / BATCH_SIZE) * gradient[i][1] * (rate / sqrt(1e-8 + adagrad[i][1]));
+                params[i][0] += (K * 2.0 / BATCH_SIZE) * gradient[i][0] *
+                                (rate / sqrt(1e-8 + adagrad[i][0]));
+                params[i][1] += (K * 2.0 / BATCH_SIZE) * gradient[i][1] *
+                                (rate / sqrt(1e-8 + adagrad[i][1]));
             }
         }
 
@@ -364,9 +381,10 @@ void TunerEntries::runTuner() {
         if (epoch % REPORTING == 0) {
             printParams(cparams, params);
 
-            for (int i = 0; i < 487; i++) {
+            for (int i = 0; i < NUM_FEATURES; i++) {
                 out << "index: " << i << ", "
-                    << "deltaMg: " << params[i][0] << ", deltaEg: " << params[i][1] << std::endl;
+                    << "deltaMg: " << params[i][0]
+                    << ", deltaEg: " << params[i][1] << std::endl;
             }
 
             out << "-----------------------" << std::endl;
@@ -376,7 +394,7 @@ void TunerEntries::runTuner() {
         printf("Epoch  [%d]  Rate = [%g], ", epoch, rate);
         std::cout.precision(std::numeric_limits<double>::max_digits10);
         std::cout << "Error = [" << error << "];  "
-                  << "ΔErr = [" << prev_err - error << "]"
+                  << "ΔErr = [" << std::fixed << prev_err - error << "]"
                   << "\n";
 
         prev_err = error;

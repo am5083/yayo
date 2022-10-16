@@ -12,21 +12,22 @@
 #define LRDROPRATE 1.00
 #define LRSTEPRATE 250
 #define REPORTING 50
+#define NUM_FEATURES 487
 
 namespace Yayo {
 double sigmoid(double K, double E);
 
 struct TTuple {
-    int index      = 0;
+    int index = 0;
     int whiteScore = 0;
     int blackScore = 0;
 };
 
 struct TEntry {
-    int turn       = 0;
-    int phase      = 0;
-    int mgPhase    = 0;
-    int egPhase    = 0;
+    int turn = 0;
+    int phase = 0;
+    int mgPhase = 0;
+    int egPhase = 0;
     int staticEval = 0;
     int egEval;
 
@@ -37,7 +38,7 @@ struct TEntry {
     int nTuples = 0;
 
     void init(Board &board);
-    double linearEval(double params[487][2]);
+    double linearEval(double params[NUM_FEATURES][2]);
 };
 
 class TunerEntries {
@@ -51,14 +52,16 @@ class TunerEntries {
     TEntry *entries;
 
     double staticEvalErrors(double K);
-    double tunedEvalErrors(double params[487][2], double K);
+    double tunedEvalErrors(double params[NUM_FEATURES][2], double K);
     double computeOptimalK();
 
-    void computeGradient(double gradient[487][2], double params[487][2], double K, int batch);
+    void computeGradient(double gradient[NUM_FEATURES][2],
+                         double params[NUM_FEATURES][2], double K, int batch);
 
-    void updateSingleGradient(TEntry &entry, double gradient[487][2], double params[487][2], double K);
+    void updateSingleGradient(TEntry &entry, double gradient[NUM_FEATURES][2],
+                              double params[NUM_FEATURES][2], double K);
 
-    void initUntunedWeights(double params[487][2]);
+    void initUntunedWeights(double params[NUM_FEATURES][2]);
 };
 
 } // namespace Yayo
