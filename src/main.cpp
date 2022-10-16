@@ -30,9 +30,14 @@ int main(int argc, char *argv[]) {
         if (strcmp(argv[1], "bench") == 0) {
             uci.Bench();
             return 0;
+        } else if (strcmp(argv[1], "tune") == 0) {
+            init_arrays();
+            initMvvLva();
+            TunerEntries tuner("lichess-big3-resolved.book");
+            tuner.runTuner();
+            return 0;
         }
     }
-
     uci.Main();
     return 0;
 }
