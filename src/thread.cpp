@@ -106,6 +106,9 @@ int Search::quiescent(int alpha, int beta) {
     int hashFlag = TP_ALPHA;
     int ply = _board.ply;
 
+    if (checkForStop())
+        return ABORT_SCORE;
+
     selDepth = std::max(selDepth, ply);
     nodes++;
 
