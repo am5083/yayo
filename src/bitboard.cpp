@@ -57,6 +57,7 @@ void initMasks(const PieceT pc, Bitboard attack_table[], Magic mask[]) {
                                    : maskBishopOccupancy(Square(sq));
         magic->attacks =
               (sq == SQUARE_0) ? attack_table : (mask[sq - 1].attacks + size);
+        magic->idx = sq;
 
         Bitboard b = size = 0;
         do {

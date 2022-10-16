@@ -39,9 +39,17 @@ struct Magic {
     Bitboard magic;
     Bitboard *attacks;
     unsigned int shift;
+    int idx;
 
     constexpr uint64_t index(Bitboard occ) const {
-        return __builtin_ia32_pext_di(occ, mask);
+        if (std::is_constant_evaluated()) {
+            occ &= mask;
+            occ *= g_rookMagics[idx];
+            occ >>= shift;
+            return occ;
+        } else {
+            return __builtin_ia32_pext_di(occ, mask);
+        }
     };
     constexpr Bitboard c_attacks(Bitboard occ) const {
         return attacks[index(occ)];
@@ -177,50 +185,40 @@ constexpr Bitboard in_between(Square from, Square to) {
     return line & b;
 }
 
-constexpr std::array<std::array<Bitboard, 64>, 64> rectArray = {
-      []() constexpr {std::array<std::array<Bitboard, 64>, 64> arr;
-for (int i = 0; i < 64; i++) {
-    for (int j = 0; j < 64; j++) {
-        arr[i][j] = in_between(Square(i), Square(j));
+constexpr std::array<std::array<Bitboard, 64>, 64> rectArray = {[]() constexpr {
+    std::array<std::array<Bitboard, 64>, 64> arr;
+    for (int i = 0; i < 64; i++) {
+        for (int j = 0; j < 64; j++) {
+            arr[i][j] = in_between(Square(i), Square(j));
+        }
     }
-}
-return arr;
+    return arr;
 } // namespace Yayo
-()
-}
-;
+                                                                ()};
 
 constexpr std::array<std::array<Bitboard, 64>, 2> pawnAttacks = {
-      []() constexpr {std::array<std::array<Bitboard, 64>, 2> arr;
-for (int i = 0; i < 64; i++) {
-    arr[WHITE][i] = pawnDblAttacks<WHITE>(SQUARE_BB(Square(i)));
-    arr[BLACK][i] = pawnDblAttacks<BLACK>(SQUARE_BB(Square(i)));
-}
-return arr;
-}
-()
-}
-;
+      []() constexpr {
+          std::array<std::array<Bitboard, 64>, 2> arr;
+          for (int i = 0; i < 64; i++) {
+              arr[WHITE][i] = pawnDblAttacks<WHITE>(SQUARE_BB(Square(i)));
+              arr[BLACK][i] = pawnDblAttacks<BLACK>(SQUARE_BB(Square(i)));
+          }
+          return arr;
+      }()};
 
-constexpr std::array<Bitboard, 64> knightAttacks = {
-      []() constexpr {std::array<Bitboard, SQUARE_CT> arr;
-for (int i = 0; i < 64; i++)
-    arr[i] = knightAllAttacks(SQUARE_BB(Square(i)));
-return arr;
-}
-()
-}
-;
+constexpr std::array<Bitboard, 64> knightAttacks = {[]() constexpr {
+    std::array<Bitboard, SQUARE_CT> arr;
+    for (int i = 0; i < 64; i++)
+        arr[i] = knightAllAttacks(SQUARE_BB(Square(i)));
+    return arr;
+}()};
 
-constexpr std::array<Bitboard, 64> kingAttacks = {
-      []() constexpr {std::array<Bitboard, SQUARE_CT> arr;
-for (int i = 0; i < 64; i++)
-    arr[i] = maskKingAttacks(SQUARE_BB(Square(i)));
-return arr;
-}
-()
-}
-;
+constexpr std::array<Bitboard, 64> kingAttacks = {[]() constexpr {
+    std::array<Bitboard, SQUARE_CT> arr;
+    for (int i = 0; i < 64; i++)
+        arr[i] = maskKingAttacks(SQUARE_BB(Square(i)));
+    return arr;
+}()};
 
 constexpr Bitboard getRookAttacks(Square s, Bitboard b) {
     return rookMagics[s].c_attacks(b);
