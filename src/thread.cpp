@@ -280,16 +280,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
         }
     }
 
-    // int ttScore = 0;
-    // int ttMove = 0;
-    // if (!nullMove &&
-    //     (ttScore = tpTbl.probeHash(_board.ply, _board.key, &ttMove, depth,
-    //                                alpha, beta)) != TP_UNKNOWN) {
-    //     if (!pvNode || (ttScore > alpha && ttScore < beta)) {
-    //         return ttScore;
-    //     }
-    // }
-
     if (depth > 2 && !_board.checkPcs && !pvNode && !nullMove) {
         makeNullMove(_board);
         int score = -negaMax(-beta, -beta + 1, depth - 1 - 2, true, false);
