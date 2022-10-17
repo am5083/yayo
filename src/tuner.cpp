@@ -55,7 +55,7 @@ TunerEntries::TunerEntries(std::string file) {
             entries[i].result = 0.0;
 
         board.setFen(line);
-        entries[i].init(board);
+        entries[i].init(board, line);
 
         if (!(i % 50000)) {
             std::cout << "initializing tuner entry #" << i << " of "
@@ -66,10 +66,8 @@ TunerEntries::TunerEntries(std::string file) {
     games.close();
 }
 
-void TEntry::init(Board &board) {
+void TEntry::init(Board &board, std::string fen) {
     Trace trace = Trace();
-    Eval<TRACE> eval(board, trace);
-    turn = board.turn;
 
     // clang-format off
     phase = 4 * popcount(board.pieces(QUEEN)) +
@@ -83,7 +81,23 @@ void TEntry::init(Board &board) {
         mgPhase = 24;
     egPhase = 24 - mgPhase;
 
-    staticEval = eval.eval();
+    Info info[1];
+    info->timeGiven = false;
+
+    Search search;
+    search.setInfo(info);
+    search._setFen(fen);
+
+    staticEval = search.quiescent(-INF, INF);
+    auto pvMoves = search.getPv();
+
+    for (auto move : pvMoves) {
+        make(board, move);
+    }
+
+    turn = board.turn;
+    Eval<TRACE> eval(board, trace);
+    eval.eval();
 
     int *TraceArray = (int *)&trace; // lol
     TTuple temp_tuples[NUM_FEATURES * 2];

@@ -30,6 +30,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace Yayo {
 
@@ -70,6 +71,10 @@ class Search {
 
     void updatePv(int ply, int move);
     void printPv();
+
+  public:
+    std::vector<int> getPv();
+    void setInfo(Info *i) { info = i; }
 
   public:
     std::uint64_t get_nodes() const { return this->bench_nodes; }

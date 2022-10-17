@@ -5,12 +5,12 @@
 #include "thread.hpp"
 #include <fstream>
 
-#define NUM_ENTRIES 900000
+#define NUM_ENTRIES 2333770
 #define MAX_EPOCHS 100000
-#define BATCH_SIZE 900000
-#define LRRATE 0.50
+#define BATCH_SIZE 2333770
+#define LRRATE 0.5
 #define LRDROPRATE 1.50
-#define LRSTEPRATE 20
+#define LRSTEPRATE 200
 #define REPORTING 50
 #define NUM_FEATURES 487
 
@@ -37,7 +37,7 @@ struct TEntry {
     TTuple *tuples;
     int nTuples = 0;
 
-    void init(Board &board);
+    void init(Board &board, std::string fen);
     double linearEval(double params[NUM_FEATURES][2]);
 };
 
