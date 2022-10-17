@@ -57,7 +57,7 @@ TunerEntries::TunerEntries(std::string file) {
         board.setFen(line);
         entries[i].init(board, line);
 
-        if (!(i % 50000)) {
+        if (!(i % 10000)) {
             std::cout << "initializing tuner entry #" << i << " of "
                       << NUM_ENTRIES << "\n";
         }
@@ -88,7 +88,7 @@ void TEntry::init(Board &board, std::string fen) {
     search.setInfo(info);
     search._setFen(fen);
 
-    search.quiescent(-INF, INF, false);
+    search.negaMax(-INF, INF, 2, false, false);
     auto pvMoves = search.getPv();
 
     for (auto move : pvMoves) {
