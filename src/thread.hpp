@@ -73,6 +73,7 @@ class Search {
     void printPv();
 
   public:
+    bool probe = true;
     std::vector<int> getPv();
     void setInfo(Info *i) { info = i; }
 

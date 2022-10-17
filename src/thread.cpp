@@ -211,7 +211,9 @@ int Search::quiescent(int alpha, int beta, bool probe) {
         }
     }
 
-    tt.record(_board.key, _board.ply, bestMove, 0, best, hashFlag);
+    if (!probe) {
+        tt.record(_board.key, _board.ply, bestMove, 0, best, hashFlag);
+    }
 
     return best;
 }
@@ -268,15 +270,18 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
 
     int ttScore = 0, ttMove = 0;
     TTHash entry = {0};
-    if (tt.probe(_board.key, entry)) {
-        ttScore = entry.score(_board.ply);
-        ttMove = entry.move();
-        int flag = entry.flag();
-        if (entry.depth() > depth) {
-            if (!pvNode && flag == TP_EXACT ||
-                (flag == TP_BETA && ttScore >= beta) ||
-                (flag == TP_ALPHA && ttScore <= alpha)) {
-                return ttScore;
+
+    if (probe) {
+        if (tt.probe(_board.key, entry)) {
+            ttScore = entry.score(_board.ply);
+            ttMove = entry.move();
+            int flag = entry.flag();
+            if (entry.depth() > depth) {
+                if (!pvNode && flag == TP_EXACT ||
+                    (flag == TP_BETA && ttScore >= beta) ||
+                    (flag == TP_ALPHA && ttScore <= alpha)) {
+                    return ttScore;
+                }
             }
         }
     }

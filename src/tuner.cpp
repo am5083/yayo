@@ -87,6 +87,7 @@ void TEntry::init(Board &board, std::string fen) {
     Search search;
     search.setInfo(info);
     search._setFen(fen);
+    search.probe = false;
 
     search.negaMax(-INF, INF, 2, false, false);
     auto pvMoves = search.getPv();
