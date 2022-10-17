@@ -407,7 +407,7 @@ int Search::search() {
     double totalTime = 0;
     for (int j = 1; j <= depth; j++) {
         double start = get_time();
-        int window = 5;
+        int window = 15;
 
         if (j >= 5) {
             alpha = std::max(-INF, prevScore - window);
