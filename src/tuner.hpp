@@ -8,7 +8,7 @@
 #define NUM_ENTRIES 2333770
 #define MAX_EPOCHS 100000
 #define BATCH_SIZE 2333770
-#define LRRATE 0.5
+#define LRRATE 1
 #define LRDROPRATE 1.50
 #define LRSTEPRATE 200
 #define REPORTING 50

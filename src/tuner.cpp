@@ -88,16 +88,15 @@ void TEntry::init(Board &board, std::string fen) {
     search.setInfo(info);
     search._setFen(fen);
 
+    turn = board.turn;
+    Eval<TRACE> eval(board, trace);
+    eval.eval();
     staticEval = search.quiescent(-INF, INF);
     auto pvMoves = search.getPv();
 
     for (auto move : pvMoves) {
         make(board, move);
     }
-
-    turn = board.turn;
-    Eval<TRACE> eval(board, trace);
-    eval.eval();
 
     int *TraceArray = (int *)&trace; // lol
     TTuple temp_tuples[NUM_FEATURES * 2];
