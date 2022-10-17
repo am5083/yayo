@@ -103,7 +103,7 @@ void Search::scoreMoves(moveList *mList, int ttMove) {
     }
 }
 
-int Search::quiescent(int alpha, int beta) {
+int Search::quiescent(int alpha, int beta, bool probe) {
     int hashFlag = TP_ALPHA;
     int ply = _board.ply;
 
@@ -116,8 +116,8 @@ int Search::quiescent(int alpha, int beta) {
         return 1 - (nodes & 2);
     }
 
-    // if (checkForStop())
-    //     return ABORT_SCORE;
+    if (checkForStop())
+        return ABORT_SCORE;
 
     selDepth = std::max(selDepth, ply);
     nodes++;
@@ -128,19 +128,19 @@ int Search::quiescent(int alpha, int beta) {
     int score = 0, best = eval.eval(), oldAlpha = alpha;
     int bestMove = 0;
 
-    // int ttScore = 0, tpMove = 0;
-    // TTHash entry = {0};
-    // if (tt.probe(_board.key, entry)) {
-    //     ttScore = entry.score(_board.ply);
-    //     tpMove = entry.move();
-    //     int flag = entry.flag();
+    int ttScore = 0, tpMove = 0;
+    TTHash entry = {0};
+    if (probe && tt.probe(_board.key, entry)) {
+        ttScore = entry.score(_board.ply);
+        tpMove = entry.move();
+        int flag = entry.flag();
 
-    //     if (!pvNode && flag == TP_EXACT ||
-    //         (flag == TP_BETA && ttScore >= beta) ||
-    //         (flag == TP_ALPHA && ttScore <= alpha)) {
-    //         return ttScore;
-    //     }
-    // }
+        if (!pvNode && flag == TP_EXACT ||
+            (flag == TP_BETA && ttScore >= beta) ||
+            (flag == TP_ALPHA && ttScore <= alpha)) {
+            return ttScore;
+        }
+    }
 
     if (best >= beta)
         return best;
@@ -152,10 +152,10 @@ int Search::quiescent(int alpha, int beta) {
     generate(_board, &mList);
 
     for (int i = 0; i < mList.nMoves; i++) {
-        // if (tpMove && mList.moves[i].move == tpMove) {
-        //     mList.moves[i].score = INF;
-        //     continue;
-        // }
+        if (tpMove && mList.moves[i].move == tpMove) {
+            mList.moves[i].score = INF;
+            continue;
+        }
 
         if (mList.moves[i].score == 0) {
             continue;
