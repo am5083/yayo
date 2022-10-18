@@ -43,7 +43,7 @@ TunerEntries::TunerEntries(std::string file) {
         return;
     }
 
-    std::string line;
+    std::string line, discard;
     for (int i = 0; i < NUM_ENTRIES; i++) {
         getline(games, line);
 
@@ -69,18 +69,6 @@ TunerEntries::TunerEntries(std::string file) {
 void TEntry::init(Board &board, std::string fen) {
     Trace trace = Trace();
 
-    // clang-format off
-    phase = 4 * popcount(board.pieces(QUEEN)) +
-            2 * popcount(board.pieces(ROOK)) +
-            1 * popcount(board.pieces(BISHOP)) +
-            1 * popcount(board.pieces(KNIGHT));
-    // clang-format on
-
-    mgPhase = phase;
-    if (mgPhase > 24)
-        mgPhase = 24;
-    egPhase = 24 - mgPhase;
-
     Info info[1];
     info->timeGiven = false;
 
@@ -94,11 +82,25 @@ void TEntry::init(Board &board, std::string fen) {
 
     for (auto move : pvMoves) {
         make(board, move);
+        search._make(move);
     }
+
+    // clang-format off
+    phase = 4 * popcount(board.pieces(QUEEN)) +
+            2 * popcount(board.pieces(ROOK)) +
+            1 * popcount(board.pieces(BISHOP)) +
+            1 * popcount(board.pieces(KNIGHT));
+    // clang-format on
+
+    mgPhase = phase;
+    if (mgPhase > 24)
+        mgPhase = 24;
+    egPhase = 24 - mgPhase;
 
     turn = board.turn;
     Eval<TRACE> eval(board, trace);
-    staticEval = eval.eval();
+    eval.eval();
+    staticEval = search.quiescent(-INF, INF, false);
 
     int *TraceArray = (int *)&trace; // lol
     TTuple temp_tuples[NUM_FEATURES * 2];
@@ -393,6 +395,10 @@ void TunerEntries::runTuner() {
         error = tunedEvalErrors(params, K);
         if (epoch && epoch % LRSTEPRATE == 0)
             rate = rate / LRDROPRATE;
+
+        if (rate <= 0.1)
+            rate = 0.1;
+
         if (epoch % REPORTING == 0) {
             printParams(cparams, params);
 

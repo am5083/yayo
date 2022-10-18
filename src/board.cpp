@@ -322,6 +322,10 @@ int Board::see(Square toSq, Piece toPc, Square from, Piece fromPc) {
 
     auto pcVal = std::array{0,        PAWN_VAL,  KNIGHT_VAL, BISHOP_VAL,
                             ROOK_VAL, QUEEN_VAL, KING_VAL,   0};
+
+    if (getPcType(toPc) < 0 || getPcType(toPc) > 7)
+        return 0;
+
     gain[ply] = pcVal[getPcType(toPc)];
 
     char startTurn = turn;

@@ -211,7 +211,7 @@ int Search::quiescent(int alpha, int beta, bool probe) {
         }
     }
 
-    if (!probe) {
+    if (probe) {
         tt.record(_board.key, _board.ply, bestMove, 0, best, hashFlag);
     }
 
@@ -219,7 +219,6 @@ int Search::quiescent(int alpha, int beta, bool probe) {
 }
 
 int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
-
     nodes++;
     int hashFlag = TP_ALPHA;
     const int ply = _board.ply;
@@ -238,7 +237,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
         return quiescent(alpha, beta);
 
     bool futilityPrune = false;
-    bool pvNode = alpha < (beta - 1);
+    bool pvNode = isPv || alpha < (beta - 1);
 
     int best = -INF;
     int move = 0;
@@ -247,11 +246,10 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
 
     pvTableLen[ply] = 0;
     if (_board.ply > 0) {
-
         if (_board.halfMoves >= 100 || _board.isDraw())
             return 1 - (nodes & 2);
 
-        if (_board.numRepetition() >= 2) {
+        if (_board.isTMR()) {
             return 1 - (nodes & 2);
         }
 
@@ -269,10 +267,12 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
     }
 
     int ttScore = 0, ttMove = 0;
+    bool found = false;
     TTHash entry = {0};
 
     if (probe) {
         if (tt.probe(_board.key, entry)) {
+            found = true;
             ttScore = entry.score(_board.ply);
             ttMove = entry.move();
             int flag = entry.flag();
@@ -329,7 +329,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
 
         movesSearched++;
         if (movesSearched == 1) {
-            score = -negaMax(-beta, -alpha, depth - 1, false, false);
+            score = -negaMax(-beta, -alpha, depth - 1, false, true);
         } else {
             if (movesSearched >= 5 && depth >= 3 &&
                 canReduce(alpha, curr_move, mList)) {
@@ -366,8 +366,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
         }
     }
 
-    tt.prefetch(_board.key);
-
     if (mList.nMoves == 0) {
         if (_board.checkPcs) {
             return -INF;
@@ -386,12 +384,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
 
     tt.record(_board.key, _board.ply, bestMove, depth, best, hashFlag);
 
-    // if (!checkForStop()) {
-    //     tpTbl.recordHash(_board.fen(), _board.ply, _board.key, bestMove,
-    //     depth,
-    //                      best, hashFlag);
-    // }
-
     return alpha;
 }
 
@@ -407,7 +399,7 @@ int Search::search() {
     double totalTime = 0;
     for (int j = 1; j <= depth; j++) {
         double start = get_time();
-        int window = 15;
+        int window = 5;
 
         if (j >= 5) {
             alpha = std::max(-INF, prevScore - window);
@@ -423,7 +415,7 @@ int Search::search() {
         while (true) {
             aspirationDepth = std::max(1, aspirationDepth);
             selDepth = 0;
-            score = negaMax(alpha, beta, aspirationDepth, false, false);
+            score = negaMax(alpha, beta, aspirationDepth, false, j > 1);
 
             if (checkForStop()) {
                 abortDepth = j;
@@ -438,8 +430,7 @@ int Search::search() {
                 if (std::abs(score) < (INF / 2))
                     aspirationDepth--;
                 beta = std::min(INF, beta + window);
-
-                if (pvTableLen[0] && !bestMove)
+                if (pvTableLen[0])
                     bestMove = pvTable[0][0];
 
             } else {

@@ -207,7 +207,7 @@ constexpr bool Board::isRepetition() const {
 constexpr bool Board::isTMR() const {
     int n = 1;
     for (int i = gamePly - 2; i >= 0; i -= 2) {
-        if (i < gamePly - halfMoves) break;
+        if (i < gamePly - halfMoves || i < 0) break;
         if (key == hist[i].key) {
             if (i > gamePly - ply) return true;
             if (n == 3) return true;
