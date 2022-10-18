@@ -443,9 +443,8 @@ constexpr Score Eval<T>::mobilityScore() {
     const Bitboard friendlyKing = board.pieces(KING, C);
     const Bitboard friendlyQueens = board.pieces(QUEEN, C);
 
-    const Bitboard excludedSquares = enemyPawnAttacks | secondThirdRankPawns |
-                                     blockedPawns | friendlyKing |
-                                     friendlyQueens;
+    const Bitboard excludedSquares =
+          enemyPawnAttacks | blockedPawns | friendlyKing | friendlyQueens;
 
     int mgScore = 0;
     int egScore = 0;

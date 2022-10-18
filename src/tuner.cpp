@@ -43,7 +43,7 @@ TunerEntries::TunerEntries(std::string file) {
         return;
     }
 
-    std::string line, discard;
+    std::string line;
     for (int i = 0; i < NUM_ENTRIES; i++) {
         getline(games, line);
 
