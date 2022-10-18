@@ -99,8 +99,8 @@ constexpr bool Search::canReduce(int alpha, int move, moveList &mList) {
         return false;
     if (getCapture(move) >= CAPTURE)
         return false;
-    if (historyMoves[_board.turn][getFrom(move)][getTo(move)] > 1500)
-        return false;
+    // if (historyMoves[_board.turn][getFrom(move)][getTo(move)] > 1500)
+    //     return false;
     // if (eval(_board, mList) > alpha)
     //     return false;
 
