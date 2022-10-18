@@ -103,7 +103,7 @@ void Search::scoreMoves(moveList *mList, int ttMove) {
     }
 }
 
-int Search::quiescent(int alpha, int beta, bool probe) {
+int Search::quiescent(int alpha, int beta) {
     int hashFlag = TP_ALPHA;
     int ply = _board.ply;
 
@@ -430,7 +430,7 @@ int Search::search() {
                 if (std::abs(score) < (INF / 2))
                     aspirationDepth--;
                 beta = std::min(INF, beta + window);
-                if (pvTableLen[0])
+                if (pvTableLen[0] && !bestMove)
                     bestMove = pvTable[0][0];
 
             } else {

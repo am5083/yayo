@@ -99,8 +99,7 @@ void TEntry::init(Board &board, std::string fen) {
 
     turn = board.turn;
     Eval<TRACE> eval(board, trace);
-    eval.eval();
-    staticEval = search.quiescent(-INF, INF, false);
+    staticEval = eval.eval();
 
     int *TraceArray = (int *)&trace; // lol
     TTuple temp_tuples[NUM_FEATURES * 2];

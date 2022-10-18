@@ -55,7 +55,7 @@ class Search {
     void _setFen(std::string fen);
     void _make(std::uint16_t move);
     void scoreMoves(moveList *mList, int ttMove = 0);
-    int quiescent(int alpha, int beta, bool probe = true);
+    int quiescent(int alpha, int beta);
     int negaMax(int alpha, int beta, int depth, bool nullMove, bool pvNode);
     moveList generateMoves();
     Board getBoard();
