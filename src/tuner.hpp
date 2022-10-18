@@ -5,9 +5,9 @@
 #include "thread.hpp"
 #include <fstream>
 
-#define NUM_ENTRIES 1000000
+#define NUM_ENTRIES 3500000
 #define MAX_EPOCHS 100000
-#define BATCH_SIZE 1000000
+#define BATCH_SIZE 3500000
 #define LRRATE 0.1
 #define LRDROPRATE 1
 #define LRSTEPRATE 250
