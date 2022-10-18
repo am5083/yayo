@@ -237,7 +237,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
         return quiescent(alpha, beta);
 
     bool futilityPrune = false;
-    bool pvNode = isPv || alpha < (beta - 1);
+    bool pvNode = alpha < (beta - 1);
 
     int best = -INF;
     int move = 0;
@@ -277,7 +277,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
             ttMove = entry.move();
             int flag = entry.flag();
             if (entry.depth() > depth) {
-                if (!pvNode && flag == TP_EXACT ||
+                if (!nullMove && !pvNode && flag == TP_EXACT ||
                     (flag == TP_BETA && ttScore >= beta) ||
                     (flag == TP_ALPHA && ttScore <= alpha)) {
                     return ttScore;
@@ -303,7 +303,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
     scoreMoves(&mList, ttMove);
 
     int futilityMargin[] = {0, 100, 500, 900};
-    if (depth <= 3 && !pvNode && std::abs(alpha) < 9000 &&
+    if (depth <= 3 && !pvNode && !nullMove && std::abs(alpha) < 9000 &&
         Eval(_board).eval() + futilityMargin[depth] <= alpha)
         futilityPrune = true;
 
@@ -328,18 +328,19 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
         }
 
         movesSearched++;
-        if (movesSearched == 1) {
+        if (pvNode && movesSearched == 1) {
             score = -negaMax(-beta, -alpha, depth - 1, false, true);
         } else {
-            if (movesSearched >= 5 && depth >= 3 &&
+            if (!nullMove && movesSearched >= 5 && depth >= 3 &&
                 canReduce(alpha, curr_move, mList)) {
-                score = -negaMax(-alpha - 1, -alpha, depth - 2, false, false);
+                score = -negaMax(-alpha - 1, -alpha, depth - 2, true, false);
             } else {
                 score = alpha + 1;
             }
 
             if (score > alpha) {
-                score = -negaMax(-alpha - 1, -alpha, depth - 1, false, false);
+                score =
+                      -negaMax(-alpha - 1, -alpha, depth - 1, !nullMove, false);
                 if (score > alpha && score < beta) {
                     score = -negaMax(-beta, -alpha, depth - 1, false, false);
                 }
@@ -415,7 +416,7 @@ int Search::search() {
         while (true) {
             aspirationDepth = std::max(1, aspirationDepth);
             selDepth = 0;
-            score = negaMax(alpha, beta, aspirationDepth, false, j > 1);
+            score = negaMax(alpha, beta, aspirationDepth, false, false);
 
             if (checkForStop()) {
                 abortDepth = j;
