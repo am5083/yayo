@@ -341,6 +341,10 @@ constexpr Score Eval<T>::passedPawnScore() {
         Square psq = Square(lsb_index(passedPawns));
         psq = (C == WHITE) ? psq : Square(mirror(psq));
 
+        if (RANK_OF(psq) <= 0 || RANK_OF(psq) > 7) {
+            continue;
+        }
+
         mgScore += MgScore(passedPawnRankBonus[RANK_OF(psq)]);
         egScore += EgScore(passedPawnRankBonus[RANK_OF(psq)]);
 
