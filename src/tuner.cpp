@@ -68,6 +68,20 @@ TunerEntries::TunerEntries(std::string file) {
 
 void TEntry::init(Board &board, std::string fen) {
     Trace trace = Trace();
+    Info info[1];
+    info->timeGiven = false;
+
+    Search search;
+    search.setInfo(info);
+    search._setFen(fen);
+    search.probe = false;
+
+    search.negaMax(-INF, INF, 2, false, false);
+    auto pvMoves = search.getPv();
+
+    for (auto move : pvMoves) {
+        make(board, move);
+    }
 
     // clang-format off
     phase = 4 * popcount(board.pieces(QUEEN)) +
@@ -80,20 +94,6 @@ void TEntry::init(Board &board, std::string fen) {
     if (mgPhase > 24)
         mgPhase = 24;
     egPhase = 24 - mgPhase;
-
-    Info info[1];
-    info->timeGiven = false;
-
-    Search search;
-    search.setInfo(info);
-    search._setFen(fen);
-
-    search.negaMax(-INF, INF, 2, false, false);
-    auto pvMoves = search.getPv();
-
-    for (auto move : pvMoves) {
-        make(board, move);
-    }
 
     turn = board.turn;
     Eval<TRACE> eval(board, trace);
@@ -392,6 +392,8 @@ void TunerEntries::runTuner() {
         error = tunedEvalErrors(params, K);
         if (epoch && epoch % LRSTEPRATE == 0)
             rate = rate / LRDROPRATE;
+        if (rate <= 0.1)
+            rate = 0.1;
         if (epoch % REPORTING == 0) {
             printParams(cparams, params);
 
