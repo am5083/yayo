@@ -135,9 +135,9 @@ int Search::quiescent(int alpha, int beta) {
         tpMove = entry.move();
         int flag = entry.flag();
 
-        if (!pvNode && flag == TP_EXACT ||
-            (flag == TP_BETA && ttScore >= beta) ||
-            (flag == TP_ALPHA && ttScore <= alpha)) {
+        if (!pvNode &&
+            (flag == TP_EXACT || (flag == TP_BETA && ttScore >= beta) ||
+             (flag == TP_ALPHA && ttScore <= alpha))) {
             return ttScore;
         }
     }
@@ -269,10 +269,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
 
     int ttScore = 0, ttMove = 0;
     TTHash entry = {0};
-            if (!pvNode && flag == TP_EXACT ||
-                (flag == TP_BETA && ttScore >= beta) ||
-                (flag == TP_ALPHA && ttScore <= alpha)) {
-                return ttScore;
     if (probe) {
         if (tt.probe(_board.key, entry)) {
             ttScore = entry.score(_board.ply);
@@ -280,6 +276,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
             int flag = entry.flag();
             if (entry.depth() > depth) {
                 if (!pvNode &&
+                    (flag == TP_EXACT || (flag == TP_BETA && ttScore >= beta) ||
+                     (flag == TP_ALPHA && ttScore <= alpha))) {
                     return ttScore;
                 }
             }
@@ -331,7 +329,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
         if (pvNode && movesSearched == 1) {
             score = -negaMax(-beta, -alpha, depth - 1, false, false);
         } else {
-            if (movesSearched >= 5 && depth >= 3 &&
+            if (!nullMove && movesSearched >= 5 && depth >= 3 &&
                 canReduce(alpha, curr_move, mList)) {
                 score = -negaMax(-alpha - 1, -alpha, depth - 2, false, false);
             } else {
@@ -339,7 +337,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
             }
 
             if (score > alpha) {
-                score = -negaMax(-alpha - 1, -alpha, depth - 1, false, false);
+                score =
+                      -negaMax(-alpha - 1, -alpha, depth - 1, !nullMove, false);
                 if (score > alpha && score < beta) {
                     score = -negaMax(-beta, -alpha, depth - 1, false, false);
                 }
