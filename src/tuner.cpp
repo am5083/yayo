@@ -66,7 +66,7 @@ TunerEntries::TunerEntries(std::string file) {
         board.setFen(line);
         entries[i].init(board, std::move(line));
 
-        if (!(i % 1000)) {
+        if (!(i % 5000)) {
             std::cout << "initializing tuner entry #" << i << " of "
                       << NUM_ENTRIES << "\n";
         }
