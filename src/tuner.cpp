@@ -25,6 +25,8 @@
 #include "tuner.hpp"
 #include <limits>
 
+#define THREADS 8
+
 namespace Yayo {
 
 double sigmoid(double K, double E) {
@@ -34,7 +36,6 @@ double sigmoid(double K, double E) {
 TunerEntries::TunerEntries(std::string file) {
     entries = new TEntry[NUM_ENTRIES];
 
-    Board board;
     std::ifstream games;
     games.open(file);
 
@@ -44,8 +45,15 @@ TunerEntries::TunerEntries(std::string file) {
     }
 
     std::string line;
+    std::vector<std::string> fens;
     for (int i = 0; i < NUM_ENTRIES; i++) {
         getline(games, line);
+        fens.push_back(line);
+    }
+
+#pragma omp parallel for schedule(dynamic) num_threads(THREADS)
+    for (int i = 0; i < NUM_ENTRIES; i++) {
+        std::string line = fens[i];
 
         if (line.find("[1.0]") != std::string::npos)
             entries[i].result = 1.0;
@@ -54,8 +62,9 @@ TunerEntries::TunerEntries(std::string file) {
         else if (line.find("[0.0]") != std::string::npos)
             entries[i].result = 0.0;
 
+        Board board;
         board.setFen(line);
-        entries[i].init(board, line);
+        entries[i].init(board, std::move(line));
 
         if (!(i % 1000)) {
             std::cout << "initializing tuner entry #" << i << " of "
@@ -150,7 +159,7 @@ double TunerEntries::staticEvalErrors(double K) {
 
     #pragma omp parallel shared(total)
     {
-        #pragma omp for schedule(static, NUM_ENTRIES / 8) reduction(+:total)
+        #pragma omp for schedule(static, NUM_ENTRIES / THREADS) reduction(+:total)
         for (int i = 0; i < NUM_ENTRIES; i++) {
             int staticEval = entries[i].turn == WHITE ? entries[i].staticEval : -1 * entries[i].staticEval;
             total += pow(entries[i].result - sigmoid(K, staticEval), 2);
@@ -164,7 +173,7 @@ double TunerEntries::tunedEvalErrors(double params[NUM_FEATURES][2], double K) {
 
     #pragma omp parallel shared(total)
     {
-        #pragma omp for schedule(static, NUM_ENTRIES / 8) reduction(+:total)
+        #pragma omp for schedule(static, NUM_ENTRIES / THREADS) reduction(+:total)
         for (int i = 0; i < NUM_ENTRIES; i++) {
             total += pow(entries[i].result - sigmoid(K, entries[i].linearEval(params)), 2.0);
         }
