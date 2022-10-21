@@ -102,7 +102,7 @@ template <Tracing T = NO_TRACE> class Eval {
                                 EgScore(bishopScore) * egPhase) /
                                24;
         const auto rookVal =
-              (MgScore(rookScore) * mgPhase + EgScore(bishopScore) * egPhase) /
+              (MgScore(rookScore) * mgPhase + EgScore(rookScore) * egPhase) /
               24;
         const auto queenVal =
               (MgScore(queenScore) * mgPhase + EgScore(queenScore) * egPhase) /

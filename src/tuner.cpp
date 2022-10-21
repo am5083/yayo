@@ -85,16 +85,13 @@ void TEntry::init(Board &board, std::string fen) {
     search._setFen(fen);
     search.probe = false;
 
-    turn = board.turn;
-    staticEval = search.negaMax(-INF, INF, 2, true, false);
-    if (board.turn == BLACK) {
-        staticEval *= -1;
-    }
-    auto pvMoves = search.getPv();
+    // turn = board.turn;
+    // search.negaMax(-INF, INF, 2, true, false);
+    // auto pvMoves = search.getPv();
 
-    for (auto move : pvMoves) {
-        make(board, move);
-    }
+    // for (auto move : pvMoves) {
+    //     make(board, move);
+    // }
 
     // clang-format off
     phase = 4 * popcount(board.pieces(QUEEN)) +
@@ -110,6 +107,11 @@ void TEntry::init(Board &board, std::string fen) {
 
     Eval<TRACE> eval(board, trace);
     eval.eval();
+    staticEval = search.quiescent(-INF, INF);
+
+    if (board.turn == BLACK) {
+        staticEval *= -1;
+    }
 
     int *TraceArray = (int *)&trace; // lol
     TTuple temp_tuples[NUM_FEATURES * 2];
@@ -195,10 +197,10 @@ double TEntry::linearEval(double params[NUM_FEATURES][2]) {
         Score s = weights[tuples[i].index];
 
         double eval =
-              Fi *
-              ((double)(mgPhase * (MgScore(s) + params[tuples[i].index][0]) +
-                        egPhase * (EgScore(s) + params[tuples[i].index][1])) /
-               24);
+              (Fi *
+               (double)(mgPhase * (MgScore(s) + params[tuples[i].index][0]) +
+                        egPhase * (EgScore(s) + params[tuples[i].index][1]))) /
+              24;
 
         linearEval += eval;
     }
@@ -246,11 +248,11 @@ void TunerEntries::updateSingleGradient(TEntry &entry,
 // clang-format off
 inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATURES][2]) {
     printf("\n");
-    printf("constexpr Score pawnScore   = S(%4d, %4d)\n", (int)cparams[0][0] + (int)params[0][0], (int)cparams[0][1] + (int)params[0][1]);
-    printf("constexpr Score knightScore = S(%4d, %4d)\n", (int)cparams[1][0] + (int)params[1][0], (int)cparams[1][1] + (int)params[1][1]);
-    printf("constexpr Score bishopScore = S(%4d, %4d)\n", (int)cparams[2][0] + (int)params[2][0], (int)cparams[2][1] + (int)params[2][1]);
-    printf("constexpr Score rookScore   = S(%4d, %4d)\n", (int)cparams[3][0] + (int)params[3][0], (int)cparams[3][1] + (int)params[3][1]);
-    printf("constexpr Score queenScore  = S(%4d, %4d)\n\n", (int)cparams[4][0] + (int)params[4][0], (int)cparams[4][1] + (int)params[4][1]);
+    printf("constexpr Score pawnScore   = S(%4d, %4d);\n", (int)cparams[0][0] + (int)params[0][0], (int)cparams[0][1] + (int)params[0][1]);
+    printf("constexpr Score knightScore = S(%4d, %4d);\n", (int)cparams[1][0] + (int)params[1][0], (int)cparams[1][1] + (int)params[1][1]);
+    printf("constexpr Score bishopScore = S(%4d, %4d);\n", (int)cparams[2][0] + (int)params[2][0], (int)cparams[2][1] + (int)params[2][1]);
+    printf("constexpr Score rookScore   = S(%4d, %4d);\n", (int)cparams[3][0] + (int)params[3][0], (int)cparams[3][1] + (int)params[3][1]);
+    printf("constexpr Score queenScore  = S(%4d, %4d);\n\n", (int)cparams[4][0] + (int)params[4][0], (int)cparams[4][1] + (int)params[4][1]);
 
     printf("constexpr Score taperedPawnPcSq[SQUARE_CT] = {");
     for (int i = 0, start = 5; i < 64; i++) {
