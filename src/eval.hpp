@@ -509,7 +509,6 @@ constexpr Score Eval<T>::mobilityScore() {
 
     while (queens) {
         Square queenSq = Square(lsb_index(queens));
-        Bitboard excludedSquares = excludedSquares ^ friendlyQueens;
         Bitboard rookMoves =
               getRookAttacks(queenSq, board.pieces()) & ~excludedSquares;
         Bitboard bishopMoves =
