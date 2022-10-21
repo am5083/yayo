@@ -112,9 +112,8 @@ int Search::quiescent(int alpha, int beta) {
     if (_board.halfMoves >= 100 || _board.isDraw())
         return 1 - (nodes & 2);
 
-    if (_board.isTMR()) {
+    if (_board.isTMR())
         return 1 - (nodes & 2);
-    }
 
     if (checkForStop())
         return ABORT_SCORE;
@@ -250,9 +249,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
         if (_board.halfMoves >= 100 || _board.isDraw())
             return 1 - (nodes & 2);
 
-        if (_board.isTMR()) {
+        if (_board.isTMR())
             return 1 - (nodes & 2);
-        }
 
         alpha = std::max(alpha, -INF + _board.ply);
         beta = std::min(beta, INF - _board.ply);

@@ -85,7 +85,11 @@ void TEntry::init(Board &board, std::string fen) {
     search._setFen(fen);
     search.probe = false;
 
-    search.negaMax(-INF, INF, 4, false, false);
+    turn = board.turn;
+    staticEval = search.negaMax(-INF, INF, 2, true, false);
+    if (board.turn == BLACK) {
+        staticEval *= -1;
+    }
     auto pvMoves = search.getPv();
 
     for (auto move : pvMoves) {
@@ -104,9 +108,8 @@ void TEntry::init(Board &board, std::string fen) {
         mgPhase = 24;
     egPhase = 24 - mgPhase;
 
-    turn = board.turn;
     Eval<TRACE> eval(board, trace);
-    staticEval = eval.eval();
+    eval.eval();
 
     int *TraceArray = (int *)&trace; // lol
     TTuple temp_tuples[NUM_FEATURES * 2];
@@ -161,8 +164,7 @@ double TunerEntries::staticEvalErrors(double K) {
     {
         #pragma omp for schedule(static, NUM_ENTRIES / THREADS) reduction(+:total)
         for (int i = 0; i < NUM_ENTRIES; i++) {
-            int staticEval = entries[i].turn == WHITE ? entries[i].staticEval : -1 * entries[i].staticEval;
-            total += pow(entries[i].result - sigmoid(K, staticEval), 2);
+            total += pow(entries[i].result - sigmoid(K, entries[i].staticEval), 2);
         }
     }
     return total / (double)NUM_ENTRIES;

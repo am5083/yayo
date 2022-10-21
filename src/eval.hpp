@@ -442,7 +442,7 @@ constexpr Score Eval<T>::mobilityScore() {
     const Bitboard secondThirdRankPawns = friendlyPawns & secondThirdRank;
     const Bitboard blockedPawns = shift<Down>(enemyPawns) & friendlyPawns;
     const Bitboard friendlyKing = board.pieces(KING, C);
-    const Bitboard friendlyQueens = board.pieces(QUEEN, C);
+    const Bitboard friendlyQueens = queens;
 
     const Bitboard excludedSquares = enemyPawnAttacks | secondThirdRankPawns |
                                      blockedPawns | friendlyKing |
@@ -509,15 +509,21 @@ constexpr Score Eval<T>::mobilityScore() {
 
     while (queens) {
         Square queenSq = Square(lsb_index(queens));
-        Bitboard queenMoves = getRookAttacks(queenSq, board.pieces()) |
-                              getBishopAttacks(queenSq, board.pieces());
-        queenMoves &= ~excludedSquares;
+        Bitboard excludedSquares = excludedSquares ^ friendlyQueens;
+        Bitboard rookMoves =
+              getRookAttacks(queenSq, board.pieces()) & ~excludedSquares;
+        Bitboard bishopMoves =
+              getBishopAttacks(queenSq, board.pieces()) & ~excludedSquares;
+        Bitboard queenMoves = rookMoves | bishopMoves;
 
         int numMoves = popcount(queenMoves);
         if (numMoves < 0)
             numMoves = 0;
 
         if (T) {
+            if (numMoves == 0) {
+                trace.queenMobility[0][C]++;
+            }
             trace.queenMobility[numMoves][C]++;
         }
 
