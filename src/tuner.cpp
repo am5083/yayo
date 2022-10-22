@@ -85,13 +85,13 @@ void TEntry::init(Board &board, std::string fen) {
     search._setFen(fen);
     search.probe = false;
 
-    // turn = board.turn;
-    // search.negaMax(-INF, INF, 2, true, false);
-    // auto pvMoves = search.getPv();
+    turn = board.turn;
+    search.negaMax(-INF, INF, 2, true, false);
+    auto pvMoves = search.getPv();
 
-    // for (auto move : pvMoves) {
-    //     make(board, move);
-    // }
+    for (auto move : pvMoves) {
+        make(board, move);
+    }
 
     // clang-format off
     phase = 4 * popcount(board.pieces(QUEEN)) +
@@ -106,8 +106,8 @@ void TEntry::init(Board &board, std::string fen) {
     egPhase = 24 - mgPhase;
 
     Eval<TRACE> eval(board, trace);
-    eval.eval();
-    staticEval = search.quiescent(-INF, INF);
+    staticEval = eval.eval();
+    // staticEval = search.quiescent(-INF, INF);
 
     if (board.turn == BLACK) {
         staticEval *= -1;
