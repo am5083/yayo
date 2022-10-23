@@ -166,7 +166,7 @@ int Search::quiescent(int alpha, int beta) {
         Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
 
         if (!_board.checkPcs &&
-            (best + _board.see(toSq, toPc, fromSq, fromPc) + 200) <= alpha) {
+            (best + _board.see(toSq, toPc, fromSq, fromPc) + 350) <= alpha) {
             mList.moves[i].score = -2000;
             continue;
         }
@@ -204,11 +204,11 @@ int Search::quiescent(int alpha, int beta) {
         }
     }
 
-    if (mList.nMoves == 0) {
-        if (__builtin_popcountll(_board.checkPcs) > 0) {
-            return -INF;
-        }
-    }
+    // if (mList.nMoves == 0) {
+    //     if (__builtin_popcountll(_board.checkPcs) > 0) {
+    //         return -INF;
+    //     }
+    // }
 
     if (probe) {
         tt.record(_board.key, _board.ply, bestMove, 0, best, hashFlag);
@@ -287,8 +287,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
         int score = -negaMax(-beta, -beta + 1, depth - 1 - 2, true, false);
         unmakeNullMove(_board);
 
-        // if (checkForStop())
-        //     return ABORT_SCORE;
+        if (checkForStop())
+            return ABORT_SCORE;
 
         if (score >= beta)
             return beta;
@@ -398,15 +398,15 @@ int Search::search() {
     int num = 2;
 
     int alpha = -INF, beta = INF;
-    int score = 0, prevScore = 0;
+    int score = 0, prevScore = -INF;
     int bestMove = 0;
 
     double totalTime = 0;
     for (int j = 1; j <= depth; j++) {
         double start = get_time();
-        int window = 11;
+        int window = 15;
 
-        if (j >= 8) {
+        if (j >= 5) {
             alpha = std::max(-INF, prevScore - window);
             beta = std::min(INF, prevScore + window);
         } else {
@@ -432,26 +432,20 @@ int Search::search() {
             if (score <= alpha) {
                 numFailed++;
 
-                // if (num == 1) {
-                //     alpha = -INF;
-                //     continue;
-                // }
-
                 beta = (alpha + beta) / 2;
                 alpha = std::max(-INF, alpha - window);
                 aspirationDepth = j;
             } else if (beta <= score) {
                 numFailed++;
 
-                if (num == 1) {
-                    beta = INF;
-                } else {
-                    beta = std::min(INF, beta + window);
-                }
+                // if (num == 1) {
+                //     beta = INF;
+                // } else {
+                // }
+                beta = std::min(INF, beta + window);
 
-                // if (std::abs(score) < (INF / 2))
-                //     aspirationDepth--;
-                //
+                if (std::abs(score) < (INF / 2))
+                    aspirationDepth--;
 
                 if (pvTableLen[0] && !bestMove)
                     bestMove = pvTable[0][0];

@@ -85,8 +85,20 @@ void TEntry::init(Board &board, std::string fen) {
     search._setFen(fen);
     search.probe = false;
 
-    turn = board.turn;
-    search.negaMax(-INF, INF, 2, true, false);
+    // turn = board.turn;
+    // search.negaMax(-INF, INF, 2, true, false);
+    // auto pvMoves = search.getPv();
+
+    // for (auto move : pvMoves) {
+    //     make(board, move);
+    // }
+
+    staticEval = search.quiescent(-INF, INF);
+
+    if (board.turn == BLACK) {
+        staticEval *= -1;
+    }
+
     auto pvMoves = search.getPv();
 
     for (auto move : pvMoves) {
@@ -106,12 +118,7 @@ void TEntry::init(Board &board, std::string fen) {
     egPhase = 24 - mgPhase;
 
     Eval<TRACE> eval(board, trace);
-    staticEval = eval.eval();
-    // staticEval = search.quiescent(-INF, INF);
-
-    if (board.turn == BLACK) {
-        staticEval *= -1;
-    }
+    eval.eval();
 
     int *TraceArray = (int *)&trace; // lol
     TTuple temp_tuples[NUM_FEATURES * 2];
@@ -386,6 +393,7 @@ void TunerEntries::runTuner() {
     initUntunedWeights(cparams);
 
     prev_err = staticEvalErrors(K);
+    double init_err = 0;
 
     std::ofstream out("new_weights.txt");
     for (int epoch = 0; epoch < MAX_EPOCHS; epoch++) {
@@ -405,6 +413,10 @@ void TunerEntries::runTuner() {
         }
 
         error = tunedEvalErrors(params, K);
+
+        if (init_err == 0)
+            init_err = error;
+
         if (epoch && epoch % LRSTEPRATE == 0)
             rate = rate / LRDROPRATE;
         if (rate <= 0.1)
@@ -422,10 +434,16 @@ void TunerEntries::runTuner() {
             out << std::endl;
         }
 
+        if (error - (init_err - 0.0001) <= 0) {
+            init_err = error;
+        }
+
         printf("Epoch  [%d]  Rate = [%g], ", epoch, rate);
         std::cout.precision(std::numeric_limits<double>::max_digits10);
         std::cout << "Error = [" << error << "];  "
                   << "ΔErr = [" << std::fixed << prev_err - error << "]"
+                  << ";   TT1 = [" << std::fixed
+                  << (error - (init_err - 0.0001)) / (prev_err - error) << "]"
                   << "\n";
 
         prev_err = error;
