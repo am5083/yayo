@@ -33,7 +33,7 @@ namespace Yayo {
 // LEGAL
 
 constexpr int victimScores[7] = {0, 100, 200, 300, 400, 500, 600};
-static int mvvLvaTable[7][7];
+extern int mvvLvaTable[7][7];
 
 void initMvvLva();
 void printMvvLvaTable();
@@ -124,7 +124,7 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
             PieceT fromPc = getPcType(board.board[fromSq]),
                    toPc = getPcType(board.board[s]);
 
-            int score = mvvLvaTable[toPc][fromPc] + 1000000;
+            int score = mvvLvaTable[toPc][fromPc];
             mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
             mList->addMove(encodeMove(fromSq, s, CP_ROOK), true, true, score);
             mList->addMove(encodeMove(fromSq, s, CP_BISHOP), true, true, score);
@@ -139,7 +139,7 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
             PieceT fromPc = getPcType(board.board[fromSq]),
                    toPc = getPcType(board.board[s]);
 
-            int score = mvvLvaTable[toPc][fromPc] + 1000000;
+            int score = mvvLvaTable[toPc][fromPc];
             mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
             mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
             mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
@@ -179,7 +179,7 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
             PieceT fromPc = getPcType(board.board[fromSq]),
                    toPc = getPcType(board.board[s]);
 
-            int score = mvvLvaTable[toPc][fromPc] + 1000000;
+            int score = mvvLvaTable[toPc][fromPc];
             mList->addMove(encodeMove(fromSq, s, CAPTURE), false, true, score);
         }
 
@@ -191,7 +191,7 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
             PieceT fromPc = getPcType(board.board[fromSq]),
                    toPc = getPcType(board.board[s]);
 
-            int score = mvvLvaTable[toPc][fromPc] + 1000000;
+            int score = mvvLvaTable[toPc][fromPc];
             mList->addMove(
                   encodeMove(Square(int(s) + int(eAttack)), s, CAPTURE), false,
                   true, score);
@@ -237,7 +237,7 @@ constexpr moveList *generateMoves(const Board &board, moveList *mList,
             int score = 0;
             if (board.board[t] != NO_PC) {
                 PieceT toPc = getPcType(board.board[t]);
-                score = mvvLvaTable[toPc][P] + 1000000;
+                score = mvvLvaTable[toPc][P];
             }
             mList->addMove(encodeMove(s, t, mf), false, bool(mf), score);
             b &= b - 1;
@@ -325,7 +325,7 @@ constexpr moveList *generateLegal(const Board &board, moveList *mList) {
         int score = 0;
         if (board.board[s] != NO_PC) {
             PieceT toPc = getPcType(board.board[s]);
-            score = mvvLvaTable[toPc][KING] + 1000000;
+            score = mvvLvaTable[toPc][KING];
         }
 
         temp.addMove(encodeMove(kingSq, s, mf), false, bool(mf), score);

@@ -289,7 +289,7 @@ void UCI::Main() {
             int cStopTime, hStopTime;
 
             if (time != -1) {
-                cStopTime = time / (movestogo + 1) + increment;
+                cStopTime = time / (movestogo + 1) + increment - 5;
                 hStopTime =
                       std::min(cStopTime * 5, time / std::min(4, movestogo));
 

@@ -19,6 +19,9 @@
 #include "movegen.hpp"
 
 namespace Yayo {
+
+int mvvLvaTable[7][7];
+
 void initMvvLva() {
     for (int Atk = 0; Atk < 7; Atk++) {
         for (int Vic = 0; Vic < 7; Vic++) {

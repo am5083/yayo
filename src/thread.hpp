@@ -42,7 +42,7 @@ class Search {
 
   public:
     const bool checkForStop() const;
-    constexpr bool canReduce(int alpha, int move, moveList &mList);
+    constexpr bool canReduce(int alpha, int move, Move &m);
 
     void startSearch(Info *_info);
 
@@ -82,25 +82,31 @@ class Search {
     std::uint64_t bench_nodes = 0;
 
   private:
+    int stopFlag = 0;
     int abortDepth;
     int numRep;
     int selDepth;
     int quiescentDepth;
     bool searched = false;
 
-    std::uint64_t nodes;
+    mutable std::uint64_t stopCount = 0;
     std::unique_ptr<std::thread> searchThread;
+    std::uint64_t nodes;
     Board _board;
     Info *info;
 };
 
-constexpr bool Search::canReduce(int alpha, int move, moveList &mList) {
+constexpr bool Search::canReduce(int alpha, int move, Move &m) {
     if (_board.checkPcs)
         return false;
+    if (m.score < 0)
+        return true;
     if (getCapture(move) >= CAPTURE)
         return false;
-    if (historyMoves[_board.turn][getFrom(move)][getTo(move)] > 1500)
+    if (historyMoves[_board.turn][getFrom(move)][getTo(move)] >= 500)
         return false;
+    // if (getPcType(_board.board[getFrom(move)]) == PAWN)
+    //     return false;
     // if (eval(_board, mList) > alpha)
     //     return false;
 

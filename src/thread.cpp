@@ -27,6 +27,7 @@ void Search::startSearch(Info *_info) {
     searched = 1;
     info = _info;
     nodes = 0;
+    stopCount = 0;
     info->uciStop = false;
     info->uciQuit = false;
     numRep = 0;
@@ -47,12 +48,17 @@ void Search::startSearch(Info *_info) {
 }
 
 const bool Search::checkForStop() const {
-    if (info->stopTime <= get_time() && info->timeGiven) {
-        return true;
-    }
+    stopCount++;
+    stopCount &= 1023;
 
     if (info->uciStop) {
         return true;
+    }
+
+    if (!stopCount) {
+        if (info->stopTime <= get_time() && info->timeGiven) {
+            info->uciStop = true;
+        }
     }
 
     return false;
@@ -71,28 +77,49 @@ void Search::scoreMoves(moveList *mList, int ttMove) {
         int move = mList->moves[i].move;
 
         if (move == pvTable[0][_board.ply]) {
-            mList->moves[i].score = 10000000 * 2;
+            mList->moves[i].score = 500000;
             continue;
         } else if (ttMove && move == ttMove) {
-            mList->moves[i].score = INF * 2;
+            mList->moves[i].score = 200000;
             continue;
         }
 
-        if (int(getCapture(move)) < int(CAPTURE)) {
+        int moveFlag = getCapture(move);
+
+        if (moveFlag >= P_KNIGHT) {
+            if (moveFlag >= CP_ROOK)
+                mList->moves[i].score = 1400 + (moveFlag - 10);
+            else if (moveFlag >= CP_KNIGHT)
+                mList->moves[i].score = 1200 + (moveFlag - 10);
+            else
+                mList->moves[i].score = 75 + moveFlag - 10;
+        }
+
+        else if (moveFlag >= CAPTURE && moveFlag < P_KNIGHT) {
+            Square fromSq = getFrom(move), toSq = getTo(move);
+            Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
+
+            if (fromPc > toPc) {
+                int see = _board.see(toSq, toPc, fromSq, fromPc);
+                mList->moves[i].score = see;
+            }
+        }
+
+        else if (moveFlag < CAPTURE) {
             if (killerMates[_board.ply][0] == move) {
-                mList->moves[i].score = 100000;
+                mList->moves[i].score = 100;
             }
 
             else if (killerMates[_board.ply][1] == move) {
-                mList->moves[i].score = 95000;
+                mList->moves[i].score = 95;
             }
 
             else if (killerMoves[_board.ply][0] == move) {
-                mList->moves[i].score = 90000;
+                mList->moves[i].score = 90;
             }
 
             else if (killerMoves[_board.ply][1] == move) {
-                mList->moves[i].score = 80000;
+                mList->moves[i].score = 80;
             }
 
             else {
@@ -109,14 +136,14 @@ int Search::quiescent(int alpha, int beta) {
 
     pvTableLen[ply] = 0;
 
+    if (checkForStop())
+        return ABORT_SCORE;
+
     if (_board.halfMoves >= 100 || _board.isDraw())
         return 1 - (nodes & 2);
 
     if (_board.isTMR())
         return 1 - (nodes & 2);
-
-    if (checkForStop())
-        return ABORT_SCORE;
 
     selDepth = std::max(selDepth, ply);
     nodes++;
@@ -148,40 +175,14 @@ int Search::quiescent(int alpha, int beta) {
         alpha = best;
 
     moveList mList = {0};
-    generate(_board, &mList);
+    generateCaptures(_board, &mList);
+    scoreMoves(&mList, tpMove);
 
     for (int i = 0; i < mList.nMoves; i++) {
-        if (tpMove && mList.moves[i].move == tpMove) {
-            mList.moves[i].score = INF;
-            continue;
-        }
-
-        if (mList.moves[i].score == 0) {
-            continue;
-        }
-
-        const int c_move = mList.moves[i].move;
-
-        Square fromSq = getFrom(c_move), toSq = getTo(c_move);
-        Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
-
-        if (!_board.checkPcs &&
-            (best + _board.see(toSq, toPc, fromSq, fromPc) + 350) <= alpha) {
-            mList.moves[i].score = -2000;
-            continue;
-        }
-
-        if (getPcType(fromPc) >= getPcType(toPc)) {
-            int see = _board.see(toSq, toPc, fromSq, fromPc);
-            mList.moves[i].score = see;
-        }
-    }
-
-    for (int i = 0; i < mList.nMoves; i++) {
-        if (mList.moves[i].score <= 0)
-            continue;
-
         mList.swapBest(i);
+
+        if (mList.moves[i].score <= 0)
+            break;
 
         make(_board, mList.moves[i].move);
         score = -quiescent(-beta, -alpha);
@@ -203,12 +204,6 @@ int Search::quiescent(int alpha, int beta) {
             }
         }
     }
-
-    // if (mList.nMoves == 0) {
-    //     if (__builtin_popcountll(_board.checkPcs) > 0) {
-    //         return -INF;
-    //     }
-    // }
 
     if (probe) {
         tt.record(_board.key, _board.ply, bestMove, 0, best, hashFlag);
@@ -236,7 +231,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
         return quiescent(alpha, beta);
 
     bool futilityPrune = false;
-    bool pvNode = alpha < (beta - 1);
+    bool pvNode = alpha < (beta - 1) || isPv;
 
     int best = -INF;
     int move = 0;
@@ -245,7 +240,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
 
     pvTableLen[ply] = 0;
     if (_board.ply > 0) {
-
         if (_board.halfMoves >= 100 || _board.isDraw())
             return 1 - (nodes & 2);
 
@@ -282,13 +276,11 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
         }
     }
 
-    if (depth > 2 && !_board.checkPcs && !pvNode && !nullMove) {
+    int R = 2;
+    if (depth > 3 && !_board.checkPcs && !pvNode && !nullMove) {
         makeNullMove(_board);
-        int score = -negaMax(-beta, -beta + 1, depth - 1 - 2, true, false);
+        int score = -negaMax(-beta, -beta + 1, depth - 1 - R, true, false);
         unmakeNullMove(_board);
-
-        if (checkForStop())
-            return ABORT_SCORE;
 
         if (score >= beta)
             return beta;
@@ -298,7 +290,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
     generate(_board, &mList);
     scoreMoves(&mList, ttMove);
 
-    int futilityMargin[] = {0, 100, 500, 900};
+    int futilityMargin[] = {0, 100, 300, 700};
     if (depth <= 3 && !pvNode && std::abs(alpha) < 9000 &&
         Eval(_board).eval() + futilityMargin[depth] <= alpha)
         futilityPrune = true;
@@ -311,7 +303,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
         const int curr_move = mList.moves[i].move;
         make(_board, mList.moves[i].move);
 
-        if (!pvNode && depth >= 3 && movesSearched >= 5 &&
+        if (!pvNode && !nullMove && depth >= 3 && movesSearched >= 5 &&
             getCapture(curr_move) < CAPTURE && !_board.checkPcs) {
             unmake(_board, mList.moves[i].move);
             continue;
@@ -328,7 +320,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
             score = -negaMax(-beta, -alpha, depth - 1, false, false);
         } else {
             if (!nullMove && movesSearched >= 5 && depth >= 3 &&
-                canReduce(alpha, curr_move, mList)) {
+                canReduce(alpha, curr_move, mList.moves[i])) {
                 score = -negaMax(-alpha - 1, -alpha, depth - 2, false, false);
             } else {
                 score = alpha + 1;
@@ -381,15 +373,9 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv) {
               depth * depth;
     }
 
-    tt.record(_board.key, _board.ply, bestMove, depth, best, hashFlag);
+    tt.record(_board.key, _board.ply, bestMove, depth, alpha, hashFlag);
 
-    // if (!checkForStop()) {
-    //     tpTbl.recordHash(_board.fen(), _board.ply, _board.key, bestMove,
-    //     depth,
-    //                      best, hashFlag);
-    // }
-
-    return alpha;
+    return best;
 }
 
 int Search::search() {
@@ -404,9 +390,9 @@ int Search::search() {
     double totalTime = 0;
     for (int j = 1; j <= depth; j++) {
         double start = get_time();
-        int window = 15;
+        int window = 10;
 
-        if (j >= 5) {
+        if (j >= 7) {
             alpha = std::max(-INF, prevScore - window);
             beta = std::min(INF, prevScore + window);
         } else {
@@ -489,7 +475,7 @@ int Search::search() {
                 break;
             }
 
-            window += window;
+            window += window * 3;
         }
 
         prevScore = score;
