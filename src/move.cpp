@@ -43,8 +43,8 @@ void Yayo::moveList::print(int flag) const {
 
 void Yayo::moveList::addCaptures(Square from, Bitboard attacks) {
     while (attacks) {
-        int sq             = (__builtin_ffsll(attacks) - 1);
-        Bitboard bb        = (1 << sq);
+        int sq = (__builtin_ffsll(attacks) - 1);
+        Bitboard bb = (1 << sq);
         moves[nMoves].move = encodeMove(from, Square(sq), CAPTURE);
         nMoves++;
         nTactical++;
@@ -54,8 +54,8 @@ void Yayo::moveList::addCaptures(Square from, Bitboard attacks) {
 
 void Yayo::moveList::addQuiets(Square from, Bitboard pushes) {
     while (pushes) {
-        int sq             = (__builtin_ffsll(pushes) - 1);
-        Bitboard bb        = (1 << sq);
+        int sq = (__builtin_ffsll(pushes) - 1);
+        Bitboard bb = (1 << sq);
         moves[nMoves].move = encodeMove(from, Square(sq), QUIET);
         nMoves++;
         nTactical++;
@@ -73,7 +73,9 @@ void Yayo::moveList::addMove(int move, bool promo, bool cap) {
 void Yayo::moveList::addMove(int move, bool promo, bool cap, int score) {
     if (getCapture(move) >= CAPTURE)
         nTactical++;
-    moves[nMoves].move  = move;
+    moves[nMoves].move = move;
+    if (score > 0)
+        score += 20000;
     moves[nMoves].score = score;
     nMoves++;
 }
@@ -87,14 +89,14 @@ void Yayo::moveList::swapBest(int index) {
     for (int i = index; i < nMoves; i++) {
         if (moves[i].score > best.score) {
             best_index = i;
-            best       = moves[i];
+            best = moves[i];
         }
     }
 
     if (best_index == -1)
         return;
 
-    moves[index]      = best;
+    moves[index] = best;
     moves[best_index] = cur;
 }
 
