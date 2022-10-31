@@ -180,8 +180,10 @@ int Search::quiescent(int alpha, int beta) {
     int queenValue = (eval.mgPhase * MgScore(queenScore) +
                       eval.egPhase * EgScore(queenScore)) /
                      24;
-    int deltaMargin = best + 200 + queenValue;
-    if (deltaMargin < alpha && eval.egPhase <= 20) {
+
+    int deltaMargin = best + queenValue;
+
+    if (deltaMargin < alpha) {
         return alpha;
     }
 
