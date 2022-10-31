@@ -227,9 +227,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     int hashFlag = TP_ALPHA;
     const int ply = _board.ply;
 
-    if (ply > selDepth)
-        selDepth = ply;
-
     tt.prefetch(_board.key);
     if (checkForStop()) {
         stopFlag = 1;
