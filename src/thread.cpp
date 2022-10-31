@@ -90,11 +90,11 @@ void Search::scoreMoves(moveList *mList, int ttMove) {
 
         if (moveFlag >= P_KNIGHT) {
             if (moveFlag >= CP_ROOK)
-                mList->moves[i].score = 1400 + (moveFlag - 10);
+                mList->moves[i].score = 20000 + 1400 + (moveFlag - 10);
             else if (moveFlag >= CP_KNIGHT)
-                mList->moves[i].score = 1200 + (moveFlag - 10);
+                mList->moves[i].score = 20000 + 1200 + (moveFlag - 10);
             else
-                mList->moves[i].score = 75 + moveFlag - 10;
+                mList->moves[i].score = 8000 + 75 + moveFlag - 10;
         }
 
         else if (moveFlag >= CAPTURE && moveFlag < P_KNIGHT) {
@@ -191,7 +191,7 @@ int Search::quiescent(int alpha, int beta) {
     for (int i = 0; i < mList.nMoves; i++) {
         mList.swapBest(i);
 
-        if (mList.moves[i].score <= 90) {
+        if (mList.moves[i].score <= 0) {
             continue;
         }
 
