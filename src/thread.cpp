@@ -146,14 +146,6 @@ int Search::quiescent(int alpha, int beta) {
         return ABORT_SCORE;
     }
 
-    if (_board.ply) {
-        if (_board.halfMoves >= 100 || _board.isDraw())
-            return 1 - (nodes & 2);
-
-        if (_board.isTMR())
-            return 1 - (nodes & 2);
-    }
-
     selDepth = std::max(selDepth, ply);
     nodes++;
 
