@@ -206,7 +206,6 @@ int Search::quiescent(int alpha, int beta) {
             if (score > alpha) {
                 hashFlag = TP_EXACT;
                 alpha = score;
-                updatePv(ply, bestMove);
 
                 if (alpha >= beta) {
                     hashFlag = TP_BETA;
