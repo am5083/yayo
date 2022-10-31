@@ -450,8 +450,7 @@ int Search::search() {
             } else if (beta <= score) {
                 numFailed++;
 
-                int diff = score + window;
-                beta = std::min(INF, diff);
+                beta = std::min(INF, beta + window);
 
                 // if (std::abs(score) < (INF / 2))
                 //     aspirationDepth--;
