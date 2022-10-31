@@ -114,19 +114,19 @@ void Search::scoreMoves(moveList *mList, int ttMove) {
 
         else if (moveFlag < CAPTURE) {
             if (killerMates[_board.ply][0] == move) {
-                mList->moves[i].score = 100;
+                mList->moves[i].score = 18000 + 100;
             }
 
             else if (killerMates[_board.ply][1] == move) {
-                mList->moves[i].score = 95;
+                mList->moves[i].score = 18000 + 95;
             }
 
             else if (killerMoves[_board.ply][0] == move) {
-                mList->moves[i].score = 90;
+                mList->moves[i].score = 16000 + 90;
             }
 
             else if (killerMoves[_board.ply][1] == move) {
-                mList->moves[i].score = 80;
+                mList->moves[i].score = 16000 + 80;
             }
 
             else {
