@@ -86,23 +86,20 @@ void TEntry::init(Board &board, std::string fen) {
     search.probe = false;
 
     // turn = board.turn;
-    // search.negaMax(-INF, INF, 2, true, false);
-    // auto pvMoves = search.getPv();
-
-    // for (auto move : pvMoves) {
-    //     make(board, move);
-    // }
-
-    staticEval = search.quiescent(-INF, INF);
-
-    if (board.turn == BLACK) {
-        staticEval *= -1;
-    }
-
+    search.negaMax(-INF, INF, 2, false, false);
     auto pvMoves = search.getPv();
 
     for (auto move : pvMoves) {
         make(board, move);
+    }
+
+    // staticEval = search.quiescent(-INF, INF);
+
+    Eval<TRACE> eval(board, trace);
+    staticEval = eval.eval();
+
+    if (board.turn == BLACK) {
+        staticEval *= -1;
     }
 
     // clang-format off
@@ -116,9 +113,6 @@ void TEntry::init(Board &board, std::string fen) {
     if (mgPhase > 24)
         mgPhase = 24;
     egPhase = 24 - mgPhase;
-
-    Eval<TRACE> eval(board, trace);
-    eval.eval();
 
     int *TraceArray = (int *)&trace; // lol
     TTuple temp_tuples[NUM_FEATURES * 2];
@@ -198,7 +192,7 @@ double TEntry::linearEval(double params[NUM_FEATURES][2]) {
     Score *weights = &((Score *)&w)[0];
     int mgScore = 0, egScore = 0;
 
-    double linearEval = 0;
+    double linearEval = TEMPO;
     for (int i = 0; i < nTuples; i++) {
         int Fi = tuples[i].whiteScore - tuples[i].blackScore;
         Score s = weights[tuples[i].index];
@@ -222,7 +216,7 @@ void TunerEntries::computeGradient(double gradient[NUM_FEATURES][2], double para
     for (int i = batch * BATCH_SIZE; i < (batch + 1) * BATCH_SIZE; i++) {
         updateSingleGradient(entries[i], local, params, K);
 
-        for (int i = 0; i < NUM_FEATURES; i++) {
+        for (int i = 1; i < NUM_FEATURES; i++) {
             gradient[i][0] += local[i][0];
             gradient[i][1] += local[i][1];
         }
@@ -395,13 +389,15 @@ void TunerEntries::runTuner() {
     prev_err = staticEvalErrors(K);
     double init_err = 0;
 
+    int count = 0;
+
     std::ofstream out("new_weights.txt");
     for (int epoch = 0; epoch < MAX_EPOCHS; epoch++) {
         for (int batch = 0; batch < NUM_ENTRIES / BATCH_SIZE; batch++) {
             double gradient[NUM_FEATURES][2] = {0};
             computeGradient(gradient, params, K, batch);
 
-            for (int i = 0; i < NUM_FEATURES; i++) {
+            for (int i = 1; i < NUM_FEATURES; i++) {
                 adagrad[i][0] += pow(2.0 * gradient[i][0] / BATCH_SIZE, 2.0);
                 adagrad[i][1] += pow(2.0 * gradient[i][1] / BATCH_SIZE, 2.0);
 
@@ -421,6 +417,17 @@ void TunerEntries::runTuner() {
             rate = rate / LRDROPRATE;
         if (rate <= 0.1)
             rate = 0.1;
+
+        if (prev_err - error < 0) {
+            count++;
+
+            if (count == 50) {
+                break;
+            }
+        } else {
+            count = 0;
+        }
+
         if (epoch % REPORTING == 0) {
             printParams(cparams, params);
 
@@ -434,7 +441,7 @@ void TunerEntries::runTuner() {
             out << std::endl;
         }
 
-        if (error - (init_err - 0.0001) <= 0) {
+        if (error - (init_err - 0.001) <= 0) {
             init_err = error;
         }
 
@@ -443,7 +450,7 @@ void TunerEntries::runTuner() {
         std::cout << "Error = [" << error << "];  "
                   << "ΔErr = [" << std::fixed << prev_err - error << "]"
                   << ";   TT1 = [" << std::fixed
-                  << (error - (init_err - 0.0001)) / (prev_err - error) << "]"
+                  << (error - (init_err - 0.001)) / (prev_err - error) << "]"
                   << "\n";
 
         prev_err = error;

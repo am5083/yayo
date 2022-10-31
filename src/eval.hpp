@@ -26,7 +26,7 @@
 
 namespace Yayo {
 namespace {
-constexpr int TEMPO = 10;
+constexpr int TEMPO = 5;
 } // namespace
 
 constexpr short gamePhaseValues[] = {0, 1, 1, 2, 4, 0};
@@ -447,6 +447,9 @@ constexpr Score Eval<T>::mobilityScore() {
     const Bitboard excludedSquares = enemyPawnAttacks | secondThirdRankPawns |
                                      blockedPawns | friendlyKing |
                                      friendlyQueens;
+    // enemyPawnAttacks; // | secondThirdRankPawns |
+    // blockedPawns | friendlyKing |
+    // friendlyQueens;
 
     int mgScore = 0;
     int egScore = 0;
@@ -471,8 +474,7 @@ constexpr Score Eval<T>::mobilityScore() {
 
     while (bishops) {
         Square bishopSq = Square(lsb_index(bishops));
-        Bitboard bishopMoves =
-              getBishopAttacks(bishopSq, board.pieces()) & ~excludedSquares;
+        Bitboard bishopMoves = getBishopAttacks(bishopSq, 0) & ~excludedSquares;
 
         int numMoves = popcount(bishopMoves);
         if (numMoves < 0)
@@ -490,8 +492,7 @@ constexpr Score Eval<T>::mobilityScore() {
 
     while (rooks) {
         Square rookSq = Square(lsb_index(rooks));
-        Bitboard rookMoves =
-              getRookAttacks(rookSq, board.pieces()) & ~excludedSquares;
+        Bitboard rookMoves = getRookAttacks(rookSq, 0) & ~excludedSquares;
 
         int numMoves = popcount(rookMoves);
         if (numMoves < 0)
@@ -509,10 +510,9 @@ constexpr Score Eval<T>::mobilityScore() {
 
     while (queens) {
         Square queenSq = Square(lsb_index(queens));
-        Bitboard rookMoves =
-              getRookAttacks(queenSq, board.pieces()) & ~excludedSquares;
-        Bitboard bishopMoves =
-              getBishopAttacks(queenSq, board.pieces()) & ~excludedSquares;
+        Bitboard rookMoves = getRookAttacks(queenSq, 0) & ~excludedSquares;
+        Bitboard bishopMoves = getBishopAttacks(queenSq, secondThirdRankPawns) &
+                               ~excludedSquares;
         Bitboard queenMoves = rookMoves | bishopMoves;
 
         int numMoves = popcount(queenMoves);

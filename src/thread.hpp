@@ -56,7 +56,8 @@ class Search {
     void _make(std::uint16_t move);
     void scoreMoves(moveList *mList, int ttMove = 0);
     int quiescent(int alpha, int beta);
-    int negaMax(int alpha, int beta, int depth, bool nullMove, bool pvNode);
+    int negaMax(int alpha, int beta, int depth, bool nullMove, bool pvNode,
+                bool isExtension = false);
     moveList generateMoves();
     Board getBoard();
 
@@ -82,14 +83,15 @@ class Search {
     std::uint64_t bench_nodes = 0;
 
   private:
-    int stopFlag = 0;
     int abortDepth;
     int numRep;
     int selDepth;
     int quiescentDepth;
     bool searched = false;
 
+    mutable int stopFlag = 0;
     mutable std::uint64_t stopCount = 0;
+
     std::unique_ptr<std::thread> searchThread;
     std::uint64_t nodes;
     Board _board;
@@ -97,16 +99,19 @@ class Search {
 };
 
 constexpr bool Search::canReduce(int alpha, int move, Move &m) {
-    if (_board.checkPcs)
+    if (getCapture(move) >= CAPTURE) {
+        if (m.score > 0)
+            return false;
+        else
+            return true;
+    }
+    if (historyMoves[_board.turn][getFrom(move)][getTo(move)] >= 2500)
         return false;
-    if (m.score < 0)
-        return true;
-    if (getCapture(move) >= CAPTURE)
+    if (getPcType(_board.board[getFrom(move)]) == PAWN)
         return false;
-    if (historyMoves[_board.turn][getFrom(move)][getTo(move)] >= 500)
+
+    if (killerMoves[_board.ply][0] == move)
         return false;
-    // if (getPcType(_board.board[getFrom(move)]) == PAWN)
-    //     return false;
     // if (eval(_board, mList) > alpha)
     //     return false;
 

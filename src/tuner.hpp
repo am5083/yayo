@@ -5,11 +5,11 @@
 #include "thread.hpp"
 #include <fstream>
 
-#define NUM_ENTRIES 2000000
+#define NUM_ENTRIES 500000
 #define MAX_EPOCHS 100000
-#define BATCH_SIZE 2000000
-#define LRRATE 0.1
-#define LRDROPRATE 1.00
+#define BATCH_SIZE 500000
+#define LRRATE 0.10
+#define LRDROPRATE 2.00
 #define LRSTEPRATE 500
 #define REPORTING 50
 #define NUM_FEATURES 487
