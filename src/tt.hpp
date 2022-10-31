@@ -27,7 +27,7 @@
 #define TP_ALPHA 1
 #define TP_BETA 2
 #define TP_UNKNOWN 9999999
-#define TP_INIT_SIZE 128
+#define TP_INIT_SIZE 512
 
 #define TP_INF 30000
 #define NUM_BUCKETS 4

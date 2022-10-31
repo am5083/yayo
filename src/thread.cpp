@@ -152,7 +152,6 @@ int Search::quiescent(int alpha, int beta) {
     }
 
     selDepth = std::max(selDepth, ply);
-    nodes++;
 
     tt.prefetch(_board.key);
     bool pvNode = (beta - alpha) < 1;
@@ -246,7 +245,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     if (depth <= 0)
         return quiescent(alpha, beta);
 
-    nodes++;
     bool futilityPrune = false;
     bool pvNode = alpha < (beta - 1) || isPv;
     pvTableLen[ply] = 0;
@@ -336,9 +334,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             continue;
         }
 
-        // print_move(curr_move);
-        // std::cout << ": ";
-
+        nodes++;
         movesSearched++;
         if (movesSearched == 1) {
             score =
