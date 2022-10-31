@@ -78,7 +78,7 @@ void Search::scoreMoves(moveList *mList, int ttMove) {
     for (int i = 0; i < mList->nMoves; i++) {
         int move = mList->moves[i].move;
 
-        if (move == pvTable[0][_board.ply]) {
+        if (move == pvTable[_board.ply][0]) {
             mList->moves[i].score = 500000;
             continue;
         } else if (ttMove && move == ttMove) {

@@ -38,6 +38,7 @@ int main(int argc, char *argv[]) {
             return 0;
         }
     }
+
     uci.Main();
     return 0;
 }
