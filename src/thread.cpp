@@ -458,8 +458,8 @@ int Search::search() {
 
                 beta = std::min(INF, beta + window);
 
-                if (std::abs(score) < (INF / 2))
-                    aspirationDepth--;
+                // if (std::abs(score) < (INF / 2))
+                //     aspirationDepth--;
 
                 if (pvTableLen[0] && !bestMove)
                     bestMove = pvTable[0][0];
