@@ -94,14 +94,14 @@ void Search::scoreMoves(moveList *mList, int ttMove) {
             else if (moveFlag >= CP_KNIGHT)
                 mList->moves[i].score = 20000 + 1200 + (moveFlag - 10);
             else
-                mList->moves[i].score = 8000 + 75 + moveFlag - 10;
+                mList->moves[i].score = 19000 + 75 + moveFlag - 10;
         }
 
         else if (moveFlag >= CAPTURE && moveFlag < P_KNIGHT) {
             Square fromSq = getFrom(move), toSq = getTo(move);
             Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
 
-            if (fromPc >= toPc) {
+            if (fromPc > toPc) {
                 int see = _board.see(toSq, toPc, fromSq, fromPc);
 
                 if (see > 0) {
@@ -340,9 +340,9 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         // std::cout << ": ";
 
         movesSearched++;
-        if (pvNode && movesSearched == 1) {
+        if (movesSearched == 1) {
             score =
-                  -negaMax(-beta, -alpha, depth - 1, false, true, isExtension);
+                  -negaMax(-beta, -alpha, depth - 1, false, false, isExtension);
         } else {
             if (!pvNode && !inCheck && !_board.checkPcs && movesSearched >= 6 &&
                 depth >= 3 && canReduce(alpha, curr_move, mList.moves[i])) {
@@ -444,7 +444,7 @@ int Search::search() {
             num++;
             aspirationDepth = std::max(1, aspirationDepth);
             selDepth = 0;
-            score = negaMax(alpha, beta, aspirationDepth, false, false);
+            score = negaMax(alpha, beta, aspirationDepth, false, true);
 
             if (score <= alpha) {
                 numFailed++;
