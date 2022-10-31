@@ -301,6 +301,10 @@ void UCI::Main() {
                 info->timeGiven = true;
             }
 
+            if (movetime != -1) {
+                info->stopTime = info->startTime + movetime;
+            }
+
             if (depth == -1) {
                 info->depth = 12;
             }
