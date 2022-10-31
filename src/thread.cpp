@@ -103,6 +103,11 @@ void Search::scoreMoves(moveList *mList, int ttMove) {
 
             if (fromPc >= toPc) {
                 int see = _board.see(toSq, toPc, fromSq, fromPc);
+
+                if (see > 0) {
+                    see += 20000;
+                }
+
                 mList->moves[i].score = see;
             }
         }
