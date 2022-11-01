@@ -305,6 +305,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
 
     int R = 2;
     if (depth > 3 && !_board.checkPcs && !pvNode && !nullMove) {
+        // R += depth / 6;
         makeNullMove(_board);
         int score = -negaMax(-beta, -beta + 1, depth - 1 - R, true, false,
                              isExtension);

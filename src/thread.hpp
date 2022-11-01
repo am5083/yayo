@@ -105,8 +105,10 @@ constexpr bool Search::canReduce(int alpha, int move, Move &m) {
         else
             return true;
     }
+
     if (historyMoves[_board.turn][getFrom(move)][getTo(move)] >= 2500)
         return false;
+
     if (getPcType(_board.board[getFrom(move)]) == PAWN)
         return false;
 
