@@ -189,9 +189,14 @@ int Search::quiescent(int alpha, int beta) {
     if (alpha < best)
         alpha = best;
 
+    constexpr auto pcVal =
+          std::array{0, PAWN_VAL, KNIGHT_VAL, BISHOP_VAL, ROOK_VAL, QUEEN_VAL};
+
     moveList mList = {0};
     generateCaptures(_board, &mList);
     scoreMoves(&mList, tpMove);
+
+    int standPat = best;
 
     for (int i = 0; i < mList.nMoves; i++) {
         mList.swapBest(i);
@@ -199,6 +204,14 @@ int Search::quiescent(int alpha, int beta) {
         if (mList.moves[i].score < 0) {
             break;
         }
+
+        int move = mList.moves[i].move;
+        Square fromSq = getFrom(move), toSq = getTo(move);
+        Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
+
+        int dMargin = standPat + pcVal[getPcType(toPc)];
+        if (dMargin < alpha)
+            continue;
 
         nodes++;
         make(_board, mList.moves[i].move);
