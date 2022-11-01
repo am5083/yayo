@@ -333,13 +333,12 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         const int curr_move = mList.moves[i].move;
         bool inCheck = _board.checkPcs;
 
-        if (!isPv && movesSearched > 1 && getCapture(curr_move) < CAPTURE &&
-            depth <= 8) {
-            Square fromSq = getFrom(move), toSq = getTo(move);
-            Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
-            if (_board.see(toSq, toPc, fromSq, fromPc) < 50 * depth)
-                continue;
-        }
+        Square fromSq = getFrom(curr_move), toSq = getTo(curr_move);
+        Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
+
+        if (getCapture(curr_move) < CAPTURE && depth <= 8 &&
+            _board.see(toSq, toPc, fromSq, fromPc) < (-50 * depth))
+            continue;
 
         make(_board, mList.moves[i].move);
 
