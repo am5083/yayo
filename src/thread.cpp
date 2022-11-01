@@ -195,10 +195,11 @@ int Search::quiescent(int alpha, int beta) {
     for (int i = 0; i < mList.nMoves; i++) {
         mList.swapBest(i);
 
-        if (mList.moves[i].score <= 0) {
-            continue;
+        if (mList.moves[i].score < 0) {
+            break;
         }
 
+        nodes++;
         make(_board, mList.moves[i].move);
         score = -quiescent(-beta, -alpha);
         unmake(_board, mList.moves[i].move);
