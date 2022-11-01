@@ -102,8 +102,7 @@ void Search::scoreMoves(moveList *mList, int ttMove) {
             Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
 
             if (getCapture(move) == EP_CAPTURE) {
-                int dir = _board.turn == WHITE ? -8 : 8;
-                toPc = _board.board[toSq + dir];
+                toPc = _board.board[toSq ^ 8];
             }
 
             if (fromPc > toPc) {
@@ -215,8 +214,7 @@ int Search::quiescent(int alpha, int beta) {
         Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
 
         if (getCapture(move) == EP_CAPTURE) {
-            int dir = _board.turn == WHITE ? -8 : 8;
-            toPc = _board.board[toSq + dir];
+            toPc = _board.board[toSq ^ 8];
         }
 
         int dMargin = standPat + pcVal[getPcType(toPc)];
@@ -347,17 +345,23 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
 
         if (getCapture(move) == EP_CAPTURE) {
-            int dir = _board.turn == WHITE ? -8 : 8;
-            toPc = _board.board[toSq + dir];
+            toPc = _board.board[toSq ^ 8];
         }
 
-        if (_board.ply > 0 && movesSearched > 1 &&
-            getCapture(curr_move) < CAPTURE && depth <= 6 &&
-            _board.see(toSq, toPc, fromSq, fromPc) < (-50 * depth)) {
-            continue;
+        int see = 0;
+        if (!pvNode && !_board.checkPcs && movesSearched >= 1 &&
+            getCapture(curr_move) < CAPTURE && depth <= 8) {
+            see = _board.see(toSq, toPc, fromSq, fromPc);
         }
 
         make(_board, mList.moves[i].move);
+
+        if (!pvNode && !_board.checkPcs && movesSearched >= 1 &&
+            getCapture(curr_move) < CAPTURE && depth <= 8 &&
+            see < -50 * depth) {
+            unmake(_board, curr_move);
+            continue;
+        }
 
         // if (!pvNode && !inCheck && depth >= 3 && movesSearched >= 4 &&
         //     (mList.moves[i].score < 0 || getCapture(curr_move) < CAPTURE) &&
@@ -395,7 +399,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
                 score = -negaMax(-alpha - 1, -alpha, depth - 1, false, false,
                                  isExtension);
                 if (score > alpha && score < beta) {
-                    score = -negaMax(-beta, -alpha, depth - 1, false, true,
+                    score = -negaMax(-beta, -alpha, depth - 1, false, false,
                                      isExtension);
                 }
             }
