@@ -334,12 +334,12 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         bool inCheck = _board.checkPcs;
         make(_board, mList.moves[i].move);
 
-        // if (!pvNode && !inCheck && depth >= 3 && movesSearched >= 4 &&
-        //     (mList.moves[i].score < 0 || getCapture(curr_move) < CAPTURE) &&
-        //     !_board.checkPcs) {
-        //     unmake(_board, mList.moves[i].move);
-        //     continue;
-        // }
+        if (!pvNode && depth >= 3 && movesSearched >= 4 &&
+            (mList.moves[i].score < 0 || getCapture(curr_move) < CAPTURE) &&
+            !_board.checkPcs) {
+            unmake(_board, mList.moves[i].move);
+            continue;
+        }
 
         if (futilityPrune &&
             (getCapture(curr_move) < CAPTURE &&
@@ -356,7 +356,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             score =
                   -negaMax(-beta, -alpha, depth - 1, false, false, isExtension);
         } else {
-            if (!pvNode && !_board.checkPcs && movesSearched >= 4 &&
+            if (!pvNode && !inCheck && !_board.checkPcs && movesSearched >= 4 &&
                 depth >= 3 && canReduce(alpha, curr_move, mList.moves[i])) {
                 int R = 2 + (depth / 10);
                 R += movesSearched / 15;
