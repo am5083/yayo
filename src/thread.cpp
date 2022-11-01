@@ -145,8 +145,6 @@ int Search::quiescent(int alpha, int beta) {
     int hashFlag = TP_ALPHA;
     int ply = _board.ply;
 
-    pvTableLen[ply] = 0;
-
     if (_board.checkPcs)
         return negaMax(alpha, beta, 1, false, false, true);
 
@@ -159,6 +157,7 @@ int Search::quiescent(int alpha, int beta) {
 
     tt.prefetch(_board.key);
     bool pvNode = (beta - alpha) < 1;
+    pvTableLen[_board.ply] = 0;
 
     int ttScore = 0, tpMove = 0;
     TTHash entry = {0};
@@ -252,6 +251,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
                     bool isExtension) {
     int hashFlag = TP_ALPHA;
     const int ply = _board.ply;
+    pvTableLen[ply] = 0;
 
     tt.prefetch(_board.key);
     if (checkForStop()) {
@@ -270,7 +270,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
 
     bool futilityPrune = false;
     bool pvNode = alpha < (beta - 1) || isPv;
-    pvTableLen[ply] = 0;
 
     if (_board.ply > 0) {
         if (_board.halfMoves >= 100 || _board.isDraw())
@@ -349,8 +348,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
 
         int see = 0;
-        if (!pvNode && !_board.checkPcs && movesSearched >= 1 &&
-            getCapture(curr_move) < CAPTURE && depth <= 8) {
+        if (!pvNode && movesSearched >= 1 && getCapture(curr_move) < CAPTURE &&
+            depth <= 8) {
             see = _board.see(toSq, toPc, fromSq, fromPc);
         }
 
