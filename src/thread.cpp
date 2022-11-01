@@ -352,7 +352,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
 
         if (_board.ply > 0 && movesSearched > 1 &&
-            getCapture(curr_move) < CAPTURE && depth <= 8 &&
+            getCapture(curr_move) < CAPTURE && depth <= 6 &&
             _board.see(toSq, toPc, fromSq, fromPc) < (-50 * depth)) {
             continue;
         }
