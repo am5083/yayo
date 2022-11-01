@@ -101,6 +101,11 @@ void Search::scoreMoves(moveList *mList, int ttMove) {
             Square fromSq = getFrom(move), toSq = getTo(move);
             Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
 
+            if (getCapture(move) == EP_CAPTURE) {
+                int dir = _board.turn == WHITE ? -8 : 8;
+                toPc = _board.board[toSq + dir];
+            }
+
             if (fromPc > toPc) {
                 int see = _board.see(toSq, toPc, fromSq, fromPc);
 
@@ -208,6 +213,11 @@ int Search::quiescent(int alpha, int beta) {
         int move = mList.moves[i].move;
         Square fromSq = getFrom(move), toSq = getTo(move);
         Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
+
+        if (getCapture(move) == EP_CAPTURE) {
+            int dir = _board.turn == WHITE ? -8 : 8;
+            toPc = _board.board[toSq + dir];
+        }
 
         int dMargin = standPat + pcVal[getPcType(toPc)];
         if (dMargin < alpha)
@@ -336,9 +346,15 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         Square fromSq = getFrom(curr_move), toSq = getTo(curr_move);
         Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
 
-        if (getCapture(curr_move) < CAPTURE && depth <= 8 &&
-            _board.see(toSq, toPc, fromSq, fromPc) < (-50 * depth))
+        if (getCapture(move) == EP_CAPTURE) {
+            int dir = _board.turn == WHITE ? -8 : 8;
+            toPc = _board.board[toSq + dir];
+        }
+
+        if (_board.ply > 0 && getCapture(curr_move) < CAPTURE && depth <= 8 &&
+            _board.see(toSq, toPc, fromSq, fromPc) < (-50 * depth)) {
             continue;
+        }
 
         make(_board, mList.moves[i].move);
 
