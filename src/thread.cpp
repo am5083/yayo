@@ -334,7 +334,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         bool inCheck = _board.checkPcs;
         make(_board, mList.moves[i].move);
 
-        if (!pvNode && depth >= 3 && movesSearched >= 4 &&
+        if (!pvNode && !inCheck && depth >= 3 && movesSearched >= 4 &&
             (mList.moves[i].score < 0 || getCapture(curr_move) < CAPTURE) &&
             !_board.checkPcs) {
             unmake(_board, mList.moves[i].move);
