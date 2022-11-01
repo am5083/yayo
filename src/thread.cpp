@@ -356,7 +356,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             score =
                   -negaMax(-beta, -alpha, depth - 1, false, false, isExtension);
         } else {
-            if (!pvNode && !inCheck && !_board.checkPcs && movesSearched >= 4 &&
+            if (!pvNode && !_board.checkPcs && movesSearched >= 4 &&
                 depth >= 3 && canReduce(alpha, curr_move, mList.moves[i])) {
                 int R = 2 + (depth / 10);
                 R += movesSearched / 15;
