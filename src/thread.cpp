@@ -348,14 +348,14 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
 
         int see = 0;
-        if (!isPv && movesSearched >= 1 && getCapture(curr_move) < CAPTURE &&
-            depth <= 8) {
+        if (_board.ply > 0 && movesSearched >= 1 &&
+            getCapture(curr_move) < CAPTURE && depth <= 8) {
             see = _board.see(toSq, toPc, fromSq, fromPc);
         }
 
         make(_board, mList.moves[i].move);
 
-        if (!isPv && !_board.checkPcs && movesSearched >= 1 &&
+        if (_board.ply > 0 && !_board.checkPcs && movesSearched >= 1 &&
             getCapture(curr_move) < CAPTURE && depth <= 8 &&
             see < -50 * depth) {
             unmake(_board, curr_move);
