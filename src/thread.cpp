@@ -33,8 +33,8 @@ void Search::startSearch(Info *_info) {
     info->uciQuit = false;
     numRep = 0;
     for (int i = 0; i < MAX_PLY + 6; i++) {
-        killerMoves[i][0] = NO_MOVE;
-        killerMoves[i][1] = NO_MOVE;
+        // killerMoves[i][0] = NO_MOVE;
+        // killerMoves[i][1] = NO_MOVE;
 
         for (int j = 0; j < MAX_PLY + 6; j++) {
 
