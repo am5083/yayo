@@ -36,13 +36,13 @@ void Search::startSearch(Info *_info) {
         killerMoves[i][0] = NO_MOVE;
         killerMoves[i][1] = NO_MOVE;
 
-        for (int j = 0; j < MAX_PLY + 6; j++) {
+        // for (int j = 0; j < MAX_PLY + 6; j++) {
 
-            if (i < 64 && j < 64) {
-                historyMoves[0][i][j] = 0;
-                historyMoves[1][i][j] = 0;
-            }
-        }
+        //     if (i < 64 && j < 64) {
+        //         historyMoves[0][i][j] = 0;
+        //         historyMoves[1][i][j] = 0;
+        //     }
+        // }
     }
 
     searchThread = std::make_unique<std::thread>(&Search::search, this);
