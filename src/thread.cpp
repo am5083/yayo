@@ -307,9 +307,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
     }
 
-    if (depth >= 4 && !ttMove) {
+    if (pvNode && depth >= 4 && !ttMove && !_board.checkPcs)
         depth--;
-    }
 
     int best = -INF;
     int move = 0;
