@@ -307,6 +307,10 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
     }
 
+    if (depth >= 4 && !ttMove) {
+        depth--;
+    }
+
     int best = -INF;
     int move = 0;
 
