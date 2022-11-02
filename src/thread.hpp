@@ -99,12 +99,12 @@ class Search {
 };
 
 constexpr bool Search::canReduce(int alpha, int move, Move &m) {
-    if (getCapture(move) >= CAPTURE) {
-        if (m.score > 0)
-            return false;
-        else
-            return true;
-    }
+    // if (getCapture(move) >= CAPTURE) {
+    //     if (m.score > 0)
+    //         return false;
+    //     else
+    //         return true;
+    // }
 
     if (historyMoves[_board.turn][getFrom(move)][getTo(move)] >= 2500)
         return false;
