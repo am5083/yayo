@@ -273,10 +273,10 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
 
     if (_board.ply > 0) {
         if (_board.halfMoves >= 100 || _board.isDraw())
-            return 1 - (nodes & 2);
+            return 10 - (nodes & 2);
 
         if (_board.isTMR())
-            return 1 - (nodes & 2);
+            return 10 - (nodes & 2);
 
         alpha = std::max(alpha, -INF + _board.ply);
         beta = std::min(beta, INF - _board.ply);
