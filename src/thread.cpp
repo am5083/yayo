@@ -339,6 +339,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         eval.eval() + futilityMargin[depth] <= alpha && mList.nMoves > 0)
         futilityPrune = true;
 
+    std::vector<Move> searched;
     int score = 0;
     int bestMove = move;
     int movesSearched = 0;
@@ -384,6 +385,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             unmake(_board, mList.moves[i].move);
             continue;
         }
+
+        searched.push_back(mList.moves[i]);
 
         nodes++;
         movesSearched++;
@@ -441,14 +444,22 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         return 0;
     }
 
-    if (best >= beta && getCapture(bestMove) < CAPTURE) {
-        killerMoves[ply][1] = killerMoves[ply][0];
-        killerMoves[ply][0] = bestMove;
+    if (best >= beta) {
+        if (getCapture(bestMove) < CAPTURE) {
+            killerMoves[ply][1] = killerMoves[ply][0];
+            killerMoves[ply][0] = bestMove;
 
-        historyMoves[_board.turn][getFrom(bestMove)][getTo(bestMove)] +=
-              depth * depth;
-    } else if (best < beta && getCapture(bestMove) < CAPTURE) {
-        butterflyMoves[_board.turn][getFrom(bestMove)][getTo(bestMove)]++;
+            historyMoves[_board.turn][getFrom(bestMove)][getTo(bestMove)] +=
+                  depth * depth;
+        }
+    } else {
+        if (getCapture(bestMove) < CAPTURE) {
+            for (int i = 0; i < movesSearched; i++) {
+                Move move = searched[i];
+                butterflyMoves[_board.turn][getFrom(move.move)]
+                              [getTo(move.move)]++;
+            }
+        }
     }
 
     if (!stopFlag) {

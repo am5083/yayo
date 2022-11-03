@@ -100,9 +100,9 @@ class Search {
 };
 
 constexpr bool Search::canReduce(int alpha, int move, Move &m) {
-    if (getCapture(move) >= CAPTURE) {
-        return false;
-    }
+    // if (getCapture(move) >= CAPTURE) {
+    //     return false;
+    // }
 
     // int hhScore = historyMoves[_board.turn][getFrom(move)][getTo(move)];
     // int bfScore =
