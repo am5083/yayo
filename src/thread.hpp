@@ -69,6 +69,7 @@ class Search {
     int killerMoves[MAX_PLY + 6][2];
     int killerMates[MAX_PLY + 6][2];
     int historyMoves[2][64][64];
+    int butterflyMoves[2][64][64];
 
     void updatePv(int ply, int move);
     void printPv();

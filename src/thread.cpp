@@ -41,6 +41,8 @@ void Search::startSearch(Info *_info) {
             if (i < 64 && j < 64) {
                 historyMoves[0][i][j] = 0;
                 historyMoves[1][i][j] = 0;
+                butterflyMoves[0][i][j] = 0;
+                butterflyMoves[1][i][j] = 0;
             }
         }
     }
@@ -134,8 +136,11 @@ void Search::scoreMoves(moveList *mList, int ttMove) {
             }
 
             else {
-                mList->moves[i].score =
+                int hhScore =
                       historyMoves[_board.turn][getFrom(move)][getTo(move)];
+                int bfScore =
+                      butterflyMoves[_board.turn][getFrom(move)][getTo(move)];
+                mList->moves[i].score = hhScore / bfScore;
             }
         }
     }
@@ -439,6 +444,9 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         killerMoves[ply][0] = bestMove;
 
         historyMoves[_board.turn][getFrom(bestMove)][getTo(bestMove)] +=
+              depth * depth;
+    } else if (best <= beta && getCapture(bestMove) < CAPTURE) {
+        butterFlyMoves[_board.turn][getFrom(bestMove)][getTo(bestMove)] +=
               depth * depth;
     }
 
