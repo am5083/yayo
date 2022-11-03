@@ -138,9 +138,11 @@ void Search::scoreMoves(moveList *mList, int ttMove) {
             else {
                 int hhScore =
                       historyMoves[_board.turn][getFrom(move)][getTo(move)];
-                int bfScore =
-                      butterflyMoves[_board.turn][getFrom(move)][getTo(move)];
-                mList->moves[i].score = hhScore / bfScore;
+                int bfScore = std::max(
+                      1,
+                      butterflyMoves[_board.turn][getFrom(move)][getTo(move)]);
+
+                mList->moves[i].score = int(hhScore / bfScore);
             }
         }
     }
