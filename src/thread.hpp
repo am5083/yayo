@@ -107,7 +107,13 @@ constexpr bool Search::canReduce(int alpha, int move, Move &m) {
             return true;
     }
 
-    if (historyMoves[_board.turn][getFrom(move)][getTo(move)] >= 2500)
+    int hhScore = historyMoves[_board.turn][getFrom(move)][getTo(move)];
+    int bfScore =
+          std::max(1, butterflyMoves[_board.turn][getFrom(move)][getTo(move)]);
+
+    int mvScore = hhScore / bfScore;
+
+    if (mvScore >= 15)
         return false;
 
     if (getPcType(_board.board[getFrom(move)]) == PAWN)
