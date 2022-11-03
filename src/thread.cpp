@@ -332,7 +332,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         eval.eval() + futilityMargin[depth] <= alpha && mList.nMoves > 0)
         futilityPrune = true;
 
-    if (depth >= 4 && !ttMove && !_board.checkPcs)
+    if (depth >= 4 && !ttMove)
         depth--;
 
     int score = 0;
