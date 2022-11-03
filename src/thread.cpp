@@ -446,7 +446,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         historyMoves[_board.turn][getFrom(bestMove)][getTo(bestMove)] +=
               depth * depth;
     } else if (best <= beta && getCapture(bestMove) < CAPTURE) {
-        butterFlyMoves[_board.turn][getFrom(bestMove)][getTo(bestMove)] +=
+        butterflyMoves[_board.turn][getFrom(bestMove)][getTo(bestMove)] +=
               depth * depth;
     }
 
