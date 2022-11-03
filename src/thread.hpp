@@ -107,20 +107,11 @@ constexpr bool Search::canReduce(int alpha, int move, Move &m) {
             return true;
     }
 
-    int hhScore = historyMoves[_board.turn][getFrom(move)][getTo(move)];
-    int bfScore =
-          std::max(1, butterflyMoves[_board.turn][getFrom(move)][getTo(move)]);
+    // if (getPcType(_board.board[getFrom(move)]) == PAWN)
+    //     return false;
 
-    int mvScore = hhScore / bfScore;
-
-    if (mvScore >= 15)
-        return false;
-
-    if (getPcType(_board.board[getFrom(move)]) == PAWN)
-        return false;
-
-    if (killerMoves[_board.ply][0] == move)
-        return false;
+    // if (killerMoves[_board.ply][0] == move)
+    //     return false;
     // if (eval(_board, mList) > alpha)
     //     return false;
 
