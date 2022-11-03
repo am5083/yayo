@@ -332,8 +332,15 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         eval.eval() + futilityMargin[depth] <= alpha && mList.nMoves > 0)
         futilityPrune = true;
 
-    if (pvNode && depth >= 4 && !ttMove)
-        depth--;
+    if (pvNode && !_board.checkPcs && depth >= 4 && !ttMove) {
+        int R = depth - 4;
+        if (R < 4) {
+            depth -= 1;
+        } else {
+            R = std::min(3, R / 2);
+            depth -= R;
+        }
+    }
 
     int score = 0;
     int bestMove = move;

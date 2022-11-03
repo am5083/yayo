@@ -99,21 +99,31 @@ class Search {
 };
 
 constexpr bool Search::canReduce(int alpha, int move, Move &m) {
-    if (getCapture(move) >= CAPTURE) {
-        if (m.score > 0)
-            return false;
-        else
-            return true;
+    if (m.score > 150 && m.score < 10000) {
+        return false;
     }
 
-    if (historyMoves[_board.turn][getFrom(move)][getTo(move)] >= 2500)
+    if (m.score > 16000 && m.score <= 18800) {
         return false;
+    }
+
+    if (m.score > 20400) {
+        return false;
+    }
 
     if (getPcType(_board.board[getFrom(move)]) == PAWN)
         return false;
 
-    if (killerMoves[_board.ply][0] == move)
-        return false;
+    // if (historyMoves[_board.turn][getFrom(move)][getTo(move)] >= 300)
+    //     return false;
+
+    // if (killerMoves[_board.ply][0] == move)
+    //     return false;
+
+    // if (getCapture(move) >= CAPTURE) {
+    //     return false;
+    // }
+
     // if (eval(_board, mList) > alpha)
     //     return false;
 
