@@ -314,9 +314,8 @@ void UCI::Main() {
 
             Go(info);
         } else if (cmd == "quit") {
-            search.stopSearch();
-            search.joinThread();
-            exit(0);
+            Stop();
+            break;
         } else if (cmd == "stop") {
             Stop();
         } else if (cmd == "trace") {

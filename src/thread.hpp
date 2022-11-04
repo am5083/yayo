@@ -99,35 +99,33 @@ class Search {
 };
 
 constexpr bool Search::canReduce(int alpha, int move, Move &m) {
-    if (m.score > 20700)
+    // if (m.score > 20700)
+    //     return false;
+
+    // Color C = _board.turn;
+    // Bitboard enemyPawns = _board.pieces(PAWN, ~C);
+
+    // Bitboard opponentPawnSpan = C == WHITE
+    //                                   ? fill<SOUTH>(shift<SOUTH>(enemyPawns))
+    //                                   :
+    //                                   fill<NORTH>(shift<NORTH>(enemyPawns));
+    // opponentPawnSpan |=
+    //       shift<WEST>(opponentPawnSpan) | shift<EAST>(opponentPawnSpan);
+
+    // Bitboard passedPawns = _board.pieces(PAWN, C) & ~opponentPawnSpan;
+
+    // if (SQUARE_BB(getFrom(move)) & passedPawns)
+    //     return false;
+
+    // if (m.score > 1100 && m.score < 11000)
+    //     return false;
+
+    // if (m.score > 16080 && m.score <= 18100)
+    //     return false;
+
+    if (getCapture(move) >= CAPTURE) {
         return false;
-
-    Color C = _board.turn;
-    Bitboard enemyPawns = _board.pieces(PAWN, ~C);
-
-    Bitboard opponentPawnSpan = C == WHITE
-                                      ? fill<SOUTH>(shift<SOUTH>(enemyPawns))
-                                      : fill<NORTH>(shift<NORTH>(enemyPawns));
-    opponentPawnSpan |=
-          shift<WEST>(opponentPawnSpan) | shift<EAST>(opponentPawnSpan);
-
-    Bitboard passedPawns = _board.pieces(PAWN, C) & ~opponentPawnSpan;
-
-    if (SQUARE_BB(getFrom(move)) & passedPawns)
-        return false;
-
-    if (m.score > 1100 && m.score < 11000)
-        return false;
-
-    if (m.score > 16080 && m.score <= 18100)
-        return false;
-
-    // if (getCapture(move) >= CAPTURE) {
-    //     if (m.score > 0)
-    //         return false;
-    //     else
-    //         return true;
-    // }
+    }
 
     // if (historyMoves[_board.turn][getFrom(move)][getTo(move)] >= 2500)
     //     return false;
