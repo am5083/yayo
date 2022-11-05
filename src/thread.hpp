@@ -36,7 +36,20 @@ namespace Yayo {
 
 class Search {
   public:
-    Search() { info = nullptr; }
+    Search() {
+        info = nullptr;
+        memset(lmrDepthReduction, 0, sizeof(lmrDepthReduction));
+
+        for (int depth = 0; depth < 64; depth++) {
+            // std::cout << "depth: " << depth << std::endl;
+            for (int moves = 0; moves < 64; moves++) {
+                // std::cout << "moves: " << moves << ", R = ";
+                lmrDepthReduction[depth][moves] =
+                      1 + std::log(depth) * std::log(moves) / 2.5;
+                // std::cout << lmrDepthReduction[depth][moves] << std::endl;
+            }
+        }
+    }
     Search(const Search &) = delete;
     Search &operator=(const Search &) = delete;
 
@@ -69,6 +82,7 @@ class Search {
     int killerMoves[MAX_PLY + 6][2];
     int killerMates[MAX_PLY + 6][2];
     int historyMoves[2][64][64];
+    int lmrDepthReduction[64][64];
 
     void updatePv(int ply, int move);
     void printPv();

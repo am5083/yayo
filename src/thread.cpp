@@ -384,10 +384,14 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             score =
                   -negaMax(-beta, -alpha, depth - 1, false, false, isExtension);
         } else {
-            if (!pvNode && !inCheck && !_board.checkPcs && movesSearched >= 4 &&
-                depth >= 3 && canReduce(alpha, curr_move, mList.moves[i])) {
-                int R = 2 + (depth / 10);
-                R += movesSearched / 15;
+            if (!inCheck && movesSearched >= (1 + (2 * isPv)) && depth >= 3 &&
+                getCapture(curr_move) < CAPTURE) {
+                // int R = 2 + (depth / 10);
+                // R += movesSearched / 15;
+                R = lmrDepthReduction[std::min(63, depth)]
+                                     [std::min(63, movesSearched)];
+                R += !(alpha < beta - 1);
+                R = std::min(depth - 1, std::max(1, R));
                 score = -negaMax(-alpha - 1, -alpha, depth - R, false, false,
                                  isExtension);
             } else {
