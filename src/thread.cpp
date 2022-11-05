@@ -355,7 +355,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
 
         make(_board, mList.moves[i].move);
 
-        if (!pvNode && !_board.checkPcs && movesSearched >= 1 &&
+        if (!pvNode && !(inCheck || _board.checkPcs) && movesSearched >= 1 &&
             getCapture(curr_move) < CAPTURE && depth <= 8 &&
             see < -50 * depth) {
             unmake(_board, curr_move);
