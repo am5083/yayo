@@ -435,7 +435,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         killerMoves[ply][1] = killerMoves[ply][0];
         killerMoves[ply][0] = bestMove;
 
-        historyMoves[_board.turn][getFrom(bestMove)][getTo(bestMove)] += depth;
+        historyMoves[_board.turn][getFrom(bestMove)][getTo(bestMove)] +=
+              depth * depth;
     }
 
     if (!stopFlag) {
