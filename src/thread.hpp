@@ -36,13 +36,31 @@ namespace Yayo {
 
 class Search {
   public:
-    Search() { info = nullptr; }
+    Search() {
+        info = nullptr;
+        memset(pvTable, 0, sizeof(pvTable));
+        memset(pvTableLen, 0, sizeof(pvTableLen));
+        memset(killerMoves, 0, sizeof(killerMoves));
+        memset(killerMates, 0, sizeof(killerMates));
+        memset(historyMoves, 0, sizeof(historyMoves));
+    }
     Search(const Search &) = delete;
     Search &operator=(const Search &) = delete;
 
   public:
     const bool checkForStop() const;
     constexpr bool canReduce(int alpha, int move, Move &m);
+
+    void newGame() {
+        tt.reset();
+        clearTT();
+
+        memset(pvTable, 0, sizeof(pvTable));
+        memset(pvTableLen, 0, sizeof(pvTableLen));
+        memset(killerMoves, 0, sizeof(killerMoves));
+        memset(killerMates, 0, sizeof(killerMates));
+        memset(historyMoves, 0, sizeof(historyMoves));
+    }
 
     void startSearch(Info *_info);
 
@@ -69,6 +87,7 @@ class Search {
     int killerMoves[MAX_PLY + 6][2];
     int killerMates[MAX_PLY + 6][2];
     int historyMoves[2][64][64];
+    int lmrRed[MAX_PLY][MAX_PLY];
 
     void updatePv(int ply, int move);
     void printPv();

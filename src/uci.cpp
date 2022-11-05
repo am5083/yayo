@@ -130,8 +130,9 @@ void UCI::Uci() {
 }
 
 void UCI::NewGame() {
-    tt.reset();
-    search.clearTT();
+    // tt.reset();
+    // search.clearTT();
+    search.newGame();
     search._setFen(START_POS);
 }
 
