@@ -314,6 +314,11 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             return beta;
     }
 
+    killerMoves[ply + 1][0] = 0;
+    killerMoves[ply + 1][1] = 0;
+    killerMates[ply + 1][0] = 0;
+    killerMates[ply + 1][1] = 0;
+
     moveList mList = {{{0}}};
     generate(_board, &mList);
     scoreMoves(&mList, ttMove);
