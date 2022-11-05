@@ -35,6 +35,7 @@ void Search::startSearch(Info *_info) {
 
     memset(pvTable, 0, sizeof(pvTable));
     memset(pvTableLen, 0, sizeof(pvTableLen));
+    memset(historyMoves, 0, sizeof(historyMoves));
 
     searchThread = std::make_unique<std::thread>(&Search::search, this);
 }
@@ -301,6 +302,11 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     int best = -INF;
     int move = 0;
 
+    killerMoves[ply + 1][0] = 0;
+    killerMoves[ply + 1][1] = 0;
+    killerMates[ply + 1][0] = 0;
+    killerMates[ply + 1][1] = 0;
+
     int R = 2;
     if (depth > 3 && !_board.checkPcs && !pvNode && !nullMove) {
         // R += depth / 6;
@@ -316,11 +322,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     moveList mList = {{{0}}};
     generate(_board, &mList);
     scoreMoves(&mList, ttMove);
-
-    killerMoves[ply + 1][0] = 0;
-    killerMoves[ply + 1][1] = 0;
-    killerMates[ply + 1][0] = 0;
-    killerMates[ply + 1][1] = 0;
 
     Eval eval(_board);
     int futilityMargin[] = {0, 100, 300, 700};
@@ -434,8 +435,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         killerMoves[ply][1] = killerMoves[ply][0];
         killerMoves[ply][0] = bestMove;
 
-        historyMoves[_board.turn][getFrom(bestMove)][getTo(bestMove)] +=
-              depth * depth;
+        historyMoves[_board.turn][getFrom(bestMove)][getTo(bestMove)] += depth;
     }
 
     if (!stopFlag) {
