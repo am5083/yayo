@@ -36,6 +36,7 @@ void Search::startSearch(Info *_info) {
     memset(pvTable, 0, sizeof(pvTable));
     memset(pvTableLen, 0, sizeof(pvTableLen));
     memset(historyMoves, 0, sizeof(historyMoves));
+    memset(killerMoves, 0, sizeof(killerMoves));
 
     searchThread = std::make_unique<std::thread>(&Search::search, this);
 }
