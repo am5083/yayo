@@ -35,7 +35,6 @@ void Search::startSearch(Info *_info) {
 
     memset(pvTable, 0, sizeof(pvTable));
     memset(pvTableLen, 0, sizeof(pvTableLen));
-    memset(historyMoves, 0, sizeof(historyMoves));
 
     searchThread = std::make_unique<std::thread>(&Search::search, this);
 }
@@ -314,14 +313,14 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             return beta;
     }
 
+    moveList mList = {{{0}}};
+    generate(_board, &mList);
+    scoreMoves(&mList, ttMove);
+
     killerMoves[ply + 1][0] = 0;
     killerMoves[ply + 1][1] = 0;
     killerMates[ply + 1][0] = 0;
     killerMates[ply + 1][1] = 0;
-
-    moveList mList = {{{0}}};
-    generate(_board, &mList);
-    scoreMoves(&mList, ttMove);
 
     Eval eval(_board);
     int futilityMargin[] = {0, 100, 300, 700};
