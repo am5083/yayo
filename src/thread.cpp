@@ -291,13 +291,13 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
     }
 
-    int ttScore = 0, ttMove = 0;
+    int ttScore = 0, ttMove = 0, flag = 0;
     TTHash entry = {0};
     if (probe) {
         if (tt.probe(_board.key, entry)) {
             ttScore = entry.score(_board.ply);
             ttMove = entry.move();
-            int flag = entry.flag();
+            flag = entry.flag();
             if (!pvNode && entry.depth() >= depth) {
                 if ((flag == TP_EXACT || (flag == TP_BETA && ttScore >= beta) ||
                      (flag == TP_ALPHA && ttScore <= alpha))) {
@@ -314,6 +314,18 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     int move = 0;
     int evalScore = eval.eval();
     int score = 0;
+    int idealEval = 0;
+
+    if ((ttScore < evalScore && flag == TP_BETA) ||
+        (ttScore > evalScore && flag == TP_ALPHA) || flag == TP_EXACT) {
+        if (!pvNode && !_board.checkPcs && depth <= 1 &&
+            ttScore + futilityMargin[2] + 250 < alpha)
+            return quiescent(alpha, beta);
+    }
+
+    if (!pvNode && !_board.checkPcs && depth <= 1 &&
+        evalScore + futilityMargin[2] + 250 < alpha)
+        return quiescent(alpha, beta);
 
     // static NMP
     if (!pvNode && !_board.checkPcs && depth <= 8 &&
