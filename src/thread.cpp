@@ -269,7 +269,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         return quiescent(alpha, beta);
 
     bool futilityPrune = false;
-    bool pvNode = alpha < (beta - 1) || isPv;
+    bool pvNode = alpha < (beta - 1);
 
     if (_board.ply > 0) {
         if (_board.halfMoves >= 100 || _board.isDraw())
