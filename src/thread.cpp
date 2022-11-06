@@ -313,17 +313,20 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     int best = -INF;
     int move = 0;
     int evalScore = eval.eval();
+    int score = 0;
 
     int R = 0;
     if (depth > 1 && !_board.checkPcs && !pvNode && !nullMove) {
         R = 4 + depth / 6;
         makeNullMove(_board);
-        int score = -negaMax(-beta, -beta + 1, depth - 1 - R, true, false,
-                             isExtension);
+        score = -negaMax(-beta, -beta + 1, depth - 1 - R, true, false,
+                         isExtension);
         unmakeNullMove(_board);
 
         if (score >= beta)
             return beta;
+
+        best = std::max(score, best);
     }
 
     moveList mList = {{{0}}};
@@ -334,7 +337,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         evalScore + futilityMargin[depth] <= alpha && mList.nMoves > 0)
         futilityPrune = true;
 
-    int score = 0;
     int bestMove = move;
     int movesSearched = 0;
     for (int i = 0; i < mList.nMoves; i++) {
@@ -355,7 +357,27 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             see = _board.see(toSq, toPc, fromSq, fromPc);
         }
 
+        int skip = 0;
+        if (_board.ply > 0 && best > -INF && std::abs(alpha) < 9000) {
+            if (getCapture(curr_move) < CAPTURE) {
+                int reducedDepth =
+                      lmrDepthReduction[std::min(63, depth)]
+                                       [std::min(63, movesSearched)];
+                if (reducedDepth <= 8 && !inCheck &&
+                    evalScore + 100 + 105 * reducedDepth +
+                                historyMoves[_board.turn][fromSq][toSq] / 120 <=
+                          alpha) {
+                    skip = 1;
+                }
+            }
+        }
+
         make(_board, mList.moves[i].move);
+
+        if (skip && !_board.checkPcs && movesSearched >= 1) {
+            unmake(_board, curr_move);
+            continue;
+        }
 
         if (!pvNode && !_board.checkPcs && movesSearched >= 1 &&
             getCapture(curr_move) < CAPTURE && depth <= 8 &&
@@ -370,11 +392,9 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         //     unmake(_board, mList.moves[i].move);
         //     continue;
         // }
+        //
 
-        if (futilityPrune &&
-            (getCapture(curr_move) < CAPTURE &&
-             (getCapture(curr_move) < P_KNIGHT ||
-              getCapture(curr_move) > P_QUEEN)) &&
+        if (futilityPrune && getCapture(curr_move) < CAPTURE &&
             !_board.checkPcs) {
             unmake(_board, mList.moves[i].move);
             continue;
@@ -386,8 +406,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             score =
                   -negaMax(-beta, -alpha, depth - 1, false, false, isExtension);
         } else {
-            if (!inCheck && movesSearched >= (1 + (2 * isPv)) && depth >= 3 &&
-                getCapture(curr_move) < CAPTURE) {
+            if (std::abs(alpha) < 9000 && movesSearched >= (1 + (2 * isPv)) &&
+                depth >= 3 && getCapture(curr_move) < CAPTURE) {
                 // int R = 2 + (depth / 10);
                 // R += movesSearched / 15;
                 R = lmrDepthReduction[std::min(63, depth)]
