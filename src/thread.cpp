@@ -32,6 +32,10 @@ void Search::startSearch(Info *_info) {
     info->uciStop = false;
     info->uciQuit = false;
     numRep = 0;
+
+    memset(pvTable, 0, sizeof(pvTable));
+    memset(pvTableLen, 0, sizeof(pvTableLen));
+
     for (int i = 0; i < MAX_PLY + 6; i++) {
         killerMoves[i][0] = NO_MOVE;
         killerMoves[i][1] = NO_MOVE;
@@ -269,7 +273,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         return quiescent(alpha, beta);
 
     bool futilityPrune = false;
-    bool pvNode = alpha < (beta - 1) || isPv;
+    bool pvNode = alpha < (beta - 1);
 
     if (_board.ply > 0) {
         if (_board.halfMoves >= 100 || _board.isDraw())
