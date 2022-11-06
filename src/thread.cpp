@@ -315,6 +315,12 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     int evalScore = eval.eval();
     int score = 0;
 
+    // static NMP
+    if (!pvNode && !_board.checkPcs && depth <= 8 &&
+        evalScore - 75 * depth > beta && std::abs(alpha) < 9000 &&
+        std::abs(ttScore) < INF / 2)
+        return evalScore;
+
     int R = 0;
     if (depth > 1 && !_board.checkPcs && !pvNode && !nullMove) {
         R = 4 + depth / 6;
