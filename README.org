@@ -1,5 +1,5 @@
 #+title: README
-* Yayo
+* Yayo (Version 0.5 - BETA)
 The C++ (and much improved) rewrite of my previous chess engine attempt. I'm aiming for ~2000-2200 ELO in the beta release, which is when I'll release the source.
 ** Building and running
 1. =git clone https://github.com/am5083/yayo=
@@ -10,13 +10,18 @@ The C++ (and much improved) rewrite of my previous chess engine attempt. I'm aim
 =yayo= is far from done, so bugs are to be expected. =yayo= can communicate with GUIs using the UCI protocol. You can also interact with =yayo= in the terminal by entering UCI commands manually.
 
 Documentation for the UCI protocol can be found here: http://wbec-ridderkerk.nl/html/UCIProtocol.html.
-** TODO Features
+** Features
 *** Board Representation
 - Bitboards
 *** Search
 - Alpha-Beta Pruning
 - Quiescence Search
 - Null Move Pruning
+- Static Null Move Pruning
+- Razoring
+- Futility/Delta Pruning
+- Butterfly Heuristic
+- Late Move Pruning
 - Check Extensions
 - Iterative Deepening
 - Killer Heuristic
@@ -24,19 +29,20 @@ Documentation for the UCI protocol can be found here: http://wbec-ridderkerk.nl/
 - Transposition Table
   - Zobrist Hashing
 - (TODO) Parallel Search
+- Aspiration Windows
 - Late Move Reductions
 - Move Ordering/Sorting
+    - MVV/LVA
+    - Static Exchange Evaluation
 *** Evaluation
 - Piece/Square Tables
 - Mobility
 - Pawn Structure
-    - Passed Pawns
-    - Doubled Pawns
-    - Backwards Pawns
-    - Isolated Pawns
+  - Passed Pawns
+  - Doubled Pawns
+  - Backwards Pawns
+  - Isolated Pawns
 - Tempo
-- (TODO) Tapered Evaluation
-- (TODO) King Safety
-- (TODO) Texel Tuning
-*** Extras
-=yayo= has support for OpenBench SPRT testing. I use a locally hosted version of OpenBench to test patches and to determine what changes make it into the =master= branch.
+- Tapered Evaluation
+- King Safety (currently excluded)
+- Texel Tuning
