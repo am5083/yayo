@@ -307,12 +307,16 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
     }
 
+    int futilityMargin[] = {0, 100, 300, 700};
+
+    Eval eval(_board);
     int best = -INF;
     int move = 0;
+    int evalScore = eval.eval();
 
-    int R = 2;
-    if (depth > 3 && !_board.checkPcs && !pvNode && !nullMove) {
-        R += depth / 3;
+    int R = 0;
+    if (depth > 1 && !_board.checkPcs && !pvNode && !nullMove) {
+        R = 4 + depth / 6;
         makeNullMove(_board);
         int score = -negaMax(-beta, -beta + 1, depth - 1 - R, true, false,
                              isExtension);
@@ -326,10 +330,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     generate(_board, &mList);
     scoreMoves(&mList, ttMove);
 
-    Eval eval(_board);
-    int futilityMargin[] = {0, 100, 300, 700};
     if (depth <= 3 && !pvNode && std::abs(alpha) < 9000 &&
-        eval.eval() + futilityMargin[depth] <= alpha && mList.nMoves > 0)
+        evalScore + futilityMargin[depth] <= alpha && mList.nMoves > 0)
         futilityPrune = true;
 
     int score = 0;
