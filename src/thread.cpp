@@ -312,9 +312,15 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     Eval eval(_board);
     int best = -INF;
     int move = 0;
-    int evalScore = eval.eval();
+    int evalScore;
     int score = 0;
     int idealEval = 0;
+
+    if (_board.checkPcs) {
+        evalScore = INF;
+    } else {
+        evalScore = eval.eval();
+    }
 
     if ((ttScore < evalScore && flag == TP_BETA) ||
         (ttScore > evalScore && flag == TP_ALPHA) || flag == TP_EXACT) {
