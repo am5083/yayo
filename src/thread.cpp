@@ -298,7 +298,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             ttScore = entry.score(_board.ply);
             ttMove = entry.move();
             flag = entry.flag();
-            if (!pvNode && entry.depth() >= depth) {
+            if (!(alpha < beta - 1) && entry.depth() >= depth) {
                 if ((flag == TP_EXACT || (flag == TP_BETA && ttScore >= beta) ||
                      (flag == TP_ALPHA && ttScore <= alpha))) {
                     return ttScore;
