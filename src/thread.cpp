@@ -319,10 +319,10 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
 
     Hist[ply].eval = evalScore;
 
-    if ((ttScore < evalScore && flag == TP_BETA) ||
-        (ttScore > evalScore && flag == TP_ALPHA) || flag == TP_EXACT) {
-        evalScore = ttScore;
-    }
+    // if ((ttScore < evalScore && flag == TP_BETA) ||
+    //     (ttScore > evalScore && flag == TP_ALPHA) || flag == TP_EXACT) {
+    //     evalScore = ttScore;
+    // }
 
     bool improving =
           (!inCheck && ply >= 2 && Hist[ply].eval > Hist[ply - 2].eval);
