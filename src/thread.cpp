@@ -319,29 +319,12 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
 
     Hist[ply].eval = evalScore;
 
-    // if ((ttScore < evalScore && flag == TP_BETA) ||
-    //     (ttScore > evalScore && flag == TP_ALPHA) || flag == TP_EXACT) {
-    //     evalScore = ttScore;
-    // }
-
     bool improving =
           (!inCheck && ply >= 2 && Hist[ply].eval > Hist[ply - 2].eval);
 
-    // if (!isExtension && (ttScore < evalScore && flag == TP_BETA) ||
-    //     (ttScore > evalScore && flag == TP_ALPHA) || flag == TP_EXACT) {
-    //     if (!pvNode && !_board.checkPcs && depth <= 1 &&
-    //         ttScore + futilityMargin[2] + 250 < alpha)
-    //         return quiescent(alpha, beta);
-    // }
-
-    // if (!isExtension && !pvNode && !_board.checkPcs && depth <= 1 &&
-    //     evalScore + futilityMargin[2] + 25 < alpha && std::abs(alpha) <
-    //     25000) return quiescent(alpha, beta);
-
     // static NMP
     if (!pvNode && !_board.checkPcs && depth <= 8 &&
-        evalScore - (100 - 25 * improving) * depth > beta &&
-        std::abs(alpha) < INF / 2)
+        evalScore - (100 - 25) * depth > beta && std::abs(alpha) < INF / 2)
         return evalScore;
 
     int R = 0;
