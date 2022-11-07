@@ -317,6 +317,17 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     int score = 0;
     int idealEval = 0;
 
+    if ((ttScore < evalScore && flag == TP_BETA) ||
+        (ttScore > evalScore && flag == TP_ALPHA) || flag == TP_EXACT) {
+        if (!pvNode && !_board.checkPcs && depth <= 1 &&
+            ttScore + futilityMargin[2] + 250 < alpha)
+            return quiescent(alpha, beta);
+    }
+
+    if (!pvNode && !_board.checkPcs && depth <= 1 &&
+        evalScore + futilityMargin[2] + 250 < alpha)
+        return quiescent(alpha, beta);
+
     // static NMP
     if (!pvNode && !_board.checkPcs && depth <= 8 &&
         evalScore - 75 * depth > beta && std::abs(alpha) < 9000 &&
