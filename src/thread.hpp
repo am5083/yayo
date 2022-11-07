@@ -34,6 +34,10 @@
 
 namespace Yayo {
 
+struct HistEntry {
+    int move, eval;
+};
+
 class Search {
   public:
     Search() {
@@ -83,6 +87,7 @@ class Search {
     int killerMates[MAX_PLY + 6][2];
     int historyMoves[2][64][64];
     long lmrDepthReduction[64][64];
+    HistEntry Hist[512];
 
     void updatePv(int ply, int move);
     void printPv();
