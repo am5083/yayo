@@ -201,8 +201,8 @@ int Search::quiescent(int alpha, int beta) {
                       eval.egPhase * EgScore(queenScore)) /
                      24;
 
-    int deltaMargin = best + 200 + queenValue;
-    if (deltaMargin < alpha) {
+    int deltaMargin = best + QUEEN_VAL;
+    if (!_board.checkPcs && deltaMargin < alpha) {
         return alpha;
     }
 
@@ -260,9 +260,8 @@ int Search::quiescent(int alpha, int beta) {
         }
     }
 
-    if (!stopFlag)
-        tt.record(_board.key, _board.ply, bestMove, 0, alpha, hashFlag,
-                  Hist[ply].eval);
+    tt.record(_board.key, _board.ply, bestMove, 0, alpha, hashFlag,
+              Hist[ply].eval);
 
     return alpha;
 }
@@ -532,10 +531,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
               depth * depth;
     }
 
-    if (!stopFlag) {
-        tt.record(_board.key, _board.ply, bestMove, depth, alpha, hashFlag,
-                  Hist[ply].eval);
-    }
+    tt.record(_board.key, _board.ply, bestMove, depth, alpha, hashFlag,
+              Hist[ply].eval);
 
     return alpha;
 }
