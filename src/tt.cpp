@@ -26,7 +26,7 @@ TTable tt;
 
 void TTHash::age(int gen) {
     std::uint64_t x = hash ^ key;
-    data.generation = gen;
+    data.meta = (data.meta & 1023u) | (gen << 10u);
     key = x ^ hash;
 }
 
@@ -76,21 +76,21 @@ bool TTable::probe(std::uint64_t key, TTHash &out) {
 }
 
 void TTable::record(std::uint64_t key, int ply, int move, int depth, int score,
-                    unsigned char flag) {
+                    int eval, unsigned char flag) {
     std::uint64_t index = (key % maxEntries) * NUM_BUCKETS;
     TTHash *bucket = table + index;
 
-    if (score >= INF)
-        score = TP_INF - ply;
-    else if (score <= -INF)
-        score = -TP_INF + ply;
+    if (score >= INF - 256)
+        score += ply;
+    else if (score <= -(INF - 256))
+        score -= ply;
 
     TTHash temp = {0};
-    temp.data.depth = depth;
-    temp.data.move = move;
-    temp.data.score = score;
-    temp.data.generation = age;
-    temp.data.flag = flag;
+    int meta = (flag | (depth << 2u) | (age << 10u));
+    temp.data.meta = std::uint16_t(meta);
+    temp.data.eval = std::int16_t(eval);
+    temp.data.move = std::uint16_t(move);
+    temp.data.score = std::int16_t(score);
     temp.key = key ^ temp.hash;
 
     if ((bucket->key ^ bucket->hash) == key) {

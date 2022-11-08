@@ -35,19 +35,21 @@
 namespace Yayo {
 
 /*
-** 0000 0000 0000 0000
-**    gen
+** generation:
+** 1111 1100 0000 0000
+** depth:
+** 0000 0011 1111 1100
+** flag:
+** 0000 0000 0000 0011
 */
 
 struct TTHash {
     std::uint64_t key;
     union {
         struct {
-            std::uint8_t old;
-            std::uint8_t flag;
-            std::uint8_t generation;
-            std::uint8_t depth;
+            std::uint16_t meta; // generation, depth, flag
             std::uint16_t move;
+            std::int16_t eval;
             std::int16_t score;
         } data;
 
@@ -55,20 +57,21 @@ struct TTHash {
     };
 
     int score(int ply) const {
-        if (data.score >= TP_INF) {
-            return INF - ply;
-        } else if (data.score <= -TP_INF) {
-            return -INF + ply;
+        if (data.score >= (INF - 256)) {
+            return data.score - ply;
+        } else if (data.score <= -(INF - 256)) {
+            return data.score + ply;
         }
 
         return data.score;
     }
 
     void age(int gen);
-    int flag() const { return data.flag; }
-    int depth() const { return data.depth; }
     int move() const { return data.move; }
-    int generation() const { return data.generation; }
+    int eval() const { return data.eval; }
+    int flag() const { return data.meta & 3u; }
+    int depth() const { return (data.meta >> 2u) & 255u; }
+    int generation() const { return data.meta >> 10u; }
 };
 
 class TTable {
@@ -87,7 +90,7 @@ class TTable {
 
     bool probe(std::uint64_t key, TTHash &out);
     void record(std::uint64_t key, int ply, int move, int depth, int score,
-                unsigned char flag);
+                int eval, unsigned char flag);
 
     void reset();
     void increaseAge();

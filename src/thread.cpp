@@ -33,6 +33,8 @@ void Search::startSearch(Info *_info) {
     info->uciQuit = false;
     numRep = 0;
 
+    memset(Hist, 0, sizeof(Hist));
+
     for (int i = 0; i < MAX_PLY + 6; i++) {
         killerMoves[i][0] = NO_MOVE;
         killerMoves[i][1] = NO_MOVE;
@@ -178,6 +180,8 @@ int Search::quiescent(int alpha, int beta) {
     int score = 0, best = eval.eval(), oldAlpha = alpha;
     int bestMove = 0;
 
+    Hist[ply].eval = best;
+
     if (best >= beta)
         return best;
 
@@ -243,7 +247,8 @@ int Search::quiescent(int alpha, int beta) {
     }
 
     if (!stopFlag)
-        tt.record(_board.key, _board.ply, bestMove, 0, alpha, hashFlag);
+        tt.record(_board.key, _board.ply, bestMove, 0, alpha, hashFlag,
+                  Hist[ply].eval);
 
     return alpha;
 }
@@ -292,13 +297,17 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
     }
 
+    int evalScore = INF;
     int ttScore = 0, ttMove = 0, flag = 0;
+
     TTHash entry = {0};
+    bool ttHit = tt.probe(_board.key, entry);
     if (probe) {
-        if (tt.probe(_board.key, entry)) {
+        if (ttHit) {
             ttScore = entry.score(_board.ply);
             ttMove = entry.move();
             flag = entry.flag();
+            evalScore = entry.eval();
             if (!pvNode && entry.depth() >= depth) {
                 if ((flag == TP_EXACT || (flag == TP_BETA && ttScore >= beta) ||
                      (flag == TP_ALPHA && ttScore <= alpha))) {
@@ -313,11 +322,20 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     Eval eval(_board);
     int best = -INF;
     int move = 0;
-    int evalScore = eval.eval();
     int score = 0;
     int idealEval = 0;
 
-    Hist[ply].eval = evalScore;
+    if (inCheck) {
+        evalScore = INF;
+        Hist[ply].eval = INF;
+    } else if (evalScore == INF) {
+        if (ply >= 1 && Hist[ply - 1].move == 0) {
+            evalScore = Hist[ply - 1].eval + (2 * TEMPO);
+        } else {
+            evalScore = eval.eval();
+            Hist[ply].eval = evalScore;
+        }
+    }
 
     bool improving =
           (!inCheck && ply >= 2 && Hist[ply].eval > Hist[ply - 2].eval);
@@ -345,7 +363,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     generate(_board, &mList);
     scoreMoves(&mList, ttMove);
 
-    if (depth <= 3 && !pvNode && std::abs(alpha) < INF / 2 &&
+    if (depth <= 3 && !pvNode && std::abs(alpha) < (INF - 256) &&
         evalScore + futilityMargin[depth] <= alpha && mList.nMoves > 0)
         futilityPrune = true;
 
@@ -359,6 +377,14 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         Square fromSq = getFrom(curr_move), toSq = getTo(curr_move);
         Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
 
+        Hist[ply].move = curr_move;
+
+        // if (_board.ply == 0 && get_time() > info->startTime + 4000) {
+        //     std::cout << "info depth " << depth << " currmove ";
+        //     print_move(curr_move);
+        //     std::cout << " currmovenumber " << movesSearched << std::endl;
+        // }
+
         if (getCapture(move) == EP_CAPTURE) {
             toPc = _board.board[toSq ^ 8];
         }
@@ -370,7 +396,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
 
         int skip = 0;
-        if (_board.ply > 0 && best > -INF && std::abs(alpha) < INF / 2) {
+        if (_board.ply > 0 && best > -INF && std::abs(alpha) < (INF - 256)) {
             if (getCapture(curr_move) < CAPTURE) {
                 int reducedDepth =
                       lmrDepthReduction[std::min(63, depth)]
@@ -418,7 +444,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             score =
                   -negaMax(-beta, -alpha, depth - 1, false, false, isExtension);
         } else {
-            if (std::abs(alpha) < INF / 2 &&
+            if (std::abs(alpha) < (INF - 256) &&
                 movesSearched >= (1 + (2 * isPv)) && depth >= 3 &&
                 getCapture(curr_move) < CAPTURE) {
                 // int R = 2 + (depth / 10);
@@ -482,7 +508,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     }
 
     if (!stopFlag) {
-        tt.record(_board.key, _board.ply, bestMove, depth, alpha, hashFlag);
+        tt.record(_board.key, _board.ply, bestMove, depth, alpha, hashFlag,
+                  Hist[ply].eval);
     }
 
     return alpha;
