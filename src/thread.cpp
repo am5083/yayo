@@ -340,13 +340,15 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     bool improving =
           (!inCheck && ply >= 2 && Hist[ply].eval > Hist[ply - 2].eval);
 
-    // static NMP
+    int margin = (100 - 25 * improving) * depth;
     if (!pvNode && !_board.checkPcs && depth <= 8 &&
-        evalScore - (100 - 25) * depth > beta && std::abs(alpha) < INF / 2)
+        evalScore - margin > beta && std::abs(alpha) < (INF - 256))
         return evalScore;
 
     int R = 0;
     if (depth > 1 && !_board.checkPcs && !pvNode && !nullMove) {
+        Hist[ply].move = 0;
+
         R = 4 + depth / 6;
         makeNullMove(_board);
         score = -negaMax(-beta, -beta + 1, depth - 1 - R, true, false,
