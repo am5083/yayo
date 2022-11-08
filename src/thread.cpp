@@ -221,6 +221,8 @@ int Search::quiescent(int alpha, int beta) {
             toPc = _board.board[toSq ^ 8];
         }
 
+        Hist[ply].move = move;
+
         int dMargin = standPat + pcVal[getPcType(toPc)];
         if (dMargin < alpha)
             continue;
