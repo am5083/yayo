@@ -386,7 +386,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
 
         make(_board, mList.moves[i].move);
 
-        if (skip && !_board.checkPcs && movesSearched >= 1) {
+        if (prune && !_board.checkPcs && movesSearched >= 1) {
             unmake(_board, curr_move);
             continue;
         }
