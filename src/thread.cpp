@@ -337,7 +337,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         unmakeNullMove(_board);
 
         if (score >= beta)
-            return (std::abs(score) > INF - 256) ? beta : score;
+            return (std::abs(score) > (INF - 256)) ? beta : score;
     }
 
     moveList mList = {{{0}}};
