@@ -323,17 +323,16 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
 
     // static NMP
     if (!pvNode && !_board.checkPcs && depth <= 8 &&
-        evalScore - (100 - 45 * improving) * depth > beta &&
+        evalScore - (76 - 25 * improving) * depth > beta &&
         std::abs(alpha) < CHECKMATE)
-        return evalScore - (100 - 45 * improving) * depth;
+        return evalScore - (76 - 25 * improving) * depth;
 
     int R = 0;
     if (depth > 1 && !_board.checkPcs && !pvNode && !nullMove &&
         evalScore >= beta) {
-        R = 4 + depth / 6 + std::min(2, (evalScore - beta) / 120) + improving;
+        R = 4 + depth / 6 + std::min(3, (evalScore - beta) / 100) * improving;
         makeNullMove(_board);
-        score = -negaMax(-beta, -beta + 1, depth - 1 - R, true, false,
-                         isExtension);
+        score = -negaMax(-beta, -beta + 1, depth - R, true, false, isExtension);
         unmakeNullMove(_board);
 
         if (score >= beta)
@@ -425,7 +424,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
                 // R += movesSearched / 15;
                 R = lmrDepthReduction[std::min(63, depth)]
                                      [std::min(63, movesSearched)];
-                R += !(alpha < beta - 1);
+                R += !(alpha < beta - 1) + !improving;
                 R = std::min(depth - 1, std::max(1, R));
                 score = -negaMax(-alpha - 1, -alpha, depth - R, false, false,
                                  isExtension);
@@ -671,6 +670,6 @@ void Search::joinThread() {
     }
 }
 
-void Search::clearTT() { tt.init(256); }
+void Search::clearTT(int size) { tt.init(size); }
 
 } // namespace Yayo

@@ -94,7 +94,7 @@ void UCI::Bench() {
     std::uint64_t total_nodes = 0;
 
     for (auto &fen : benchPos) {
-        search.clearTT();
+        search.clearTT(ttSize);
         search._setFen(fen);
 
         info->timeGiven = false;
@@ -131,7 +131,7 @@ void UCI::Uci() {
 
 void UCI::NewGame() {
     tt.reset();
-    search.clearTT();
+    search.clearTT(ttSize);
     search._setFen(START_POS);
 }
 
@@ -346,6 +346,11 @@ void UCI::Main() {
         } else if (cmd == "uci") {
             Uci();
         } else if (cmd == "setoption") {
+            int size = 128;
+            iss >> size;
+
+            ttSize = size;
+            NewGame();
         } else if (cmd == "eval") {
             moveList mList = {0};
             generate(board, &mList);

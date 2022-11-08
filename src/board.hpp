@@ -267,6 +267,18 @@ constexpr bool Board::castleBlocked(CastleRights cr, Square sq) const {
     return false;
 };
 
+    static inline bool isNoisy(Board &board, unsigned int move) {
+        switch (move) {
+            case QUIET:
+            case DOUBLE_PAWN:
+            case Q_CASTLE:
+            case K_CASTLE:
+                return false;
+                break;
+        }
+
+        return true;
+    }
 
 } // namespace Yayo
 #endif // BOARD_H_

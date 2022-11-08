@@ -68,7 +68,7 @@ class Search {
 
     void startSearch(Info *_info);
 
-    void clearTT();
+    void clearTT(int ttSize);
     void wait();
     void isReady();
     void joinThread();
