@@ -267,6 +267,8 @@ constexpr bool Board::castleBlocked(CastleRights cr, Square sq) const {
     return false;
 };
 
+bool isNoisy(Board &board, unsigned short move);
+bool isQuiet(Board &board, unsigned short move);
 
 } // namespace Yayo
 #endif // BOARD_H_

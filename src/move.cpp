@@ -15,8 +15,8 @@
 **    You should have received a copy of the GNU General Public License
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 #include "move.hpp"
+#include "board.hpp"
 
 void Yayo::moveList::print() const {
     for (int i = 0; i < nMoves; i++) {
@@ -79,6 +79,21 @@ void Yayo::moveList::addMove(int move, bool promo, bool cap, int score) {
     moves[nMoves].score = score;
     nMoves++;
 }
+
+// TODO: dirty, fix later
+namespace Yayo {
+bool isQuiet(Board &board, unsigned short move) {
+    return getCapture(move) < CAPTURE;
+};
+
+bool isNoisy(Board &board, unsigned short move) {
+    if (getCapture(move) == EP_CAPTURE)
+        return true;
+
+    return board.board[getFrom(move)] != NO_PC &&
+           board.board[getTo(move)] != NO_PC;
+};
+} // namespace Yayo
 
 void Yayo::moveList::swapBest(int index) {
     if (nMoves < 2)
