@@ -370,7 +370,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
 
         int skip = 0;
-        if (_board.ply > 0 && best > -INF && std::abs(alpha) < 9000) {
+        if (_board.ply > 0 && best > -INF && std::abs(alpha) < INF / 2) {
             if (getCapture(curr_move) < CAPTURE) {
                 int reducedDepth =
                       lmrDepthReduction[std::min(63, depth)]
@@ -418,13 +418,14 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             score =
                   -negaMax(-beta, -alpha, depth - 1, false, false, isExtension);
         } else {
-            if (std::abs(alpha) < 9000 && movesSearched >= (1 + (2 * isPv)) &&
-                depth >= 3 && getCapture(curr_move) < CAPTURE) {
+            if (std::abs(alpha) < INF / 2 &&
+                movesSearched >= (1 + (2 * isPv)) && depth >= 3 &&
+                getCapture(curr_move) < CAPTURE) {
                 // int R = 2 + (depth / 10);
                 // R += movesSearched / 15;
                 R = lmrDepthReduction[std::min(63, depth)]
                                      [std::min(63, movesSearched)];
-                R += !(alpha < beta - 1) + !improving;
+                R += !(alpha < beta - 1);
                 R = std::min(depth - 1, std::max(1, R));
                 score = -negaMax(-alpha - 1, -alpha, depth - R, false, false,
                                  isExtension);
