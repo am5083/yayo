@@ -425,7 +425,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
                 // R += movesSearched / 15;
                 R = lmrDepthReduction[std::min(63, depth)]
                                      [std::min(63, movesSearched)];
-                R += !(alpha < beta - 1) + !improving;
+                R += !(alpha < beta - 1);
                 R = std::min(depth - 1, std::max(1, R));
                 score = -negaMax(-alpha - 1, -alpha, depth - R, false, false,
                                  isExtension);
