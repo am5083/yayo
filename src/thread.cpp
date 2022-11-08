@@ -292,18 +292,17 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
     }
 
-    int ttScore = 0, ttMove = 0, flag = 0;
     TTHash entry = {0};
-    if (probe) {
-        if (tt.probe(_board.key, entry)) {
-            ttScore = entry.score(_board.ply);
-            ttMove = entry.move();
-            flag = entry.flag();
-            if (!pvNode && entry.depth() >= depth) {
-                if ((flag == TP_EXACT || (flag == TP_BETA && ttScore >= beta) ||
-                     (flag == TP_ALPHA && ttScore <= alpha))) {
-                    return ttScore;
-                }
+    int ttScore = 0, ttMove = 0, flag = 0;
+    bool ttHit = tt.probe(_board.key, entry);
+    if (ttHit) {
+        ttScore = entry.score(_board.ply);
+        ttMove = entry.move();
+        flag = entry.flag();
+        if (!pvNode && entry.depth() >= depth) {
+            if ((flag == TP_EXACT || (flag == TP_BETA && ttScore >= beta) ||
+                 (flag == TP_ALPHA && ttScore <= alpha))) {
+                return ttScore;
             }
         }
     }
@@ -324,8 +323,9 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
 
     // static NMP
     if (!pvNode && !_board.checkPcs && depth <= 8 &&
-        evalScore - (100 - 25) * depth > beta && std::abs(alpha) < INF / 2)
-        return evalScore;
+        evalScore - (100 - 45 * improving) * depth > beta &&
+        std::abs(alpha) < CHECKMATE)
+        return evalScore - (100 - 45 * improving) * depth;
 
     int R = 0;
     if (depth > 1 && !_board.checkPcs && !pvNode && !nullMove &&
@@ -337,17 +337,19 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         unmakeNullMove(_board);
 
         if (score >= beta)
-            return (std::abs(score) > (INF - 256)) ? beta : score;
+            return (std::abs(score) > CHECKMATE) ? beta : score;
     }
 
     moveList mList = {{{0}}};
     generate(_board, &mList);
     scoreMoves(&mList, ttMove);
 
-    if (depth <= 3 && !pvNode && std::abs(alpha) < INF / 2 &&
+    if (depth <= 3 && !pvNode && std::abs(alpha) < CHECKMATE &&
         evalScore + futilityMargin[depth] <= alpha && mList.nMoves > 0)
         futilityPrune = true;
 
+    int prune = 0;
+    int lmpCounter = 00;
     int bestMove = move;
     int movesSearched = 0;
     for (int i = 0; i < mList.nMoves; i++) {
@@ -368,8 +370,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             see = _board.see(toSq, toPc, fromSq, fromPc);
         }
 
-        int skip = 0;
-        if (_board.ply > 0 && best > -INF && std::abs(alpha) < INF / 2) {
+        if (_board.ply > 0 && best > -INF && std::abs(alpha) < CHECKMATE) {
             if (getCapture(curr_move) < CAPTURE) {
                 int reducedDepth =
                       lmrDepthReduction[std::min(63, depth)]
@@ -378,7 +379,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
                     evalScore + 100 + 105 * reducedDepth +
                                 historyMoves[_board.turn][fromSq][toSq] / 120 <=
                           alpha) {
-                    skip = 1;
+                    prune = 1;
                 }
             }
         }
@@ -417,7 +418,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             score =
                   -negaMax(-beta, -alpha, depth - 1, false, false, isExtension);
         } else {
-            if (std::abs(alpha) < INF / 2 &&
+            if (std::abs(alpha) < CHECKMATE &&
                 movesSearched >= (1 + (2 * isPv)) && depth >= 3 &&
                 getCapture(curr_move) < CAPTURE) {
                 // int R = 2 + (depth / 10);
@@ -536,7 +537,7 @@ int Search::search() {
 
                 beta = std::min(INF, beta + window);
 
-                // if (std::abs(score) < (INF / 2))
+                // if (std::abs(score) < (CHECKMATE))
                 //     aspirationDepth--;
 
                 if (pvTableLen[0] && !bestMove)
@@ -555,7 +556,7 @@ int Search::search() {
                 std::cout << " hashfull " << tt.percentFull();
                 std::cout << " score";
 
-                if (std::abs(score) > (INF - MAX_PLY)) {
+                if (std::abs(score) > CHECKMATE) {
                     int tscore = 0;
                     if (score < 0)
                         tscore = -1;

@@ -53,6 +53,11 @@ class Search {
                 // std::cout << lmrDepthReduction[depth][moves] << std::endl;
             }
         }
+
+        for (int i = 0; i < 9; i++) {
+            lmpThresholds[0][i] = (3 + i * i) / 2;
+            lmpThresholds[1][i] = 3 + i * i;
+        }
     }
     Search(const Search &) = delete;
     Search &operator=(const Search &) = delete;
@@ -87,6 +92,7 @@ class Search {
     int killerMates[MAX_PLY + 6][2];
     int historyMoves[2][64][64];
     long lmrDepthReduction[64][64];
+    long lmpThresholds[2][9];
     HistEntry Hist[512];
 
     void updatePv(int ply, int move);
