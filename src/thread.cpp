@@ -162,12 +162,14 @@ int Search::quiescent(int alpha, int beta) {
     bool pvNode = (beta - alpha) < 1;
     pvTableLen[_board.ply] = 0;
 
+    int best = INF, flag = 0;
     int ttScore = 0, tpMove = 0;
     TTHash entry = {0};
     if (probe && tt.probe(_board.key, entry)) {
         ttScore = entry.score(_board.ply);
         tpMove = entry.move();
-        int flag = entry.flag();
+        best = entry.eval();
+        flag = entry.flag();
 
         if (!pvNode &&
             (flag == TP_EXACT || (flag == TP_BETA && ttScore >= beta) ||
@@ -177,10 +179,20 @@ int Search::quiescent(int alpha, int beta) {
     }
 
     Eval eval(_board);
-    int score = 0, best = eval.eval(), oldAlpha = alpha;
+    int score = 0, oldAlpha = alpha;
     int bestMove = 0;
 
-    Hist[ply].eval = best;
+    if (best == INF) {
+        best = eval.eval();
+        Hist[ply].eval = best;
+    } else {
+        Hist[ply].eval = best;
+
+        if ((flag == TP_EXACT || (flag == TP_BETA && ttScore >= best) ||
+             (flag == TP_ALPHA && ttScore <= best))) {
+            best = ttScore;
+        }
+    }
 
     if (best >= beta)
         return best;
@@ -337,6 +349,13 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             evalScore = eval.eval();
             Hist[ply].eval = evalScore;
         }
+    } else {
+        Hist[ply].eval = evalScore;
+
+        if ((flag == TP_EXACT || (flag == TP_BETA && ttScore >= evalScore) ||
+             (flag == TP_ALPHA && ttScore <= evalScore))) {
+            evalScore = ttScore;
+        }
     }
 
     bool improving =
@@ -386,7 +405,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         // if (_board.ply == 0 && get_time() > info->startTime + 4000) {
         //     std::cout << "info depth " << depth << " currmove ";
         //     print_move(curr_move);
-        //     std::cout << " currmovenumber " << movesSearched << std::endl;
+        //     std::cout << " currmovenumber " << movesSearched <<
+        //     std::endl;
         // }
 
         if (getCapture(move) == EP_CAPTURE) {
@@ -429,7 +449,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
 
         // if (!pvNode && !inCheck && depth >= 3 && movesSearched >= 4 &&
-        //     (mList.moves[i].score < 0 || getCapture(curr_move) < CAPTURE) &&
+        //     (mList.moves[i].score < 0 || getCapture(curr_move) < CAPTURE)
+        //     &&
         //     !_board.checkPcs) {
         //     unmake(_board, mList.moves[i].move);
         //     continue;
