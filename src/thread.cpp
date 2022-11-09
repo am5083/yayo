@@ -330,7 +330,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     int R = 0;
     if (depth > 1 && !_board.checkPcs && !pvNode && !nullMove &&
         evalScore >= beta) {
-        R = 4 + depth / 6 + std::min(3, (evalScore - beta) / 100) * improving;
+        R = 4 + depth / 6 + std::min(3, (evalScore - beta) / 100) * !improving;
         makeNullMove(_board);
         score = -negaMax(-beta, -beta + 1, depth - R, true, false, isExtension);
         unmakeNullMove(_board);
