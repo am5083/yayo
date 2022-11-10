@@ -55,10 +55,10 @@ struct TTHash {
     };
 
     int score(int ply) const {
-        if (data.score >= TP_INF) {
-            return INF - ply;
-        } else if (data.score <= -TP_INF) {
-            return -INF + ply;
+        if (data.score >= CHECKMATE) {
+            return data.score - ply;
+        } else if (data.score <= -CHECKMATE) {
+            return data.score + ply;
         }
 
         return data.score;

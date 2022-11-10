@@ -180,11 +180,10 @@ void Yayo::TPTable::recordHash(std::string fen, int ply, std::uint64_t key,
 
     TPHash &p = t[key % TP_INIT_SIZE];
 
-    const int mateScore = INF - MAX_PLY;
-    if (p.score > mateScore)
-        p.score += ply;
-    else if (p.score < -mateScore)
+    if (p.score > CHECKMATE)
         p.score -= ply;
+    else if (p.score < -CHECKMATE)
+        p.score += ply;
 
     if (p.key) {
         overwrites++;

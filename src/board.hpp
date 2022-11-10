@@ -26,6 +26,12 @@
 
 namespace Yayo {
 
+struct HistEntry {
+    int eval = 0;
+    int move = 0;
+    int piece = 0;
+};
+
 // clang-format off
 struct Hist {
     uint64_t key      = 0;
@@ -266,6 +272,21 @@ constexpr bool Board::castleBlocked(CastleRights cr, Square sq) const {
         return !(kingOccupancy & pieces());
     return false;
 };
+
+
+    static inline bool isNoisy(Board &board, unsigned int move) {
+        switch (move) {
+            case QUIET:
+            case DOUBLE_PAWN:
+            case Q_CASTLE:
+            case K_CASTLE:
+                return false;
+                break;
+        }
+
+        return true;
+    }
+
 
 
 } // namespace Yayo

@@ -33,7 +33,8 @@
 #define QUEEN_VAL 910
 #define KING_VAL 12000
 
-#define INF 100000
+#define INF 32700
+#define CHECKMATE 32000
 #define ABORT_SCORE 10000000
 
 #define mirror(sq) ((7 - (sq) / 8) * 8 + (sq) % 8)
@@ -44,7 +45,7 @@ constexpr uint64_t B_ATK_TBL_SIZE = 0x1480;
 constexpr uint64_t R_ATK_TBL_SIZE = 0x190000;
 
 constexpr int MAX_MOVES = 256;
-constexpr int MAX_PLY   = 246;
+constexpr int MAX_PLY = 246;
 
 constexpr Bitboard A_FILEBB = 0x101010101010101;
 constexpr Bitboard B_FILEBB = 0x202020202020202;
@@ -64,8 +65,12 @@ constexpr Bitboard RANK_6BB = 0x0000000000ff0000;
 constexpr Bitboard RANK_7BB = 0x000000000000ff00;
 constexpr Bitboard RANK_8BB = 0x00000000000000ff;
 
-constexpr std::uint64_t popcount(std::uint64_t n) { return __builtin_popcountll(n); }
-constexpr std::uint64_t lsb_index(std::uint64_t n) { return __builtin_ffsll(n) - 1; }
+constexpr std::uint64_t popcount(std::uint64_t n) {
+    return __builtin_popcountll(n);
+}
+constexpr std::uint64_t lsb_index(std::uint64_t n) {
+    return __builtin_ffsll(n) - 1;
+}
 constexpr std::uint64_t pop_lsb(std::uint64_t n) { return (1 << lsb_index(n)); }
 
 // clang-format off

@@ -319,7 +319,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
 
     // static NMP
     if (!pvNode && !_board.checkPcs && depth <= 8 &&
-        evalScore - 75 * depth > beta && std::abs(alpha) < 9000 &&
+        evalScore - 75 * depth > beta && std::abs(alpha) < CHECKMATE &&
         std::abs(ttScore) < INF / 2)
         return evalScore;
 
@@ -341,7 +341,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     generate(_board, &mList);
     scoreMoves(&mList, ttMove);
 
-    if (depth <= 3 && !pvNode && std::abs(alpha) < 9000 &&
+    if (depth <= 3 && !pvNode && std::abs(alpha) < CHECKMATE &&
         evalScore + futilityMargin[depth] <= alpha && mList.nMoves > 0)
         futilityPrune = true;
 
@@ -366,11 +366,12 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
 
         int skip = 0;
-        if (_board.ply > 0 && best > -INF && std::abs(alpha) < 9000) {
+        if (_board.ply > 0 && best > -INF && std::abs(alpha) < CHECKMATE) {
             if (getCapture(curr_move) < CAPTURE) {
-                int reducedDepth =
-                      lmrDepthReduction[std::min(63, depth)]
-                                       [std::min(63, movesSearched)];
+                int reducedDepth = std::max(
+                      0,
+                      depth - (int)lmrDepthReduction[std::min(
+                                    63, depth)][std::min(63, movesSearched)]);
                 if (reducedDepth <= 8 && !inCheck &&
                     evalScore + 100 + 105 * reducedDepth +
                                 historyMoves[_board.turn][fromSq][toSq] / 120 <=
@@ -414,13 +415,15 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             score =
                   -negaMax(-beta, -alpha, depth - 1, false, false, isExtension);
         } else {
-            if (std::abs(alpha) < 9000 && movesSearched >= (1 + (2 * isPv)) &&
-                depth >= 3 && getCapture(curr_move) < CAPTURE) {
+            if (std::abs(alpha) < CHECKMATE &&
+                movesSearched > (1 + (2 * isPv)) && depth >= 3 &&
+                getCapture(curr_move) < CAPTURE) {
                 // int R = 2 + (depth / 10);
                 // R += movesSearched / 15;
                 R = lmrDepthReduction[std::min(63, depth)]
                                      [std::min(63, movesSearched)];
                 R += !(alpha < beta - 1);
+                // R -= (alpha < beta - 1);
                 R = std::min(depth - 1, std::max(1, R));
                 score = -negaMax(-alpha - 1, -alpha, depth - R, false, false,
                                  isExtension);
