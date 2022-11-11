@@ -330,13 +330,13 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         evalScore >= beta && Hist[ply - 1].move &&
         (_board.pieces(_board.turn) ^ _board.pieces(PAWN, _board.turn) ^
          _board.pieces(KING, _board.turn))) {
+        R = 4 + depth / 6 + std::min(3, (evalScore - beta) / 100) * !improving;
 
         Hist[ply].move = NO_MOVE;
         Hist[ply].piece = NO_PC;
 
         makeNullMove(_board);
-        score = -negaMax(-beta, -beta + 1, depth - 1 - R, true, false,
-                         isExtension);
+        score = -negaMax(-beta, -beta + 1, depth - R, true, false, isExtension);
         unmakeNullMove(_board);
 
         if (score >= beta)
