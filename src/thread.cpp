@@ -253,7 +253,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         return ABORT_SCORE;
     }
 
-    bool inCheck = popcount(_board.checkPcs) > 0;
+    bool inCheck = _board.checkPcs;
     if (inCheck && !isExtension) {
         depth++;
         isExtension = true;
@@ -322,8 +322,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
 
     // static NMP
     if (!pvNode && !_board.checkPcs && depth <= 8 &&
-        evalScore - 75 * depth > beta && std::abs(alpha) < CHECKMATE &&
-        std::abs(ttScore) < INF / 2)
+        evalScore - (97 - 74 * improving) * depth > beta)
         return evalScore;
 
     int R = 0;
