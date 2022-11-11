@@ -340,9 +340,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         unmakeNullMove(_board);
 
         if (score >= beta)
-            return beta;
-
-        best = std::max(score, best);
+            return std::abs(score) > CHECKMATE ? beta : score;
     }
 
     moveList mList = {{{0}}};
