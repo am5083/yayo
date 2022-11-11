@@ -305,10 +305,20 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
 
     Eval eval(_board);
     int best = -INF;
+    int evalScore = -INF;
     int move = 0;
-    int evalScore = eval.eval();
     int score = 0;
-    int idealEval = 0;
+
+    if (ply >= 1 && !Hist[ply - 1].move) {
+        evalScore = -Hist[ply - 1].eval + 2 * TEMPO;
+        Hist[ply].eval = evalScore;
+    } else {
+        evalScore = eval.eval();
+        Hist[ply].eval = evalScore;
+    }
+
+    bool improving =
+          (!inCheck && ply >= 2 && Hist[ply].eval > Hist[ply - 2].eval);
 
     // static NMP
     if (!pvNode && !_board.checkPcs && depth <= 8 &&
@@ -319,6 +329,10 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     int R = 0;
     if (depth > 1 && !_board.checkPcs && !pvNode && !nullMove) {
         R = 4 + depth / 6;
+
+        Hist[ply].move = NO_MOVE;
+        Hist[ply].piece = NO_PC;
+
         makeNullMove(_board);
         score = -negaMax(-beta, -beta + 1, depth - 1 - R, true, false,
                          isExtension);
@@ -373,6 +387,9 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
                 }
             }
         }
+
+        Hist[ply].move = curr_move;
+        Hist[ply].piece = fromPc;
 
         make(_board, mList.moves[i].move);
 
