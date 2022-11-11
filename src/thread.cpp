@@ -285,10 +285,12 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
     }
 
+    bool ttHit = false;
     int ttScore = 0, ttMove = 0, flag = 0;
     TTHash entry = {0};
     if (probe) {
         if (tt.probe(_board.key, entry)) {
+            ttHit = true;
             ttScore = entry.score(_board.ply);
             ttMove = entry.move();
             flag = entry.flag();
@@ -329,7 +331,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     if (depth > 1 && !_board.checkPcs && !pvNode && !nullMove && !isExtension &&
         evalScore >= beta && Hist[ply - 1].move &&
         (_board.pieces(_board.turn) ^ _board.pieces(PAWN, _board.turn) ^
-         _board.pieces(KING, _board.turn))) {
+         _board.pieces(KING, _board.turn)) &&
+        !ttHit) {
         R = 4 + depth / 6 + std::min(3, (evalScore - beta) / 100) * !improving;
 
         Hist[ply].move = NO_MOVE;
