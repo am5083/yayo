@@ -326,8 +326,10 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         return evalScore;
 
     int R = 0;
-    if (depth > 1 && !_board.checkPcs && !pvNode && !nullMove) {
-        R = 4 + depth / 6;
+    if (depth > 1 && !_board.checkPcs && !pvNode && !nullMove && !isExtension &&
+        evalScore >= beta && Hist[ply - 1].move &&
+        (_board.pieces(_board.turn) ^ _board.pieces(PAWN, _board.turn) ^
+         _board.pieces(KING, _board.turn))) {
 
         Hist[ply].move = NO_MOVE;
         Hist[ply].piece = NO_PC;
