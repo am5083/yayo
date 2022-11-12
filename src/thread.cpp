@@ -428,7 +428,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             score =
                   -negaMax(-beta, -alpha, depth - 1, false, false, isExtension);
         } else {
-            if (movesSearched > (2 + (2 * isRoot)) && depth >= 3 &&
+            if (movesSearched > (2 + (1 * isRoot)) && depth >= 3 &&
                 getCapture(curr_move) < CAPTURE) {
                 // int R = 2 + (depth / 10);
                 // R += movesSearched / 15;
