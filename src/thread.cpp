@@ -355,6 +355,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         evalScore + futilityMargin[depth] <= alpha && mList.nMoves > 0)
         futilityPrune = true;
 
+    bool skip = false;
     int bestMove = move;
     int movesSearched = 0;
     for (int i = 0; i < mList.nMoves; i++) {
@@ -375,8 +376,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             see = _board.see(toSq, toPc, fromSq, fromPc);
         }
 
-        int skip = 0;
-        if (!isRoot && best > -INF && std::abs(alpha) < CHECKMATE) {
+        if (!isRoot && best > -CHECKMATE) {
             if (getCapture(curr_move) < CAPTURE) {
                 int reducedDepth = std::max(
                       0,
@@ -434,7 +434,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
                 // R += movesSearched / 15;
                 R = lmrDepthReduction[std::min(63, depth)]
                                      [std::min(63, movesSearched)];
-                R += !(alpha < beta - 1);
+                R += !pvNode;
                 // R -= (alpha < beta - 1);
                 R = std::min(depth - 1, std::max(1, R));
                 score = -negaMax(-alpha - 1, -alpha, depth - R, false, false,
