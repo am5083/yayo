@@ -33,11 +33,11 @@ void Search::startSearch(Info *_info) {
     info->uciQuit = false;
     numRep = 0;
 
-    memset(pvTable, 0, sizeof(pvTable));
-    memset(pvTableLen, 0, sizeof(pvTableLen));
-    memset(killerMoves, 0, sizeof(killerMoves));
-    memset(historyMoves, 0, sizeof(historyMoves));
-    memset(Hist, 0, sizeof(Hist));
+    // memset(&pvTable, 0, sizeof(pvTable));
+    // memset(&pvTableLen, 0, sizeof(pvTableLen));
+    // memset(&killerMoves, 0, sizeof(killerMoves));
+    // memset(&historyMoves, 0, sizeof(historyMoves));
+    memset(&Hist, 0, sizeof(Hist));
 
     searchThread = std::make_unique<std::thread>(&Search::search, this);
 }

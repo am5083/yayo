@@ -38,14 +38,22 @@ class Search {
   public:
     Search() {
         info = nullptr;
-        memset(lmrDepthReduction, 0, sizeof(lmrDepthReduction));
+
+        memset(&lmpThresholds, 0, sizeof(lmpThresholds));
+        memset(&lmrDepthReduction, 0, sizeof(lmrDepthReduction));
+        // memset(&pvTable, 0, sizeof(pvTable));
+        // memset(&pvTableLen, 0, sizeof(pvTableLen));
+        // memset(&killerMoves, 0, sizeof(killerMoves));
+        // memset(&historyMoves, 0, sizeof(historyMoves));
+        // memset(&Hist, 0, sizeof(Hist));
 
         for (int depth = 0; depth < 64; depth++) {
             // std::cout << "depth: " << depth << std::endl;
             for (int moves = 0; moves < 64; moves++) {
                 // std::cout << "moves: " << moves << ", R = ";
                 lmrDepthReduction[depth][moves] =
-                      1 + std::log(depth) * std::log(moves) / 2.5;
+                      1 + log(depth) * log(moves) / 2.5;
+
                 // std::cout << lmrDepthReduction[depth][moves] << std::endl;
             }
         }
@@ -87,8 +95,8 @@ class Search {
     int killerMoves[MAX_PLY + 6][2];
     int killerMates[MAX_PLY + 6][2];
     int historyMoves[2][64][64];
-    long lmrDepthReduction[64][64];
-    long lmpThresholds[2][9];
+    int lmrDepthReduction[64][64];
+    int lmpThresholds[2][9];
 
     HistEntry Hist[256];
 
