@@ -264,6 +264,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
 
     bool futilityPrune = false;
     bool pvNode = alpha < (beta - 1);
+    bool isRoot = (ply == 0);
 
     if (_board.ply > 0) {
         if (_board.halfMoves >= 100 || _board.isDraw())
@@ -375,7 +376,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
 
         int skip = 0;
-        if (_board.ply > 0 && best > -INF && std::abs(alpha) < CHECKMATE) {
+        if (!isRoot && best > -INF && std::abs(alpha) < CHECKMATE) {
             if (getCapture(curr_move) < CAPTURE) {
                 int reducedDepth = std::max(
                       0,
@@ -383,7 +384,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
                                     63, depth)][std::min(63, movesSearched)]);
                 if (reducedDepth <= 8 && !inCheck &&
                     evalScore + 100 + 105 * reducedDepth +
-                                historyMoves[_board.turn][fromSq][toSq] / 120 <=
+                                historyMoves[_board.turn][fromSq][toSq] / 550 <=
                           alpha) {
                     skip = 1;
                 }
@@ -395,17 +396,17 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
 
         make(_board, mList.moves[i].move);
 
-        if (skip && !_board.checkPcs && movesSearched >= 1) {
-            unmake(_board, curr_move);
-            continue;
-        }
+        // if (skip && !_board.checkPcs && movesSearched >= 1) {
+        //     unmake(_board, curr_move);
+        //     continue;
+        // }
 
-        if (!pvNode && !_board.checkPcs && movesSearched >= 1 &&
-            getCapture(curr_move) < CAPTURE && depth <= 8 &&
-            see < -50 * depth) {
-            unmake(_board, curr_move);
-            continue;
-        }
+        // if (!pvNode && !_board.checkPcs && movesSearched >= 1 &&
+        //     getCapture(curr_move) < CAPTURE && depth <= 8 &&
+        //     see < -50 * depth) {
+        //     unmake(_board, curr_move);
+        //     continue;
+        // }
 
         // if (!pvNode && !inCheck && depth >= 3 && movesSearched >= 4 &&
         //     (mList.moves[i].score < 0 || getCapture(curr_move) < CAPTURE) &&
@@ -415,11 +416,11 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         // }
         //
 
-        if (futilityPrune && getCapture(curr_move) < CAPTURE &&
-            !_board.checkPcs) {
-            unmake(_board, mList.moves[i].move);
-            continue;
-        }
+        // if (futilityPrune && getCapture(curr_move) < CAPTURE &&
+        //     !_board.checkPcs) {
+        //     unmake(_board, mList.moves[i].move);
+        //     continue;
+        // }
 
         nodes++;
         movesSearched++;
@@ -427,8 +428,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             score =
                   -negaMax(-beta, -alpha, depth - 1, false, false, isExtension);
         } else {
-            if (std::abs(alpha) < CHECKMATE &&
-                movesSearched > (1 + (2 * isPv)) && depth >= 3 &&
+            if (movesSearched > (2 + (2 * isRoot)) && depth >= 3 &&
                 getCapture(curr_move) < CAPTURE) {
                 // int R = 2 + (depth / 10);
                 // R += movesSearched / 15;
