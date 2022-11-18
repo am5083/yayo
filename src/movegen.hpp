@@ -65,6 +65,7 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
     constexpr Bitboard Rank7 = (Turn == WHITE) ? RANK_7BB : RANK_2BB;
     constexpr Bitboard Rank3 = (Turn == WHITE) ? RANK_3BB : RANK_6BB;
     constexpr Direction Push = (Turn == WHITE) ? NORTH : SOUTH;
+    constexpr Direction Retreat = (Turn == WHITE) ? SOUTH : NORTH;
     constexpr Direction eAttack = Push + EAST;
     constexpr Direction wAttack = Push + WEST;
 
@@ -208,9 +209,17 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
                 const Square s = Square(__builtin_ctzll(eastAttacks));
                 const Bitboard pawn = SQUARE_BB(s);
                 eastAttacks &= eastAttacks - 1;
-                if (board.isSqAttacked(Sq(board.pieces(KING, Turn)),
-                                       board.pieces() ^ pawn, ~Turn))
+
+                Bitboard epSq = SQUARE_BB(board.epSq());
+                Bitboard modifiedBoard =
+                      board.pieces() ^ pawn ^ epSq ^ shift<Retreat>(epSq);
+
+                Bitboard atkToKing = board.attacksToKing<~Turn>(
+                      Sq(board.pieces(KING, Turn)), modifiedBoard);
+
+                if (atkToKing)
                     continue;
+
                 mList->addMove(encodeMove(s, board.epSq(), EP_CAPTURE), false,
                                true, 105);
             }

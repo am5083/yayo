@@ -80,10 +80,10 @@ void TTable::record(std::uint64_t key, int ply, int move, int depth, int score,
     std::uint64_t index = (key % maxEntries) * NUM_BUCKETS;
     TTHash *bucket = table + index;
 
-    if (score >= INF)
-        score = TP_INF - ply;
-    else if (score <= -INF)
-        score = -TP_INF + ply;
+    if (score >= CHECKMATE)
+        score = INF;
+    else if (score <= -CHECKMATE)
+        score = -INF;
 
     TTHash temp = {0};
     temp.data.depth = depth;

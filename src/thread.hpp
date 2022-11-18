@@ -83,7 +83,7 @@ class Search {
     void scoreMoves(moveList *mList, int ttMove = 0);
     int quiescent(int alpha, int beta);
     int negaMax(int alpha, int beta, int depth, bool nullMove, bool pvNode,
-                bool isExtension = false);
+                bool cutNode, bool isExtension = false);
     moveList generateMoves();
     Board getBoard();
 
@@ -100,7 +100,7 @@ class Search {
 
     HistEntry Hist[256];
 
-    void updatePv(int ply, int move);
+    void updatePv(int ply, unsigned short move);
     void printPv();
 
   public:
@@ -124,6 +124,7 @@ class Search {
 
     std::unique_ptr<std::thread> searchThread;
     std::uint64_t nodes;
+    std::uint64_t qnodes;
     Board _board;
     Info *info;
 };
