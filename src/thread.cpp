@@ -337,7 +337,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
 
     // static NMP
     if (!pvNode && !_board.checkPcs && depth <= 8 &&
-        evalScore - (100 - 25) * depth > beta && std::abs(alpha) < INF / 2)
+        evalScore - (100 - 25) * depth > beta && std::abs(alpha) < CHECKMATE)
         return evalScore;
 
     int R = 0;
@@ -359,7 +359,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
     generate(_board, &mList);
     scoreMoves(&mList, ttMove);
 
-    if (depth <= 3 && !pvNode && std::abs(alpha) < INF / 2 &&
+    if (depth <= 3 && !pvNode && std::abs(alpha) < CHECKMATE &&
         evalScore + futilityMargin[depth] <= alpha && mList.nMoves > 0)
         futilityPrune = true;
 
@@ -384,7 +384,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
 
         int skip = 0;
-        if (_board.ply > 0 && best > -INF && std::abs(alpha) < INF / 2) {
+        if (_board.ply > 0 && best > -CHECKMATE &&
+            std::abs(alpha) < CHECKMATE) {
             if (getCapture(curr_move) < CAPTURE) {
                 int reducedDepth =
                       lmrDepthReduction[std::min(63, depth)]
@@ -432,7 +433,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             score =
                   -negaMax(-beta, -alpha, depth - 1, false, false, isExtension);
         } else {
-            if (std::abs(alpha) < INF / 2 &&
+            if (std::abs(alpha) < CHECKMATE &&
                 movesSearched >= (1 + (2 * isPv)) && depth >= 3 &&
                 getCapture(curr_move) < CAPTURE) {
                 // int R = 2 + (depth / 10);
@@ -570,7 +571,7 @@ int Search::search() {
                 std::cout << " hashfull " << tt.percentFull();
                 std::cout << " score";
 
-                if (std::abs(score) > (INF - MAX_PLY)) {
+                if (std::abs(score) > CHECKMATE) {
                     int tscore = 0;
                     if (score < 0)
                         tscore = -1;

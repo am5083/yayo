@@ -33,7 +33,8 @@
 #define QUEEN_VAL 910
 #define KING_VAL 12000
 
-#define INF 32000
+#define INF 32700
+#define CHECKMATE 32600
 #define ABORT_SCORE 10000000
 
 #define mirror(sq) ((7 - (sq) / 8) * 8 + (sq) % 8)
