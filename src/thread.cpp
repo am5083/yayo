@@ -33,18 +33,25 @@ void Search::startSearch(Info *_info) {
     info->uciQuit = false;
     numRep = 0;
 
-    for (int i = 0; i < MAX_PLY + 6; i++) {
-        killerMoves[i][0] = NO_MOVE;
-        killerMoves[i][1] = NO_MOVE;
+    // for (int i = 0; i < MAX_PLY + 6; i++) {
+    //     killerMoves[i][0] = NO_MOVE;
+    //     killerMoves[i][1] = NO_MOVE;
 
-        for (int j = 0; j < MAX_PLY + 6; j++) {
+    //     for (int j = 0; j < MAX_PLY + 6; j++) {
 
-            if (i < 64 && j < 64) {
-                historyMoves[0][i][j] = 0;
-                historyMoves[1][i][j] = 0;
-            }
-        }
-    }
+    //         if (i < 64 && j < 64) {
+    //             historyMoves[0][i][j] = 0;
+    //             historyMoves[1][i][j] = 0;
+    //         }
+    //     }
+    // }
+
+    memset(&pvTable, 0, sizeof(pvTable));
+    memset(&pvTableLen, 0, sizeof(pvTableLen));
+    // memset(&killerMoves, 0, sizeof(killerMoves));
+    // memset(&killerMates, 0, sizeof(killerMates));
+    memset(&historyMoves, 0, sizeof(historyMoves));
+    memset(&Hist, 0, sizeof(Hist));
 
     searchThread = std::make_unique<std::thread>(&Search::search, this);
 }
@@ -307,6 +314,12 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             }
         }
     }
+
+    killerMoves[ply + 1][0] = 0;
+    killerMates[ply + 1][0] = 0;
+
+    killerMoves[ply + 1][1] = 0;
+    killerMates[ply + 1][1] = 0;
 
     int futilityMargin[] = {0, 100, 300, 700};
 
