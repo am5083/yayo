@@ -197,6 +197,7 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
                   true, score);
         }
 
+        constexpr Direction Retreat = (Turn == WHITE) ? SOUTH : NORTH;
         if (board.epSq() != SQUARE_64) {
             if (Type == CHECK_EVASION &&
                 (targets & (board.epSq() + Square(Push)))) {
@@ -208,9 +209,16 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
                 const Square s = Square(__builtin_ctzll(eastAttacks));
                 const Bitboard pawn = SQUARE_BB(s);
                 eastAttacks &= eastAttacks - 1;
-                if (board.isSqAttacked(Sq(board.pieces(KING, Turn)),
-                                       board.pieces() ^ pawn, ~Turn))
+
+                Bitboard epSq = SQUARE_BB(board.epSq());
+                Bitboard modifiedBoard =
+                      board.pieces() ^ pawn ^ epSq ^ shift<Retreat>(epSq);
+                Bitboard atkToKing = board.attacksToKing<~Turn>(
+                      Sq(board.pieces(KING, Turn)), modifiedBoard);
+
+                if (atkToKing)
                     continue;
+
                 mList->addMove(encodeMove(s, board.epSq(), EP_CAPTURE), false,
                                true, 105);
             }

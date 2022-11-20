@@ -137,7 +137,7 @@ class Board {
         queenRooks |= pieces(ROOK, C);
         queenBishops |= pieces(BISHOP, C);
 
-        return (pawnAttacks[~C][sq] & pieces(PAWN, C)) | (knightAttacks[sq] & knights) | (kingAttacks[sq] & kings) |
+        return (pawnAttacks[~C][sq] & pieces(PAWN, C) & occ) | (knightAttacks[sq] & knights & occ) | (kingAttacks[sq] & kings & occ) |
                (getBishopAttacks(sq, occ) & queenBishops) | (getRookAttacks(sq, occ) & queenRooks);
     }
 
