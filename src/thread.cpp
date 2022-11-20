@@ -82,9 +82,9 @@ moveList Search::generateMoves() {
 
 Board Search::getBoard() { return _board; }
 
-void Search::scoreMoves(moveList *mList, int ttMove) {
+void Search::scoreMoves(moveList *mList, unsigned int ttMove) {
     for (int i = 0; i < mList->nMoves; i++) {
-        int move = mList->moves[i].move;
+        unsigned int move = mList->moves[i].move;
 
         if (move == pvTable[_board.ply][0]) {
             mList->moves[i].score = 500000;
@@ -94,7 +94,7 @@ void Search::scoreMoves(moveList *mList, int ttMove) {
             continue;
         }
 
-        int moveFlag = getCapture(move);
+        unsigned int moveFlag = getCapture(move);
 
         if (moveFlag >= P_KNIGHT) {
             if (moveFlag >= CP_ROOK)
@@ -167,7 +167,8 @@ int Search::quiescent(int alpha, int beta) {
     bool pvNode = (beta - alpha) < 1;
     pvTableLen[_board.ply] = 0;
 
-    int ttScore = 0, tpMove = 0;
+    int ttScore = 0;
+    unsigned tpMove = 0;
     TTHash entry = {0};
     if (probe && tt.probe(_board.key, entry)) {
         ttScore = entry.score(_board.ply);
@@ -183,7 +184,7 @@ int Search::quiescent(int alpha, int beta) {
 
     Eval eval(_board);
     int score = 0, best = eval.eval(), oldAlpha = alpha;
-    int bestMove = 0;
+    unsigned int bestMove = 0;
 
     if (best >= beta)
         return best;
@@ -216,7 +217,7 @@ int Search::quiescent(int alpha, int beta) {
             break;
         }
 
-        int move = mList.moves[i].move;
+        unsigned int move = mList.moves[i].move;
         Square fromSq = getFrom(move), toSq = getTo(move);
         Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
 
@@ -299,7 +300,9 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         }
     }
 
-    int ttScore = 0, ttMove = 0, flag = 0;
+    int ttScore = 0;
+    unsigned int ttMove = 0;
+    int flag = 0;
     TTHash entry = {0};
     if (probe) {
         if (tt.probe(_board.key, entry)) {
@@ -325,7 +328,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
 
     Eval eval(_board);
     int best = -INF;
-    int move = 0;
+    unsigned int move = 0;
     int evalScore = eval.eval();
     int score = 0;
     int idealEval = 0;
@@ -363,11 +366,11 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
         evalScore + futilityMargin[depth] <= alpha && mList.nMoves > 0)
         futilityPrune = true;
 
-    int bestMove = move;
-    int movesSearched = 0;
+    unsigned int bestMove = move;
+    unsigned int movesSearched = 0;
     for (int i = 0; i < mList.nMoves; i++) {
         mList.swapBest(i);
-        const int curr_move = mList.moves[i].move;
+        const unsigned int curr_move = mList.moves[i].move;
         bool inCheck = _board.checkPcs;
 
         Square fromSq = getFrom(curr_move), toSq = getTo(curr_move);
@@ -389,7 +392,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
             if (getCapture(curr_move) < CAPTURE) {
                 int reducedDepth =
                       lmrDepthReduction[std::min(63, depth)]
-                                       [std::min(63, movesSearched)];
+                                       [std::min(63u, movesSearched)];
                 if (reducedDepth <= 8 && !inCheck &&
                     evalScore + 100 + 105 * reducedDepth +
                                 historyMoves[_board.turn][fromSq][toSq] / 120 <=
@@ -439,7 +442,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool nullMove, bool isPv,
                 // int R = 2 + (depth / 10);
                 // R += movesSearched / 15;
                 R = lmrDepthReduction[std::min(63, depth)]
-                                     [std::min(63, movesSearched)];
+                                     [std::min(63u, movesSearched)];
                 R += !(alpha < beta - 1);
                 R = std::min(depth - 1, std::max(1, R));
                 score = -negaMax(-alpha - 1, -alpha, depth - R, false, false,
@@ -510,7 +513,7 @@ int Search::search() {
 
     int alpha = -INF, beta = INF;
     int score = 0, prevScore = -INF;
-    int bestMove = 0;
+    unsigned int bestMove = 0;
 
     double totalTime = 0;
     for (int j = 1; j <= depth; j++) {
@@ -618,7 +621,7 @@ int Search::search() {
     return 0;
 }
 
-void Search::updatePv(int ply, int move) {
+void Search::updatePv(int ply, unsigned int move) {
     pvTable[ply][0] = move;
 
     for (int i = 0; i < pvTableLen[ply + 1]; i++)

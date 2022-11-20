@@ -35,7 +35,8 @@
 namespace Yayo {
 
 struct HistEntry {
-    int move, eval;
+    unsigned int move;
+    int eval;
 };
 
 class Search {
@@ -71,7 +72,7 @@ class Search {
     void printBoard() const;
     void _setFen(std::string fen);
     void _make(std::uint16_t move);
-    void scoreMoves(moveList *mList, int ttMove = 0);
+    void scoreMoves(moveList *mList, unsigned int ttMove = 0);
     int quiescent(int alpha, int beta);
     int negaMax(int alpha, int beta, int depth, bool nullMove, bool pvNode,
                 bool isExtension = false);
@@ -89,7 +90,7 @@ class Search {
     long lmrDepthReduction[64][64];
     HistEntry Hist[512];
 
-    void updatePv(int ply, int move);
+    void updatePv(int ply, unsigned int move);
     void printPv();
 
   public:
