@@ -58,7 +58,7 @@ enum MoveFlag {
 };
 
 struct Move {
-    unsigned short move;
+    unsigned move;
     long score;
 };
 
