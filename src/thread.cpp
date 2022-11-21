@@ -141,7 +141,7 @@ int Search::quiescent(int alpha, int beta) {
     int ply = _board.ply;
 
     if (_board.checkPcs)
-        return negaMax(alpha, beta, 1, true);
+        return negaMax(alpha, beta, 1, false, true);
 
     if (checkForStop()) {
         stopFlag = 1;
@@ -157,7 +157,7 @@ int Search::quiescent(int alpha, int beta) {
     int ttScore = 0;
     unsigned tpMove = 0;
     TTHash entry = {0};
-    if (probe && tt.probe(_board.key, entry)) {
+    if (tt.probe(_board.key, entry)) {
         ttScore = entry.score(_board.ply);
         tpMove = entry.move();
         int flag = entry.flag();
@@ -216,6 +216,8 @@ int Search::quiescent(int alpha, int beta) {
         if (dMargin < alpha)
             continue;
 
+        Hist[ply].move = move;
+
         nodes++;
         make(_board, mList.moves[i].move);
         score = -quiescent(-beta, -alpha);
@@ -238,12 +240,14 @@ int Search::quiescent(int alpha, int beta) {
     }
 
     if (!stopFlag)
-        tt.record(_board.key, _board.ply, bestMove, 0, alpha, hashFlag);
+        tt.record(_board.key, _board.ply, bestMove, 0, standPat, alpha,
+                  hashFlag);
 
     return alpha;
 }
 
-int Search::negaMax(int alpha, int beta, int depth, bool isExtension) {
+int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
+                    bool isExtension) {
     int hashFlag = TP_ALPHA;
     const int ply = _board.ply;
     pvTableLen[ply] = 0;
@@ -286,20 +290,20 @@ int Search::negaMax(int alpha, int beta, int depth, bool isExtension) {
         }
     }
 
+    bool ttHit = false;
     int ttScore = 0;
     unsigned ttMove = 0;
     int flag = 0;
     TTHash entry = {0};
-    if (probe) {
-        if (tt.probe(_board.key, entry)) {
-            ttScore = entry.score(_board.ply);
-            ttMove = entry.move();
-            flag = entry.flag();
-            if (!pvNode && entry.depth() >= depth) {
-                if ((flag == TP_EXACT || (flag == TP_BETA && ttScore >= beta) ||
-                     (flag == TP_ALPHA && ttScore <= alpha))) {
-                    return ttScore;
-                }
+    if (tt.probe(_board.key, entry)) {
+        ttHit = true;
+        ttScore = entry.score(_board.ply);
+        ttMove = entry.move();
+        flag = entry.flag();
+        if (!pvNode && entry.depth() >= depth) {
+            if ((flag == TP_EXACT || (flag == TP_BETA && ttScore >= beta) ||
+                 (flag == TP_ALPHA && ttScore <= alpha))) {
+                return ttScore;
             }
         }
     }
@@ -320,38 +324,44 @@ int Search::negaMax(int alpha, int beta, int depth, bool isExtension) {
 
     // static NMP
     if (!pvNode && !_board.checkPcs && depth <= 8 &&
-        evalScore - (100 - 25) * depth > beta && std::abs(alpha) < INF / 2)
+        evalScore - (100 - 25) * depth > beta && std::abs(alpha) < CHECKMATE)
         return evalScore;
 
     if (depth > 1 && !_board.checkPcs && !pvNode && Hist[ply - 1].move &&
         evalScore >= beta &&
         (_board.pieces(_board.turn) ^ _board.pieces(PAWN, _board.turn) ^
-         _board.pieces(KING, _board.turn))) {
-        int R =
-              4 + depth / 6 + std::min(3, (evalScore - beta) / 135) + improving;
+         _board.pieces(KING, _board.turn)) &&
+        (!ttHit || flag == TP_BETA || (ttScore >= beta && ttScore != 0))) {
+        int R = 4 + depth / 6 +
+                std::min(3, (evalScore - beta) / (135 - 45 * improving)) +
+                improving;
 
         Hist[ply].move = NO_MOVE;
         makeNullMove(_board);
-        score = -negaMax(-beta, -beta + 1, depth - R, isExtension);
+        score = -negaMax(-beta, -beta + 1, depth - R, !cutNode, isExtension);
         unmakeNullMove(_board);
 
-        if (score >= beta)
-            return beta;
-
-        best = std::max(score, best);
+        if (score >= beta) {
+            if (std::abs(score) > CHECKMATE) {
+                return beta;
+            } else {
+                return score;
+            }
+        }
     }
 
     moveList mList = {{{0}}};
     generate(_board, &mList);
     scoreMoves(&mList, ttMove);
 
-    if (depth <= 3 && !pvNode && std::abs(alpha) < INF / 2 &&
-        evalScore + futilityMargin[depth] <= alpha && mList.nMoves > 0)
+    if (depth <= 3 && !pvNode && evalScore + futilityMargin[depth] <= alpha &&
+        std::abs(alpha) < CHECKMATE && mList.nMoves > 1)
         futilityPrune = true;
 
     bool rootNode = (_board.ply == 0);
     unsigned bestMove = move;
     int movesSearched = 0;
+    int skip = 0;
     for (int i = 0; i < mList.nMoves; i++) {
         mList.swapBest(i);
         const unsigned curr_move = mList.moves[i].move;
@@ -365,40 +375,45 @@ int Search::negaMax(int alpha, int beta, int depth, bool isExtension) {
             toPc = _board.board[toSq ^ 8];
         }
 
-        int see = 0;
-        if (!pvNode && movesSearched >= 1 && getCapture(curr_move) < CAPTURE &&
-            depth <= 8) {
-            see = _board.see(toSq, toPc, fromSq, fromPc);
-        }
-
-        int skip = 0;
-        if (_board.ply > 0 && best > -INF && std::abs(alpha) < INF / 2) {
+        if (_board.ply > 0 && best > -CHECKMATE) {
             if (getCapture(curr_move) < CAPTURE) {
-                int reducedDepth =
-                      lmrDepthReduction[std::min(63, depth)]
-                                       [std::min(63, movesSearched)];
+                if (skip)
+                    continue;
+
+                int reducedDepth = std::max(
+                      0,
+                      std::min(
+                            depth,
+                            depth -
+                                  int(lmrDepthReduction[std::min(
+                                        63, depth)][std::min(63,
+                                                             movesSearched)])));
                 if (reducedDepth <= 8 && !inCheck &&
-                    evalScore + 100 + 105 * reducedDepth +
-                                historyMoves[_board.turn][fromSq][toSq] / 120 <=
+                    evalScore + 125 + 100 * reducedDepth +
+                                historyMoves[_board.turn][fromSq][toSq] / 5 <
                           alpha) {
-                    skip = 1;
+                    skip = true;
                 }
+
+                if (depth <= 8 && !_board.checkPcs &&
+                    _board.see(toSq, toPc, fromSq, fromPc) < -80 * depth)
+                    continue;
             }
         }
 
         make(_board, mList.moves[i].move);
 
-        if (skip && !_board.checkPcs && movesSearched >= 1) {
-            unmake(_board, curr_move);
-            continue;
-        }
+        // if (skip && !_board.checkPcs && movesSearched >= 1) {
+        //     unmake(_board, curr_move);
+        //     continue;
+        // }
 
-        if (!pvNode && !_board.checkPcs && movesSearched >= 1 &&
-            getCapture(curr_move) < CAPTURE && depth <= 8 &&
-            see < -50 * depth) {
-            unmake(_board, curr_move);
-            continue;
-        }
+        // if (!pvNode && !_board.checkPcs && movesSearched >= 1 &&
+        //     getCapture(curr_move) < CAPTURE && depth <= 8 &&
+        //     see < -50 * depth) {
+        //     unmake(_board, curr_move);
+        //     continue;
+        // }
 
         // if (!pvNode && !inCheck && depth >= 3 && movesSearched >= 4 &&
         //     (mList.moves[i].score < 0 || getCapture(curr_move) < CAPTURE) &&
@@ -418,7 +433,14 @@ int Search::negaMax(int alpha, int beta, int depth, bool isExtension) {
         if (movesSearched >= (1 + (2 * rootNode)) && depth >= 3 && isQuiet) {
             R = lmrDepthReduction[std::min(63, depth)]
                                  [std::min(63, movesSearched)];
-            R += !(alpha < beta - 1);
+            R += !pvNode;
+            R += !improving;
+            R += cutNode;
+
+            R -= 2 * (mList.moves[i].score > 19500);
+            int mHist = historyMoves[_board.turn][fromSq][toSq] / 125;
+            R -= std::min(2, mHist) * isQuiet;
+
             R = std::min(depth - 1, std::max(1, R));
         }
 
@@ -429,12 +451,12 @@ int Search::negaMax(int alpha, int beta, int depth, bool isExtension) {
         int score = -INF;
 
         if (R != 1) {
-            score = -negaMax(-alpha - 1, -alpha, depth - R, false);
+            score = -negaMax(-alpha - 1, -alpha, depth - R, true);
         }
 
         if ((R != 1 && score > alpha) ||
             (R == 1 && !(pvNode && movesSearched == 1))) {
-            score = -negaMax(-alpha - 1, -alpha, depth - 1, false);
+            score = -negaMax(-alpha - 1, -alpha, depth - 1, !cutNode);
         }
 
         if (pvNode && (movesSearched == 1 || score > alpha)) {
@@ -480,7 +502,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool isExtension) {
     }
 
     if (!stopFlag) {
-        tt.record(_board.key, _board.ply, bestMove, depth, alpha, hashFlag);
+        tt.record(_board.key, _board.ply, bestMove, depth, evalScore, alpha,
+                  hashFlag);
     }
 
     return alpha;
@@ -522,7 +545,7 @@ int Search::search() {
             num++;
             aspirationDepth = std::max(1, aspirationDepth);
             selDepth = 0;
-            score = negaMax(alpha, beta, aspirationDepth);
+            score = negaMax(alpha, beta, aspirationDepth, false);
 
             if (score <= alpha) {
                 numFailed++;

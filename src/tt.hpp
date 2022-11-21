@@ -43,10 +43,8 @@ struct TTHash {
     std::uint64_t key;
     union {
         struct {
-            std::uint8_t old;
-            std::uint8_t flag;
-            std::uint8_t generation;
-            std::uint8_t depth;
+            std::int16_t eval;
+            std::uint16_t info;
             std::uint16_t move;
             std::int16_t score;
         } data;
@@ -55,20 +53,21 @@ struct TTHash {
     };
 
     int score(int ply) const {
-        if (data.score >= TP_INF) {
-            return INF - ply;
-        } else if (data.score <= -TP_INF) {
-            return -INF + ply;
+        if (data.score >= CHECKMATE) {
+            return data.score - ply;
+        } else if (data.score <= -CHECKMATE) {
+            return data.score + ply;
         }
 
         return data.score;
     }
 
     void age(int gen);
-    int flag() const { return data.flag; }
-    int depth() const { return data.depth; }
+    int flag() const { return data.info & 3u; }
+    int depth() const { return (data.info >> 2u) & 255u; }
+    int generation() const { return data.info >> 10u; }
     int move() const { return data.move; }
-    int generation() const { return data.generation; }
+    int eval() const { return data.eval; }
 };
 
 class TTable {
@@ -86,8 +85,8 @@ class TTable {
     void prefetch(std::uint64_t key);
 
     bool probe(std::uint64_t key, TTHash &out);
-    void record(std::uint64_t key, int ply, int move, int depth, int score,
-                unsigned char flag);
+    void record(std::uint64_t key, int ply, unsigned short move, int depth,
+                int score, int eval, unsigned char flag);
 
     void reset();
     void increaseAge();

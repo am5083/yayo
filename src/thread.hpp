@@ -73,7 +73,8 @@ class Search {
     void _make(std::uint16_t move);
     void scoreMoves(moveList *mList, unsigned ttMove = 0);
     int quiescent(int alpha, int beta);
-    int negaMax(int alpha, int beta, int depth, bool isExtension = false);
+    int negaMax(int alpha, int beta, int depth, bool cutNode,
+                bool isExtension = false);
     moveList generateMoves();
     Board getBoard();
 
