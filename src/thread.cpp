@@ -17,6 +17,8 @@
 */
 #include "thread.hpp"
 #include "eval.hpp"
+#include <cassert>
+#include <stdio.h>
 #include <vector>
 
 namespace Yayo {
@@ -154,13 +156,19 @@ int Search::quiescent(int alpha, int beta) {
     bool pvNode = (beta - alpha) < 1;
     pvTableLen[_board.ply] = 0;
 
+    int flag = -1;
+    int evalScore = INF;
     int ttScore = 0;
     unsigned tpMove = 0;
     TTHash entry = {0};
+
     if (tt.probe(_board.key, entry)) {
         ttScore = entry.score(_board.ply);
         tpMove = entry.move();
-        int flag = entry.flag();
+
+        evalScore = entry.eval();
+
+        flag = entry.flag();
 
         if (!pvNode &&
             (flag == TP_EXACT || (flag == TP_BETA && ttScore >= beta) ||
@@ -170,7 +178,20 @@ int Search::quiescent(int alpha, int beta) {
     }
 
     Eval eval(_board);
-    int score = 0, best = eval.eval(), oldAlpha = alpha;
+
+    if (evalScore == INF) {
+        evalScore = eval.eval();
+        Hist[ply].eval = evalScore;
+    } else {
+        Hist[ply].eval = evalScore;
+
+        if (!pvNode && (flag == TP_EXACT || (flag == TP_BETA && ttScore >= evalScore) ||
+            (flag == TP_ALPHA && ttScore <= evalScore))) {
+            evalScore = ttScore;
+        }
+    }
+
+    int score = INF, best = evalScore, oldAlpha = alpha;
     unsigned bestMove = 0;
 
     if (best >= beta)
@@ -239,8 +260,7 @@ int Search::quiescent(int alpha, int beta) {
         }
     }
 
-    if (!stopFlag)
-        tt.record(_board.key, _board.ply, bestMove, 0, standPat, alpha,
+    tt.record(_board.key, _board.ply, bestMove, 0, Hist[ply].eval, alpha,
                   hashFlag);
 
     return alpha;
@@ -290,16 +310,18 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         }
     }
 
+    int evalScore = INF;
     bool ttHit = false;
     int ttScore = 0;
     unsigned ttMove = 0;
-    int flag = 0;
+    int flag = -1;
     TTHash entry = {0};
     if (tt.probe(_board.key, entry)) {
         ttHit = true;
         ttScore = entry.score(_board.ply);
         ttMove = entry.move();
         flag = entry.flag();
+        evalScore = entry.eval();
         if (!pvNode && entry.depth() >= depth) {
             if ((flag == TP_EXACT || (flag == TP_BETA && ttScore >= beta) ||
                  (flag == TP_ALPHA && ttScore <= alpha))) {
@@ -313,18 +335,32 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
     Eval eval(_board);
     int best = -INF;
     unsigned move = 0;
-    int evalScore = eval.eval();
     int score = 0;
-    int idealEval = 0;
 
-    Hist[ply].eval = evalScore;
+    if (evalScore == INF) {
+        if (ply >= 1 && !Hist[ply - 1].move) {
+            evalScore = Hist[ply - 1].eval;
+            Hist[ply].eval = evalScore;
+        } else {
+            evalScore = eval.eval();
+            Hist[ply].eval = evalScore;
+        }
+    } else {
+        Hist[ply].eval = evalScore;
+        // try tt score
+
+        if (!pvNode && (flag == TP_EXACT || (flag == TP_BETA && ttScore >= evalScore) ||
+            (flag == TP_ALPHA && ttScore <= evalScore))) {
+            evalScore = ttScore;
+        }
+    }
 
     bool improving =
           (!inCheck && ply >= 2 && Hist[ply].eval > Hist[ply - 2].eval);
 
     // static NMP
     if (!pvNode && !_board.checkPcs && depth <= 8 &&
-        evalScore - (100 - 25) * depth > beta && std::abs(alpha) < CHECKMATE)
+        evalScore - (75 - 25 * improving) * depth > beta && std::abs(alpha) < CHECKMATE)
         return evalScore;
 
     if (depth > 1 && !_board.checkPcs && !pvNode && Hist[ply - 1].move &&
@@ -490,20 +526,22 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
             return -INF;
         }
 
-        return 0;
+        return 1 - (nodes & 2);
     }
 
     if (best >= beta && getCapture(bestMove) < CAPTURE) {
-        killerMoves[ply][1] = killerMoves[ply][0];
-        killerMoves[ply][0] = bestMove;
+        if (killerMoves[ply][0] != bestMove) {
+            killerMoves[ply][1] = killerMoves[ply][0];
+            killerMoves[ply][0] = bestMove;
+        }
 
         historyMoves[_board.turn][getFrom(bestMove)][getTo(bestMove)] +=
               depth * depth;
     }
 
-    if (!stopFlag) {
-        tt.record(_board.key, _board.ply, bestMove, depth, evalScore, alpha,
-                  hashFlag);
+    if (!isExtension) {
+        tt.record(_board.key, _board.ply, bestMove, depth, Hist[ply].eval,
+                  alpha, hashFlag);
     }
 
     return alpha;
