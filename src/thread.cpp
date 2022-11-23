@@ -142,8 +142,8 @@ int Search::quiescent(int alpha, int beta) {
     int hashFlag = TP_ALPHA;
     int ply = _board.ply;
 
-    if (_board.checkPcs)
-        return negaMax(alpha, beta, 1, false, true);
+    // if (_board.checkPcs)
+    //     return negaMax(alpha, beta, 1, false, true);
 
     if (checkForStop()) {
         stopFlag = 1;
@@ -185,8 +185,9 @@ int Search::quiescent(int alpha, int beta) {
     } else {
         Hist[ply].eval = evalScore;
 
-        if (!pvNode && (flag == TP_EXACT || (flag == TP_BETA && ttScore >= evalScore) ||
-            (flag == TP_ALPHA && ttScore <= evalScore))) {
+        if (!pvNode &&
+            (flag == TP_EXACT || (flag == TP_BETA && ttScore >= evalScore) ||
+             (flag == TP_ALPHA && ttScore <= evalScore))) {
             evalScore = ttScore;
         }
     }
@@ -221,10 +222,6 @@ int Search::quiescent(int alpha, int beta) {
     for (int i = 0; i < mList.nMoves; i++) {
         mList.swapBest(i);
 
-        if (mList.moves[i].score < 0) {
-            break;
-        }
-
         unsigned move = mList.moves[i].move;
         Square fromSq = getFrom(move), toSq = getTo(move);
         Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
@@ -233,8 +230,11 @@ int Search::quiescent(int alpha, int beta) {
             toPc = _board.board[toSq ^ 8];
         }
 
-        int dMargin = standPat + pcVal[getPcType(toPc)];
-        if (dMargin < alpha)
+        if (mList.moves[i].score < 0)
+            continue;
+
+        int dMargin = standPat + 200 + pcVal[getPcType(toPc)];
+        if (dMargin < alpha && getCapture(move) < P_KNIGHT)
             continue;
 
         Hist[ply].move = move;
@@ -260,10 +260,10 @@ int Search::quiescent(int alpha, int beta) {
         }
     }
 
-    tt.record(_board.key, _board.ply, bestMove, 0, Hist[ply].eval, alpha,
-                  hashFlag);
+    tt.record(_board.key, _board.ply, bestMove, 0, Hist[ply].eval, best,
+              hashFlag);
 
-    return alpha;
+    return best;
 }
 
 int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
@@ -359,9 +359,11 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
           (!inCheck && ply >= 2 && Hist[ply].eval > Hist[ply - 2].eval);
 
     // static NMP
+    int evalMargin = evalScore - (75 - 25 * improving) * depth;
     if (!pvNode && !_board.checkPcs && depth <= 8 &&
-        evalScore - (75 - 25 * improving) * depth > beta && std::abs(alpha) < CHECKMATE)
-        return evalScore;
+        evalMargin > beta && std::abs(alpha) < CHECKMATE) {
+        return evalMargin;
+    }
 
     if (depth > 1 && !_board.checkPcs && !pvNode && Hist[ply - 1].move &&
         evalScore >= beta &&
