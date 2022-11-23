@@ -98,7 +98,7 @@ void UCI::Bench() {
         search.clearTT(8);
         search._setFen(fen);
         info->timeGiven = false;
-        info->depth = 12;
+        info->depth = 5;
         info->startTime = start_time;
         search.startSearch(info);
         search.wait();
