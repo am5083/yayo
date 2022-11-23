@@ -76,7 +76,7 @@ bool TTable::probe(std::uint64_t key, TTHash &out) {
 }
 
 void TTable::record(std::uint64_t key, int ply, unsigned short move, int depth,
-                    int eval, int score, unsigned char flag) {
+                    int eval, int score, bool pvNode, unsigned char flag) {
     std::uint64_t index = (key % maxEntries) * NUM_BUCKETS;
     TTHash *bucket = table + index;
 

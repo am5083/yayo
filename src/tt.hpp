@@ -27,7 +27,7 @@
 #define TP_ALPHA 1
 #define TP_BETA 2
 #define TP_UNKNOWN 9999999
-#define TP_INIT_SIZE 512
+#define TP_INIT_SIZE 64
 
 #define TP_INF 30000
 #define NUM_BUCKETS 4
@@ -86,7 +86,7 @@ class TTable {
 
     bool probe(std::uint64_t key, TTHash &out);
     void record(std::uint64_t key, int ply, unsigned short move, int depth,
-                int score, int eval, unsigned char flag);
+                int eval, int score, bool pvNode, unsigned char flag);
 
     void reset();
     void increaseAge();

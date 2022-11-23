@@ -260,7 +260,7 @@ int Search::quiescent(int alpha, int beta) {
         }
     }
 
-    tt.record(_board.key, _board.ply, bestMove, 0, Hist[ply].eval, best,
+    tt.record(_board.key, _board.ply, bestMove, 0, Hist[ply].eval, best, pvNode,
               hashFlag);
 
     return best;
@@ -404,6 +404,9 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
     int movesSearched = 0;
     int skip = 0;
 
+    // if (!ttHit && depth >= 4)
+    //     depth--;
+
     for (int i = 0; i < mList.nMoves; i++) {
         mList.swapBest(i);
         const unsigned curr_move = mList.moves[i].move;
@@ -545,12 +548,10 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
               depth * depth;
     }
 
-    if (!isExtension) {
-        tt.record(_board.key, _board.ply, bestMove, depth, Hist[ply].eval,
-                  alpha, hashFlag);
-    }
+    tt.record(_board.key, _board.ply, bestMove, depth, Hist[ply].eval, best,
+              pvNode, hashFlag);
 
-    return alpha;
+    return best;
 }
 
 int Search::search() {
@@ -736,6 +737,6 @@ void Search::joinThread() {
     }
 }
 
-void Search::clearTT() { tt.init(256); }
+void Search::clearTT(int size) { tt.init(size); }
 
 } // namespace Yayo

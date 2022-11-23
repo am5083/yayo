@@ -108,6 +108,7 @@ class UCI {
 
   private:
     Search &search;
+    int ttSize = TP_INIT_SIZE;
 };
 
 } // namespace Yayo
