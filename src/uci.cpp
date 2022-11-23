@@ -77,7 +77,7 @@ Bitboard Yayo::divide(Board &board, moveList *mL, int start, int cur) {
         unmake(board, mList.moves[i].move);
         if (cur == start) {
             print_move(mList.moves[i].move);
-            std::cout << ": " << thisMoves << std::endl;
+            std::cout << ": " << thisMoves << "\n";
         }
     }
 
@@ -92,17 +92,17 @@ void UCI::Bench() {
 
     std::uint64_t start_time = get_time();
     std::uint64_t total_nodes = 0;
+    std::uint64_t total_time = 0;
 
     for (auto &fen : benchPos) {
-        search.clearTT();
+        search.clearTT(8);
         search._setFen(fen);
-
         info->timeGiven = false;
         info->depth = 5;
         info->startTime = start_time;
         search.startSearch(info);
-
         search.wait();
+        total_time += get_time() - start_time;
         total_nodes += search.get_nodes();
     }
 
@@ -110,7 +110,7 @@ void UCI::Bench() {
     total_nodes += search.get_nodes();
 
     std::uint64_t end_time = get_time();
-    long double total_time = 1.0 * (end_time - start_time) / 1000.0;
+    total_time /= 1000;
 
     std::cout << total_nodes << " nodes " << (long)(total_nodes / total_time)
               << " nps" << std::endl;
@@ -123,15 +123,15 @@ void UCI::Uci() {
 
     std::cout << "option name Threads type spin default 1 min 1 max 1"
               << std::endl;
-    std::cout << "option name Hash type spin default 400 min 400 max 1024"
-              << std::endl;
+    std::cout << "option name Hash type spin default " << TP_INIT_SIZE
+              << " min 1 max 1024" << std::endl;
     std::cout << "option name Ponder type check default False" << std::endl;
     std::cout << "uciok" << std::endl;
 }
 
 void UCI::NewGame() {
     tt.reset();
-    search.clearTT();
+    search.clearTT(ttSize);
     search._setFen(START_POS);
 }
 
@@ -144,8 +144,9 @@ void UCI::Go(Info *info) {
 
 void UCI::Stop() { search.stopSearch(); }
 
-void UCI::Perft(int depth) {
+std::uint64_t UCI::Perft(int depth) {
     Board board;
+    board.setFen(START_POS);
 
     unsigned long long n;
     if (depth == 1) {
@@ -157,13 +158,15 @@ void UCI::Perft(int depth) {
             std::cout << ": 1\n";
         }
 
-        std::cout << std::endl;
+        std::cout << "\n";
     } else {
         n = divide(board, nullptr, depth, depth);
-        std::cout << std::endl;
+        std::cout << "\n";
     }
 
-    std::cout << "total: " << n << std::endl;
+    std::cout << "total: " << n << "\n";
+
+    return n;
 }
 
 void UCI::Main() {
@@ -346,6 +349,24 @@ void UCI::Main() {
         } else if (cmd == "uci") {
             Uci();
         } else if (cmd == "setoption") {
+            std::string args;
+            iss >> args;
+
+            if (args == "name") {
+                iss >> args;
+
+                if (args == "Hash") {
+                    iss >> args;
+
+                    if (args == "value") {
+                        int size = 0;
+                        iss >> size;
+                        ttSize = size;
+                        NewGame();
+                    }
+                }
+            }
+
         } else if (cmd == "eval") {
             moveList mList = {0};
             generate(board, &mList);

@@ -36,6 +36,20 @@ int main(int argc, char *argv[]) {
             TunerEntries tuner("selfplay.pgn");
             tuner.runTuner();
             return 0;
+        } else if (strcmp(argv[1], "perft") == 0) {
+            init_arrays();
+            initMvvLva();
+
+            std::uint64_t start_time = get_time();
+            std::uint64_t total_nodes = uci.Perft(7);
+            std::uint64_t end_time = get_time();
+            long double total_time =
+                  1.0 * double(end_time - start_time) / 1000.0;
+
+            std::uint64_t nps = (long)(total_nodes / total_time);
+            std::cout << "nps: " << nps << std::endl;
+
+            return 0;
         }
     }
 

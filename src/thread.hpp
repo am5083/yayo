@@ -63,7 +63,7 @@ class Search {
 
     void startSearch(Info *_info);
 
-    void clearTT();
+    void clearTT(int size);
     void wait();
     void isReady();
     void joinThread();
@@ -73,7 +73,7 @@ class Search {
     void _make(std::uint16_t move);
     void scoreMoves(moveList *mList, unsigned ttMove = 0);
     int quiescent(int alpha, int beta);
-    int negaMax(int alpha, int beta, int depth, bool nullMove, bool pvNode,
+    int negaMax(int alpha, int beta, int depth, bool cutNode,
                 bool isExtension = false);
     moveList generateMoves();
     Board getBoard();
