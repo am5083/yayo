@@ -137,21 +137,14 @@ class Board {
         queenRooks |= pieces(ROOK, C);
         queenBishops |= pieces(BISHOP, C);
 
-        return (pawnAttacks[~C][sq] & pieces(PAWN, C)) | (knightAttacks[sq] & knights) | (kingAttacks[sq] & kings) |
-               (getBishopAttacks(sq, occ) & queenBishops) | (getRookAttacks(sq, occ) & queenRooks);
+        return (pawnAttacks[~C][sq] & pieces(PAWN, C) & occ) | (knightAttacks[sq] & knights & occ) | (kingAttacks[sq] & kings & occ) |
+                (getBishopAttacks(sq, occ) & queenBishops) | (getRookAttacks(sq, occ) & queenRooks);
     }
 
     constexpr Bitboard attacksToSq(Square sq, Bitboard occ) const {
-        Bitboard knights, kings, queenRooks, queenBishops;
-        knights = pieces(KNIGHT);
-        kings = pieces(KING);
-        queenRooks = queenBishops = pieces(QUEEN);
-        queenRooks |= pieces(ROOK);
-        queenBishops |= pieces(BISHOP);
-        Bitboard pawns = pawnAttacks[WHITE][sq] | pawnAttacks[BLACK][sq];
-
-        return (pawns & pieces(PAWN)) | (knightAttacks[sq] & knights) | (kingAttacks[sq] & kings) | (getBishopAttacks(sq, occ) & queenBishops)
-            | (getRookAttacks(sq, occ) & queenRooks);
+        if (turn == WHITE)
+            return attacksToKing<BLACK>(sq, occ);
+        return attacksToKing<WHITE>(sq, occ);
     }
 };
 
@@ -168,13 +161,13 @@ constexpr bool Board::isDraw() {
 constexpr bool Board::isSqAttacked(Square sq, Bitboard occ, Color byColor) const {
     Bitboard pawns, knights, kings, bishopQueens, rookQueens;
     pawns = pieces(PAWN, byColor);
-    if (pawnAttacks[~byColor][sq] & pawns)
+    if (pawnAttacks[~byColor][sq] & pawns & occ)
         return true;
     knights = pieces(KNIGHT, byColor);
-    if (knightAttacks[sq] & knights)
+    if (knightAttacks[sq] & knights & occ)
         return true;
     kings = pieces(KING, byColor);
-    if (kingAttacks[sq] & kings)
+    if (kingAttacks[sq] & kings & occ)
         return true;
     rookQueens   = pieces(QUEEN, byColor);
     bishopQueens = rookQueens | pieces(BISHOP, byColor);
