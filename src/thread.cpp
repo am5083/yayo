@@ -291,10 +291,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
     bool pvNode = alpha < (beta - 1);
 
     if (_board.ply > 0) {
-        if (_board.halfMoves >= 100 || _board.isDraw())
-            return 1 - (nodes & 2);
-
-        if (_board.isTMR())
+        if (_board.halfMoves >= 100 || _board.isDraw() || _board.isTMR())
             return 1 - (nodes & 2);
 
         alpha = std::max(alpha, -INF + _board.ply);
@@ -349,8 +346,9 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         Hist[ply].eval = evalScore;
         // try tt score
 
-        if (!pvNode && (flag == TP_EXACT || (flag == TP_BETA && ttScore >= evalScore) ||
-            (flag == TP_ALPHA && ttScore <= evalScore))) {
+        if (!pvNode &&
+            (flag == TP_EXACT || (flag == TP_BETA && ttScore >= evalScore) ||
+             (flag == TP_ALPHA && ttScore <= evalScore))) {
             evalScore = ttScore;
         }
     }
@@ -359,9 +357,9 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
           (!inCheck && ply >= 2 && Hist[ply].eval > Hist[ply - 2].eval);
 
     // static NMP
-    int evalMargin = evalScore - (75 - 25 * improving) * depth;
-    if (!pvNode && !_board.checkPcs && depth <= 8 &&
-        evalMargin > beta && std::abs(alpha) < CHECKMATE) {
+    int evalMargin = evalScore - (75 - 28 * improving) * depth;
+    if (!pvNode && !_board.checkPcs && depth <= 8 && evalMargin > beta &&
+        std::abs(alpha) < CHECKMATE) {
         return evalMargin;
     }
 
@@ -388,6 +386,11 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         }
     }
 
+    // if (!pvNode && depth <= 1 &&
+    //     (evalScore <= (alpha - 350 - 15 * (depth - 1))) && !inCheck) {
+    //     return quiescent(alpha, beta);
+    // }
+
     moveList mList = {{{0}}};
     generate(_board, &mList);
     scoreMoves(&mList, ttMove);
@@ -400,6 +403,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
     unsigned bestMove = move;
     int movesSearched = 0;
     int skip = 0;
+
     for (int i = 0; i < mList.nMoves; i++) {
         mList.swapBest(i);
         const unsigned curr_move = mList.moves[i].move;

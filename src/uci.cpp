@@ -77,7 +77,7 @@ Bitboard Yayo::divide(Board &board, moveList *mL, int start, int cur) {
         unmake(board, mList.moves[i].move);
         if (cur == start) {
             print_move(mList.moves[i].move);
-            std::cout << ": " << thisMoves << std::endl;
+            std::cout << ": " << thisMoves << "\n";
         }
     }
 
@@ -144,8 +144,9 @@ void UCI::Go(Info *info) {
 
 void UCI::Stop() { search.stopSearch(); }
 
-void UCI::Perft(int depth) {
+std::uint64_t UCI::Perft(int depth) {
     Board board;
+    board.setFen(START_POS);
 
     unsigned long long n;
     if (depth == 1) {
@@ -157,13 +158,15 @@ void UCI::Perft(int depth) {
             std::cout << ": 1\n";
         }
 
-        std::cout << std::endl;
+        std::cout << "\n";
     } else {
         n = divide(board, nullptr, depth, depth);
-        std::cout << std::endl;
+        std::cout << "\n";
     }
 
-    std::cout << "total: " << n << std::endl;
+    std::cout << "total: " << n << "\n";
+
+    return n;
 }
 
 void UCI::Main() {
