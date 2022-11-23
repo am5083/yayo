@@ -404,8 +404,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
     int movesSearched = 0;
     int skip = 0;
 
-    // if (!ttHit && depth >= 4)
-    //     depth--;
+    if (!ttHit && depth >= 4)
+        depth--;
 
     for (int i = 0; i < mList.nMoves; i++) {
         mList.swapBest(i);
