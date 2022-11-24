@@ -593,7 +593,7 @@ int Search::search() {
             score = negaMax(alpha, beta, aspirationDepth, false);
 
             if (score <= alpha) {
-                numFailed++;
+                numFailed = 0;
 
                 beta = (alpha + beta) / 2;
                 alpha = std::max(-INF, alpha - window);
@@ -603,12 +603,19 @@ int Search::search() {
 
                 beta = std::min(INF, beta + window);
 
-                // if (std::abs(score) < (INF / 2))
-                //     aspirationDepth--;
+                if (numFailed > 1) {
+                    numFailed = 0;
+                    aspirationDepth = j;
+                    beta = INF;
+                    alpha = -INF;
+                    continue;
+                }
+
+                if (std::abs(score) < CHECKMATE)
+                    aspirationDepth--;
 
                 if (pvTableLen[0] && !bestMove)
                     bestMove = pvTable[0][0];
-
             } else {
                 if (pvTableLen[0])
                     bestMove = pvTable[0][0];
