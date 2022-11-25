@@ -101,13 +101,14 @@ void TTable::record(std::uint64_t key, int ply, unsigned short move, int depth,
 
     TTHash *rep = bucket;
     for (int i = 1; i < NUM_BUCKETS; i++) {
-        if (((bucket + i)->key ^ (bucket + i)->hash) == key) {
+        std::uint64_t bucket_key = (bucket + i)->key ^ (bucket + i)->hash;
+        if (bucket_key == key) {
             if (flag == TP_EXACT ||
                 depth + 1 + 2 * pvNode >= (bucket + i)->depth() - 3) {
                 *(bucket + i) = temp;
             }
             return;
-        } else if ((bucket + i)->generation() <= rep->generation()) {
+        } else {
             rep = (bucket + i);
         }
     }

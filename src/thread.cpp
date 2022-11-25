@@ -386,8 +386,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         }
     }
 
-    // if (!pvNode && depth <= 1 &&
-    //     (evalScore <= (alpha - 350 - 15 * (depth - 1))) && !inCheck) {
+    // if (!pvNode && depth <= 3 &&
+    //     (evalScore <= (alpha - 119 - 182 * (depth - 1)))) {
     //     return quiescent(alpha, beta);
     // }
 
