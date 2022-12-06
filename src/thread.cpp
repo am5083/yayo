@@ -36,8 +36,6 @@ void Search::startSearch(Info *_info) {
     numRep = 0;
 
     memset(&historyMoves, 0, sizeof(historyMoves));
-    memset(&killerMoves, NO_MOVE, sizeof(killerMoves));
-    memset(&killerMates, NO_MOVE, sizeof(killerMates));
     memset(&pvTableLen, NO_MOVE, sizeof(pvTableLen));
     memset(&pvTable, NO_MOVE, sizeof(pvTable));
     memset(&Hist, 0, sizeof(Hist));
@@ -75,7 +73,7 @@ void Search::scoreMoves(moveList *mList, unsigned ttMove) {
     for (int i = 0; i < mList->nMoves; i++) {
         unsigned move = mList->moves[i].move;
 
-        if (move == pvTable[_board.ply][0]) {
+        if (move == pvTable[_board.ply - 1][0]) {
             mList->moves[i].score = 500000;
             continue;
         } else if (ttMove && move == ttMove) {
@@ -394,6 +392,11 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
     moveList mList = {{{0}}};
     generate(_board, &mList);
     scoreMoves(&mList, ttMove);
+
+    killerMoves[ply][0] = 0;
+    killerMoves[ply][1] = 0;
+    killerMates[ply][0] = 0;
+    killerMates[ply][1] = 0;
 
     if (depth <= 3 && !pvNode && evalScore + futilityMargin[depth] <= alpha &&
         std::abs(alpha) < CHECKMATE && mList.nMoves > 1)
