@@ -73,8 +73,8 @@ void Search::scoreMoves(moveList *mList, unsigned ttMove) {
     for (int i = 0; i < mList->nMoves; i++) {
         unsigned move = mList->moves[i].move;
 
-        if (ttMove && move == ttMove) {
-            mList->moves[i].score = 200000;
+        if (move == ttMove) {
+            mList->moves[i].score = 9000000;
             continue;
         }
 
@@ -87,11 +87,13 @@ void Search::scoreMoves(moveList *mList, unsigned ttMove) {
 
         if (moveFlag >= P_KNIGHT) {
             if (moveFlag >= CP_ROOK)
-                mList->moves[i].score = 20000 + 1400 + (moveFlag - 10);
+                mList->moves[i].score = 200000 + 1400 + (moveFlag - 10);
             else if (moveFlag >= CP_KNIGHT)
-                mList->moves[i].score = 20000 + 1200 + (moveFlag - 10);
+                mList->moves[i].score = 20425 + (moveFlag - 10);
+            else if (moveFlag < CP_KNIGHT && moveFlag >= P_ROOK)
+                mList->moves[i].score = 20195 + 75 + moveFlag - 10;
             else
-                mList->moves[i].score = 19000 + 75 + moveFlag - 10;
+                mList->moves[i].score = 19800 + 75 + moveFlag - 10;
         }
 
         else if (moveFlag >= CAPTURE && moveFlag < P_KNIGHT) {
@@ -131,8 +133,10 @@ void Search::scoreMoves(moveList *mList, unsigned ttMove) {
             }
 
             else {
-                mList->moves[i].score =
+                int historyScore =
                       historyMoves[_board.turn][getFrom(move)][getTo(move)];
+                mList->moves[i].score =
+                      (historyScore <= 16000) ? historyScore : historyScore;
             }
         }
     }
