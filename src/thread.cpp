@@ -376,14 +376,14 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         evalScore >= beta &&
         (_board.pieces(_board.turn) ^ _board.pieces(PAWN, _board.turn) ^
          _board.pieces(KING, _board.turn)) &&
-        (!ttHit || flag == TP_BETA || (ttScore >= beta && ttScore != 0))) {
+        (!ttHit || flag == TP_BETA || ttScore >= beta)) {
         int R = 4 + depth / 6 +
                 std::min(3, (evalScore - beta) / (135 - 45 * improving)) +
                 improving;
 
         Hist[ply].move = NO_MOVE;
         makeNullMove(_board);
-        score = -negaMax(-beta, -beta + 1, depth - R, !cutNode, isExtension);
+        score = -negaMax(-beta, -beta + 1, depth - R, !cutNode);
         unmakeNullMove(_board);
 
         if (score >= beta) {
