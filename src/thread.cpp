@@ -455,6 +455,8 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
             }
         }
 
+        Hist[ply].move = curr_move;
+
         make(_board, mList.moves[i].move);
 
         // if (skip && !_board.checkPcs && movesSearched >= 1) {
@@ -477,11 +479,12 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         // }
         //
 
-        if (futilityPrune && getCapture(curr_move) < CAPTURE &&
-            !_board.checkPcs) {
-            unmake(_board, mList.moves[i].move);
-            continue;
-        }
+        // if (futilityPrune && getCapture(curr_move) < CAPTURE &&
+        //     !_board.checkPcs) {
+        //     Hist[ply - 1].move = NO_MOVE;
+        //     unmake(_board, mList.moves[i].move);
+        //     continue;
+        // }
 
         int R = 1;
         if (movesSearched >= (1 + (2 * rootNode)) && depth >= 3 && isQuiet) {
@@ -497,8 +500,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
 
             R = std::min(depth - 1, std::max(1, R));
         }
-
-        Hist[ply].move = curr_move;
 
         nodes++;
         movesSearched++;
