@@ -145,6 +145,7 @@ void Search::scoreMoves(moveList *mList, unsigned ttMove) {
 int Search::quiescent(int alpha, int beta) {
     int hashFlag = TP_ALPHA;
     int ply = _board.ply;
+    pvTableLen[ply] = 0;
 
     if (checkForStop()) {
         stopFlag = 1;
@@ -155,8 +156,8 @@ int Search::quiescent(int alpha, int beta) {
 
     tt.prefetch(_board.key);
     bool pvNode = (beta - alpha) < 1;
-    pvTableLen[_board.ply] = 0;
 
+    bool nullMove = (_board.ply >= 1 && !Hist[ply - 1].move) ? true : false;
     bool ttHit = false;
     int flag = -1;
     int evalScore = INF;
@@ -164,13 +165,11 @@ int Search::quiescent(int alpha, int beta) {
     unsigned tpMove = 0;
     TTHash entry = {0};
 
-    if (tt.probe(_board.key, entry)) {
+    if (!nullMove && tt.probe(_board.key, entry)) {
         ttHit = true;
         ttScore = entry.score(_board.ply);
         tpMove = entry.move();
-
         evalScore = entry.eval();
-
         flag = entry.flag();
 
         if (!pvNode &&
@@ -183,8 +182,13 @@ int Search::quiescent(int alpha, int beta) {
     Eval eval(_board);
 
     if (evalScore == INF) {
-        evalScore = eval.eval();
-        Hist[ply].eval = evalScore;
+        if (ply >= 1 && !Hist[ply - 1].move) {
+            evalScore = -Hist[ply - 1].eval + 2 * TEMPO;
+            Hist[ply].eval = evalScore;
+        } else {
+            evalScore = eval.eval();
+            Hist[ply].eval = evalScore;
+        }
     } else {
         Hist[ply].eval = evalScore;
 
@@ -273,7 +277,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
                     bool isExtension) {
     int hashFlag = TP_ALPHA;
     const int ply = _board.ply;
-    pvTableLen[ply] = 0;
 
     tt.prefetch(_board.key);
     if (checkForStop()) {
@@ -290,6 +293,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
     if (depth <= 0)
         return quiescent(alpha, beta);
 
+    pvTableLen[ply] = 0;
     bool futilityPrune = false;
     bool pvNode = alpha < (beta - 1);
 
@@ -310,13 +314,15 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         }
     }
 
+    bool nullMove = (_board.ply >= 1 && !Hist[ply - 1].move) ? true : false;
     int evalScore = INF;
     bool ttHit = false;
     int ttScore = 0;
     unsigned ttMove = 0;
     int flag = -1;
     TTHash entry = {0};
-    if (tt.probe(_board.key, entry)) {
+
+    if (!nullMove && tt.probe(_board.key, entry)) {
         ttHit = true;
         ttScore = entry.score(_board.ply);
         ttMove = entry.move();
