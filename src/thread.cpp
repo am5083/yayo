@@ -353,6 +353,11 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         }
     }
 
+    killerMoves[ply + 1][0] = 0;
+    killerMoves[ply + 1][1] = 0;
+    killerMates[ply + 1][0] = 0;
+    killerMates[ply + 1][1] = 0;
+
     bool improving =
           (!inCheck && ply >= 2 && Hist[ply].eval > Hist[ply - 2].eval);
 
@@ -394,11 +399,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
     moveList mList = {{{0}}};
     generate(_board, &mList);
     scoreMoves(&mList, ttMove);
-
-    killerMoves[ply][0] = 0;
-    killerMoves[ply][1] = 0;
-    killerMates[ply][0] = 0;
-    killerMates[ply][1] = 0;
 
     if (depth <= 3 && !pvNode && evalScore + futilityMargin[depth] <= alpha &&
         std::abs(alpha) < CHECKMATE && mList.nMoves > 1)
