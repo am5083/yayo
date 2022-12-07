@@ -377,14 +377,14 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         return evalMargin;
     }
 
-    if (depth > 1 && !_board.checkPcs && !pvNode && Hist[ply - 1].move &&
+    if (depth > 2 && !_board.checkPcs && !pvNode && Hist[ply - 1].move &&
         evalScore >= beta &&
         (_board.pieces(_board.turn) ^ _board.pieces(PAWN, _board.turn) ^
          _board.pieces(KING, _board.turn)) &&
         (!ttHit || flag == TP_BETA || ttScore >= beta)) {
-        int R = 4 + depth / 6 +
-                std::min(3, (evalScore - beta) / (135 - 45 * improving)) +
-                improving;
+
+        int R =
+              4 + depth / 6 + std::min(3, (evalScore - beta) / 100) + improving;
 
         Hist[ply].move = NO_MOVE;
         makeNullMove(_board);
@@ -426,6 +426,12 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         const unsigned curr_move = mList.moves[i].move;
         bool inCheck = _board.checkPcs;
         bool isQuiet = (getCapture(curr_move) < CAPTURE);
+        bool isCapture = (getCapture(curr_move) == CAPTURE ||
+                          getCapture(curr_move) == EP_CAPTURE ||
+                          getCapture(curr_move) >= CP_KNIGHT);
+
+        if (skip && isQuiet)
+            continue;
 
         Square fromSq = getFrom(curr_move), toSq = getTo(curr_move);
         Piece fromPc = _board.board[fromSq], toPc = _board.board[toSq];
@@ -436,9 +442,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
 
         if (_board.ply > 0 && best > -CHECKMATE) {
             if (getCapture(curr_move) < CAPTURE) {
-                if (skip)
-                    continue;
-
                 int reducedDepth = std::max(
                       0,
                       std::min(
