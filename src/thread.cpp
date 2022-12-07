@@ -146,9 +146,6 @@ int Search::quiescent(int alpha, int beta) {
     int hashFlag = TP_ALPHA;
     int ply = _board.ply;
 
-    // if (_board.checkPcs)
-    //     return negaMax(alpha, beta, 1, false, true);
-
     if (checkForStop()) {
         stopFlag = 1;
         return ABORT_SCORE;
@@ -160,6 +157,7 @@ int Search::quiescent(int alpha, int beta) {
     bool pvNode = (beta - alpha) < 1;
     pvTableLen[_board.ply] = 0;
 
+    bool ttHit = false;
     int flag = -1;
     int evalScore = INF;
     int ttScore = 0;
@@ -167,6 +165,7 @@ int Search::quiescent(int alpha, int beta) {
     TTHash entry = {0};
 
     if (tt.probe(_board.key, entry)) {
+        ttHit = true;
         ttScore = entry.score(_board.ply);
         tpMove = entry.move();
 
@@ -189,7 +188,7 @@ int Search::quiescent(int alpha, int beta) {
     } else {
         Hist[ply].eval = evalScore;
 
-        if (!pvNode &&
+        if (ttHit &&
             (flag == TP_EXACT || (flag == TP_BETA && ttScore >= evalScore) ||
              (flag == TP_ALPHA && ttScore <= evalScore))) {
             evalScore = ttScore;
@@ -340,7 +339,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
 
     if (evalScore == INF) {
         if (ply >= 1 && !Hist[ply - 1].move) {
-            evalScore = Hist[ply - 1].eval;
+            evalScore = -Hist[ply - 1].eval + 2 * TEMPO;
             Hist[ply].eval = evalScore;
         } else {
             evalScore = eval.eval();
