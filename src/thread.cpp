@@ -73,13 +73,15 @@ void Search::scoreMoves(moveList *mList, unsigned ttMove) {
     for (int i = 0; i < mList->nMoves; i++) {
         unsigned move = mList->moves[i].move;
 
-        if (move == pvTable[_board.ply - 1][0]) {
-            mList->moves[i].score = 500000;
-            continue;
-        } else if (ttMove && move == ttMove) {
+        if (ttMove && move == ttMove) {
             mList->moves[i].score = 200000;
             continue;
         }
+
+        // if (move == pvTable[_board.ply - 1][0]) {
+        //             mList->moves[i].score = 500000;
+        //             continue;
+        //         }
 
         int moveFlag = getCapture(move);
 
