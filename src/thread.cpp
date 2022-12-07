@@ -350,7 +350,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         Hist[ply].eval = evalScore;
         // try tt score
 
-        if (!pvNode &&
+        if (ttHit &&
             (flag == TP_EXACT || (flag == TP_BETA && ttScore >= evalScore) ||
              (flag == TP_ALPHA && ttScore <= evalScore))) {
             evalScore = ttScore;
