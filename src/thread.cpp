@@ -442,17 +442,13 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
 
         if (_board.ply > 0 && best > -CHECKMATE) {
             if (getCapture(curr_move) < CAPTURE) {
-                int reducedDepth = std::max(
-                      0,
-                      std::min(
-                            depth,
-                            depth -
-                                  int(lmrDepthReduction[std::min(
-                                        63, depth)][std::min(63,
-                                                             movesSearched)])));
+                int reducedDepth =
+                      depth - int(lmrDepthReduction[std::min(
+                                    63, depth)][std::min(63, movesSearched)]);
+
                 if (reducedDepth <= 8 && !inCheck &&
                     evalScore + 125 + 100 * reducedDepth +
-                                historyMoves[_board.turn][fromSq][toSq] / 5 <
+                                historyMoves[_board.turn][fromSq][toSq] / 512 <
                           alpha) {
                     skip = true;
                 }
@@ -495,16 +491,15 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         // }
 
         int R = 1;
-        if (movesSearched >= (1 + (2 * rootNode)) && depth >= 3 && isQuiet) {
+        if (movesSearched > (1 + (2 * rootNode)) && depth >= 3 && isQuiet) {
             R = lmrDepthReduction[std::min(63, depth)]
                                  [std::min(63, movesSearched)];
             R += !pvNode;
             R += !improving;
             R += cutNode;
 
-            R -= 2 * (mList.moves[i].score > 19500);
-            int mHist = historyMoves[_board.turn][fromSq][toSq] / 125;
-            R -= std::min(2, mHist) * isQuiet;
+            int mHist = historyMoves[_board.turn][fromSq][toSq] / 1024;
+            R -= std::min(2, mHist);
 
             R = std::min(depth - 1, std::max(1, R));
         }
