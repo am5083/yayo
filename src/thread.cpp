@@ -447,9 +447,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
                                     63, depth)][std::min(63, movesSearched)]);
 
                 if (reducedDepth <= 8 && !inCheck &&
-                    evalScore + 125 + 100 * reducedDepth +
-                                historyMoves[_board.turn][fromSq][toSq] / 512 <
-                          alpha) {
+                    evalScore + 125 + 100 * reducedDepth < alpha) {
                     skip = true;
                 }
 
