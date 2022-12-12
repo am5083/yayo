@@ -47,7 +47,8 @@ const bool Search::checkForStop() const {
     stopCount++;
     stopCount &= 1023;
 
-    if (info->uciStop) {
+    if (info->uciStop || stopFlag || info->uciQuit) {
+        stopFlag = true;
         return true;
     }
 
@@ -171,12 +172,6 @@ int Search::quiescent(int alpha, int beta) {
         tpMove = entry.move();
         evalScore = entry.eval();
         flag = entry.flag();
-
-        if (!pvNode &&
-            (flag == TP_EXACT || (flag == TP_BETA && ttScore >= beta) ||
-             (flag == TP_ALPHA && ttScore <= alpha))) {
-            return ttScore;
-        }
     }
 
     Eval eval(_board);
@@ -204,6 +199,11 @@ int Search::quiescent(int alpha, int beta) {
 
     if (best >= beta)
         return best;
+
+    if (!pvNode && (flag == TP_EXACT || (flag == TP_BETA && ttScore >= beta) ||
+                    (flag == TP_ALPHA && ttScore <= alpha))) {
+        return ttScore;
+    }
 
     int queenValue = (eval.mgPhase * MgScore(queenScore) +
                       eval.egPhase * EgScore(queenScore)) /
@@ -336,12 +336,27 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         }
     }
 
-    int futilityMargin[] = {0, 100, 300, 700};
+    killerMoves[ply + 1][0] = 0;
+    killerMoves[ply + 1][1] = 0;
+    killerMates[ply + 1][0] = 0;
+    killerMates[ply + 1][1] = 0;
 
+    int evalMargin = -INF;
+    bool improving = false;
     Eval eval(_board);
     int best = -INF;
     unsigned move = 0;
     int score = 0;
+
+    if (!ttHit && depth >= 4)
+        depth--;
+
+    if (inCheck) {
+        evalScore = INF;
+        Hist[ply].eval = INF;
+        improving = false;
+        goto move_loop;
+    }
 
     if (evalScore == INF) {
         if (ply >= 1 && !Hist[ply - 1].move) {
@@ -362,16 +377,10 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         }
     }
 
-    killerMoves[ply + 1][0] = 0;
-    killerMoves[ply + 1][1] = 0;
-    killerMates[ply + 1][0] = 0;
-    killerMates[ply + 1][1] = 0;
-
-    bool improving =
-          (!inCheck && ply >= 2 && Hist[ply].eval > Hist[ply - 2].eval);
+    improving = (!inCheck && ply >= 2 && Hist[ply].eval > Hist[ply - 2].eval);
 
     // static NMP
-    int evalMargin = evalScore - (75 - 28 * improving) * depth;
+    evalMargin = evalScore - (75 - 28 * improving) * depth;
     if (!pvNode && !_board.checkPcs && depth <= 8 && evalMargin > beta &&
         std::abs(alpha) < CHECKMATE) {
         return evalMargin;
@@ -405,21 +414,16 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
     //     return quiescent(alpha, beta);
     // }
 
+move_loop:
+
     moveList mList = {{{0}}};
     generate(_board, &mList);
     scoreMoves(&mList, ttMove);
-
-    if (depth <= 3 && !pvNode && evalScore + futilityMargin[depth] <= alpha &&
-        std::abs(alpha) < CHECKMATE && mList.nMoves > 1)
-        futilityPrune = true;
 
     bool rootNode = (_board.ply == 0);
     unsigned bestMove = move;
     int movesSearched = 0;
     int skip = 0;
-
-    if (!ttHit && depth >= 4)
-        depth--;
 
     for (int i = 0; i < mList.nMoves; i++) {
         mList.swapBest(i);
