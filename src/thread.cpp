@@ -465,33 +465,6 @@ move_loop:
 
         make(_board, mList.moves[i].move);
 
-        // if (skip && !_board.checkPcs && movesSearched >= 1) {
-        //     unmake(_board, curr_move);
-        //     continue;
-        // }
-
-        // if (!pvNode && !_board.checkPcs && movesSearched >= 1 &&
-        //     getCapture(curr_move) < CAPTURE && depth <= 8 &&
-        //     see < -50 * depth) {
-        //     unmake(_board, curr_move);
-        //     continue;
-        // }
-
-        // if (!pvNode && !inCheck && depth >= 3 && movesSearched >= 4 &&
-        //     (mList.moves[i].score < 0 || getCapture(curr_move) < CAPTURE) &&
-        //     !_board.checkPcs) {
-        //     unmake(_board, mList.moves[i].move);
-        //     continue;
-        // }
-        //
-
-        // if (futilityPrune && getCapture(curr_move) < CAPTURE &&
-        //     !_board.checkPcs) {
-        //     Hist[ply - 1].move = NO_MOVE;
-        //     unmake(_board, mList.moves[i].move);
-        //     continue;
-        // }
-
         int R = 1;
         if (movesSearched > (1 + (2 * rootNode)) && depth >= 3 && isQuiet) {
             R = lmrDepthReduction[std::min(63, depth)]
