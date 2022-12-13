@@ -443,7 +443,16 @@ move_loop:
                     skip = true;
                 }
 
-                if (depth <= 8 && !_board.checkPcs &&
+                if (reducedDepth <= 8 &&
+                    numQuiets > lmpThresholds[improving][reducedDepth]) {
+                    skip = true;
+                }
+
+                if (depth <= 8 &&
+                    _board.see(toSq, toPc, fromSq, fromPc) < -60 * depth)
+                    continue;
+            } else if (isCapture) {
+                if (depth <= 8 &&
                     _board.see(toSq, toPc, fromSq, fromPc) < -80 * depth)
                     continue;
             }
