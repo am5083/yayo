@@ -1,4 +1,4 @@
-set (CMAKE_CXX_COMPILER "/usr/local/bin/g++-12")
+set (CMAKE_CXX_COMPILER "/usr/bin/clang++")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 cmake_minimum_required(VERSION 3.22)
