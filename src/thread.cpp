@@ -442,10 +442,10 @@ move_loop:
                     skip = true;
                 }
 
-                if (depth <= 8 && !inCheck && !pvNode &&
-                    numQuiets > lmpThresholds[improving][depth]) {
-                    skip = true;
-                }
+                // if (depth <= 8 && !inCheck && !pvNode &&
+                //     numQuiets > lmpThresholds[improving][depth]) {
+                //     skip = true;
+                // }
 
                 if (depth <= 8 &&
                     _board.see(toSq, toPc, fromSq, fromPc) < -60 * depth)
