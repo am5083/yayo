@@ -199,7 +199,7 @@ constexpr bool Board::isRepetition() const {
 
 constexpr bool Board::isTMR() const {
     int n = 1;
-        for (int i = gamePly - 2; i >= 0; i -= 2) {
+    for (int i = gamePly - 2; i >= 0; i -= 2) {
         if (i < gamePly - halfMoves) break;
         if (key == hist[i].key) {
             n++;

@@ -396,8 +396,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         }
     }
 
-    // if (!pvNode && depth <= 3 &&
-    //     (evalScore <= (alpha - 119 - 182 * (depth - 1)))) {
+    // if (depth <= 3 && (evalScore + 130 + 150 * depth <= alpha)) {
     //     return quiescent(alpha, beta);
     // }
 
@@ -443,8 +442,8 @@ move_loop:
                     skip = true;
                 }
 
-                if (reducedDepth <= 8 &&
-                    numQuiets > lmpThresholds[improving][reducedDepth]) {
+                if (depth <= 8 && !inCheck && !pvNode &&
+                    numQuiets > lmpThresholds[improving][depth]) {
                     skip = true;
                 }
 
@@ -470,8 +469,8 @@ move_loop:
             R += !improving;
             R += cutNode;
 
-            int mHist = historyMoves[_board.turn][fromSq][toSq] / 1024;
-            R -= std::min(2, mHist);
+            // int mHist = historyMoves[_board.turn][fromSq][toSq] / 1024;
+            // R -= std::min(2, mHist);
 
             R = std::min(depth - 1, std::max(1, R));
         }
