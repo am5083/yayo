@@ -538,110 +538,89 @@ move_loop:
 }
 
 int Search::search() {
-    abortDepth = -1;
-    int depth = info->depth;
-    int num = 2;
-
     int alpha = -INF, beta = INF;
-    int score = 0, prevScore = -INF;
+    int score = 0;
     unsigned bestMove = 0;
 
     double totalTime = 0;
-    for (int j = 1; j <= depth; j++) {
+    int depth = info->depth;
+
+    int alphaWindow = -12;
+    int betaWindow = 12;
+    int numFailed = 0;
+    int failDepth = -1;
+    for (int i = 1; i <= depth; i++) {
         double start = get_time();
-        int window = 10;
 
-        if (j >= 7) {
-            alpha = std::max(-INF, prevScore - window);
-            beta = std::min(INF, prevScore + window);
+        score = negaMax(alpha, beta, i, false);
+
+        if (score <= alpha) {
+            if (numFailed > 5) {
+                alpha = -INF;
+            }
+
+            beta = (alpha + beta) / 2;
+            alphaWindow *= 1.45;
+            alpha += alphaWindow + 1;
+            numFailed++;
+            i--;
+            continue;
+        }
+
+        if (score >= beta) {
+            if (numFailed > 5) {
+                beta = INF;
+            }
+
+            betaWindow *= 1.45;
+            beta += betaWindow + 1;
+            numFailed++;
+            i--;
+            continue;
+        }
+
+        if (i >= 3) {
+            alpha = score + alphaWindow;
+            beta = score + betaWindow;
+        }
+
+        if (info->uciStop) {
+            break;
+        }
+
+        if (pvTableLen[0])
+            bestMove = pvTable[0][0];
+
+        double end = ((get_time() - start) + 1) / 1000.0;
+        totalTime += end;
+        long double nps = (nodes / (totalTime));
+
+        std::cout << std::fixed << "info depth " << i;
+        std::cout << " seldepth " << selDepth;
+        std::cout << " hashfull " << tt.percentFull();
+        std::cout << " score";
+
+        if (std::abs(score) > (INF - MAX_PLY)) {
+            int tscore = 0;
+            if (score < 0)
+                tscore = -1;
+            else
+                tscore = 1;
+            std::cout << " mate " << tscore * ((INF - std::abs(score)) / 2);
         } else {
-            alpha = -INF;
-            beta = INF;
+            std::cout << " cp " << score;
+
+            if (score >= beta)
+                std::cout << "lowerbound";
+            if (score <= alpha)
+                std::cout << "upperbound";
         }
 
-        num = 0;
-        int numFailed = 0;
-        int aspirationDepth = j;
-
-        while (true) {
-
-            if (checkForStop()) {
-                abortDepth = aspirationDepth;
-                break;
-            }
-
-            num++;
-            aspirationDepth = std::max(1, aspirationDepth);
-            selDepth = 0;
-            score = negaMax(alpha, beta, aspirationDepth, false);
-
-            if (score <= alpha) {
-                numFailed = 0;
-
-                beta = (alpha + beta) / 2;
-                alpha = std::max(-INF, alpha - window);
-                aspirationDepth = j;
-            } else if (beta <= score) {
-                numFailed++;
-
-                beta = std::min(INF, beta + window);
-
-                if (numFailed > 1) {
-                    numFailed = 0;
-                    aspirationDepth = j;
-                    beta = INF;
-                    alpha = -INF;
-                    continue;
-                }
-
-                if (std::abs(score) < CHECKMATE)
-                    aspirationDepth--;
-
-                if (pvTableLen[0] && !bestMove)
-                    bestMove = pvTable[0][0];
-            } else {
-                if (pvTableLen[0])
-                    bestMove = pvTable[0][0];
-
-                double end = ((get_time() - start) + 1) / 1000.0;
-                totalTime += end;
-                long double nps = (nodes / (totalTime));
-
-                std::cout << std::fixed << "info depth " << aspirationDepth;
-                std::cout << " seldepth " << selDepth;
-                std::cout << " hashfull " << tt.percentFull();
-                std::cout << " score";
-
-                if (std::abs(score) > (INF - MAX_PLY)) {
-                    int tscore = 0;
-                    if (score < 0)
-                        tscore = -1;
-                    else
-                        tscore = 1;
-                    std::cout << " mate "
-                              << tscore * ((INF - std::abs(score)) / 2);
-                } else {
-                    std::cout << " cp " << score;
-
-                    if (score >= beta)
-                        std::cout << "lowerbound";
-                    if (score <= alpha)
-                        std::cout << "upperbound";
-                }
-
-                std::cout << " nodes " << nodes;
-                std::cout << " nps " << int(nps) << " time "
-                          << int(totalTime * 1000) << " pv ";
-                printPv();
-                std::cout << std::endl;
-
-                break;
-            }
-
-            window += window / 3;
-        }
-
-        prevScore = score;
+        std::cout << " nodes " << nodes;
+        std::cout << " nps " << int(nps) << " time " << int(totalTime * 1000)
+                  << " pv ";
+        printPv();
+        std::cout << std::endl;
     }
 
     if (!bestMove) {
