@@ -51,7 +51,7 @@ TunerEntries::TunerEntries(std::string file) {
         fens.push_back(line);
     }
 
-#pragma omp parallel for schedule(dynamic) num_threads(THREADS)
+#pragma omp parallel for schedule(static, 1) num_threads(THREADS)
     for (int i = 0; i < NUM_ENTRIES; i++) {
         std::string line = fens[i];
 
@@ -85,8 +85,8 @@ void TEntry::init(Board &board, std::string fen) {
     search._setFen(fen);
     search.probe = false;
 
-    // turn = board.turn;
-    search.negaMax(-INF, INF, 2, false);
+    turn = board.turn;
+    search.negaMax(-INF, INF, 4, false);
     auto pvMoves = search.getPv();
 
     for (auto move : pvMoves) {
@@ -249,13 +249,13 @@ void TunerEntries::updateSingleGradient(TEntry &entry,
 // clang-format off
 inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATURES][2]) {
     printf("\n");
-    printf("constexpr Score pawnScore   = S(%4d, %4d);\n", (int)cparams[0][0] + (int)params[0][0], (int)cparams[0][1] + (int)params[0][1]);
-    printf("constexpr Score knightScore = S(%4d, %4d);\n", (int)cparams[1][0] + (int)params[1][0], (int)cparams[1][1] + (int)params[1][1]);
-    printf("constexpr Score bishopScore = S(%4d, %4d);\n", (int)cparams[2][0] + (int)params[2][0], (int)cparams[2][1] + (int)params[2][1]);
-    printf("constexpr Score rookScore   = S(%4d, %4d);\n", (int)cparams[3][0] + (int)params[3][0], (int)cparams[3][1] + (int)params[3][1]);
-    printf("constexpr Score queenScore  = S(%4d, %4d);\n\n", (int)cparams[4][0] + (int)params[4][0], (int)cparams[4][1] + (int)params[4][1]);
+    printf("const Score pawnScore   = S(%4d, %4d);\n", (int)cparams[0][0] + (int)params[0][0], (int)cparams[0][1] + (int)params[0][1]);
+    printf("const Score knightScore = S(%4d, %4d);\n", (int)cparams[1][0] + (int)params[1][0], (int)cparams[1][1] + (int)params[1][1]);
+    printf("const Score bishopScore = S(%4d, %4d);\n", (int)cparams[2][0] + (int)params[2][0], (int)cparams[2][1] + (int)params[2][1]);
+    printf("const Score rookScore   = S(%4d, %4d);\n", (int)cparams[3][0] + (int)params[3][0], (int)cparams[3][1] + (int)params[3][1]);
+    printf("const Score queenScore  = S(%4d, %4d);\n\n", (int)cparams[4][0] + (int)params[4][0], (int)cparams[4][1] + (int)params[4][1]);
 
-    printf("constexpr Score taperedPawnPcSq[SQUARE_CT] = {");
+    printf("const Score taperedPawnPcSq[SQUARE_CT] = {");
     for (int i = 0, start = 5; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
@@ -263,7 +263,7 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     }
     printf("\n};\n");
 
-    printf("constexpr Score taperedKnightPcSq[SQUARE_CT] = {");
+    printf("const Score taperedKnightPcSq[SQUARE_CT] = {");
     for (int i = 0, start = 69; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
@@ -271,7 +271,7 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     }
     printf("\n};\n");
 
-    printf("constexpr Score taperedBishopPcSq[SQUARE_CT] = {");
+    printf("const Score taperedBishopPcSq[SQUARE_CT] = {");
     for (int i = 0, start = 133; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
@@ -279,7 +279,7 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     }
     printf("\n};\n");
 
-    printf("constexpr Score taperedRookPcSq[SQUARE_CT] = {");
+    printf("const Score taperedRookPcSq[SQUARE_CT] = {");
     for (int i = 0, start = 197; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
@@ -287,7 +287,7 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     }
     printf("\n};\n");
 
-    printf("constexpr Score taperedQueenPcSq[SQUARE_CT] = {");
+    printf("const Score taperedQueenPcSq[SQUARE_CT] = {");
     for (int i = 0, start = 261; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
@@ -295,7 +295,7 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     }
     printf("\n};\n");
 
-    printf("constexpr Score taperedKingPcSq[SQUARE_CT] = {");
+    printf("const Score taperedKingPcSq[SQUARE_CT] = {");
     for (int i = 0, start = 325; i < 64; i++) {
         if (!(i % 8))
             printf("\n");
@@ -303,7 +303,7 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     }
     printf("\n};\n");
 
-    printf("constexpr Score passedPawnRankBonus[8] = {");
+    printf("const Score passedPawnRankBonus[8] = {");
     for (int i = 0, start = 389; i < 8; i++) {
         if (!(i % 4))
             printf("\n");
@@ -311,7 +311,7 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     }
     printf("\n};\n");
 
-    printf("constexpr Score doubledPawnRankBonus[8] = {");
+    printf("const Score doubledPawnRankBonus[8] = {");
     for (int i = 0, start = 397; i < 8; i++) {
         if (!(i % 4))
             printf("\n");
@@ -319,7 +319,7 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     }
     printf("\n};\n");
 
-    printf("constexpr Score isolatedPawnRankBonus[8] = {");
+    printf("const Score isolatedPawnRankBonus[8] = {");
     for (int i = 0, start = 405; i < 8; i++) {
         if (!(i % 4))
             printf("\n");
@@ -327,7 +327,7 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     }
     printf("\n};\n");
 
-    printf("constexpr Score backwardPawnRankBonus[8] = {");
+    printf("const Score backwardPawnRankBonus[8] = {");
     for (int i = 0, start = 413; i < 8; i++) {
         if (!(i % 4))
             printf("\n");
@@ -335,7 +335,7 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     }
     printf("\n};\n");
 
-    printf("constexpr Score KnightMobilityScore[9] = {");
+    printf("const Score KnightMobilityScore[9] = {");
     for (int i = 0, start = 421; i < 9; i++) {
         if (!(i % 4))
             printf("\n");
@@ -343,7 +343,7 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     }
     printf("\n};\n");
 
-    printf("constexpr Score BishopMobilityScore[14] = {");
+    printf("const Score BishopMobilityScore[14] = {");
     for (int i = 0, start = 430; i < 14; i++) {
         if (!(i % 4))
             printf("\n");
@@ -351,7 +351,7 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     }
     printf("\n};\n");
 
-    printf("constexpr Score RookMobilityScore[15] = {");
+    printf("const Score RookMobilityScore[15] = {");
     for (int i = 0, start = 444; i < 15; i++) {
         if (!(i % 4))
             printf("\n");
@@ -359,8 +359,24 @@ inline void printParams(double cparams[NUM_FEATURES][2], double params[NUM_FEATU
     }
     printf("\n};\n");
 
-    printf("constexpr Score QueenMobilityScore[28] = {");
+    printf("const Score QueenMobilityScore[28] = {");
     for (int i = 0, start = 459; i < 28; i++) {
+        if (!(i % 4))
+            printf("\n");
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
+    }
+    printf("\n};\n");
+
+    printf("const Score pawnShieldScores[4] = {");
+    for (int i = 0, start = 487; i < 4; i++) {
+        if (!(i % 4))
+            printf("\n");
+        printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);
+    }
+    printf("\n};\n");
+
+    printf("const Score KingAttackerCountScore[16] = {");
+    for (int i = 0, start = 491; i < 16; i++) {
         if (!(i % 4))
             printf("\n");
         printf("S(%4d, %4d), ", (int)cparams[start + i][0] + (int)params[start + i][0], (int)cparams[start + i][1] + (int)params[start + i][1]);

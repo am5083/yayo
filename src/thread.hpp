@@ -48,7 +48,8 @@ class Search {
         for (int depth = 0; depth < 64; depth++) {
             for (int moves = 0; moves < 64; moves++) {
                 lmrDepthReduction[depth][moves] =
-                      1 + std::log(depth) * std::log(moves) / 2.5;
+                      1 + std::log(std::max(1, depth)) *
+                                std::log(std::max(1, moves)) / 2.5;
             }
         }
 

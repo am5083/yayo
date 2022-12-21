@@ -55,6 +55,8 @@ struct Trace {
     int bishopMobility[14][NUM_COLOR] = {{0}};
     int rookMobility[15][NUM_COLOR] = {{0}};
     int queenMobility[28][NUM_COLOR] = {{0}};
+    int pawnShield[4][NUM_COLOR] = {{0}};
+    int kingAttackerCount[16][NUM_COLOR] = {{0}};
 };
 
 struct TracePeek {
@@ -168,6 +170,18 @@ template <Tracing T = NO_TRACE> class Eval {
         const int mgMobility = MgScore(wMobility) - MgScore(bMobility);
         const int egMobility = EgScore(wMobility) - EgScore(bMobility);
 
+        const Score wPawnShield = pawnShieldScore<WHITE>();
+        const Score bPawnShield = pawnShieldScore<BLACK>();
+        const int mgPawnShield = MgScore(wPawnShield) - MgScore(bPawnShield);
+        const int egPawnShield = EgScore(wPawnShield) - EgScore(bPawnShield);
+
+        const Score wKingAttackers = kingAttackersScore<WHITE>();
+        const Score bKingAttackers = kingAttackersScore<BLACK>();
+        const int mgKingAttackers =
+              MgScore(wKingAttackers) - MgScore(bKingAttackers);
+        const int egKingAttackers =
+              EgScore(wKingAttackers) - EgScore(bKingAttackers);
+
         const auto color = (board.turn == WHITE) ? 1 : -1;
         const auto materialScore = wMaterial - bMaterial;
         const int pcSqEval = (mgPcSq * mgPhase + egPcSq * egPhase) / 24;
@@ -181,10 +195,15 @@ template <Tracing T = NO_TRACE> class Eval {
               (mgBackwardPawn * mgPhase + egBackwardPawn * egPhase) / 24;
         const int mobilityEval =
               (mgMobility * mgPhase + egMobility * egPhase) / 24;
+        const int pawnShieldEval =
+              (mgPawnShield * mgPhase + egPawnShield * egPhase) / 24;
+        const int kingAttackersEval =
+              (mgKingAttackers * mgPhase + egKingAttackers * egPhase) / 24;
 
         auto eval = TEMPO;
         eval += materialScore + pcSqEval + passedPawnEval + doubledPawnEval +
-                isolatedPawnEval + backwardPawnEval + mobilityEval;
+                isolatedPawnEval + backwardPawnEval + mobilityEval +
+                pawnShieldEval + kingAttackersEval;
 
         return eval * color;
     }
@@ -208,6 +227,8 @@ template <Tracing T = NO_TRACE> class Eval {
     template <Color C> constexpr Score doubledPawnPenalty();
     template <Color C> constexpr Score pieceSquare();
     template <Color C> constexpr Score mobilityScore();
+    template <Color C> constexpr Score pawnShieldScore();
+    template <Color C> constexpr Score kingAttackersScore();
 
   private:
     void init() {
@@ -312,6 +333,32 @@ constexpr Score Eval<T>::isolatedPawnPenalty() {
         }
 
         pawns &= pawns - 1;
+    }
+
+    return S(mgScore, egScore);
+}
+
+template <Tracing T>
+template <Color C>
+constexpr Score Eval<T>::pawnShieldScore() {
+    int mgScore = 0, egScore = 0;
+
+    Bitboard castleSquares = SQUARE_BB(F1) | SQUARE_BB(C1);
+    castleSquares =
+          C == WHITE ? castleSquares : (SQUARE_BB(F8) | SQUARE_BB(C1));
+
+    Bitboard king = board.pieces(KING, C);
+
+    if (king & castleSquares) {
+        Bitboard kAtk = kingAttacks[Sq(king)];
+        int count = popcount(kAtk & board.pieces(PAWN));
+
+        if (T) {
+            trace.pawnShield[count][C]++;
+        }
+
+        mgScore += MgScore(pawnShieldScores[count]);
+        egScore += EgScore(pawnShieldScores[count]);
     }
 
     return S(mgScore, egScore);
@@ -446,7 +493,7 @@ constexpr Score Eval<T>::mobilityScore() {
 
     const Bitboard excludedSquares = enemyPawnAttacks | secondThirdRankPawns |
                                      blockedPawns | friendlyKing |
-                                     friendlyQueens;
+                                     friendlyQueens | board.pieces(C);
     // enemyPawnAttacks; // | secondThirdRankPawns |
     // blockedPawns | friendlyKing |
     // friendlyQueens;
@@ -474,7 +521,8 @@ constexpr Score Eval<T>::mobilityScore() {
 
     while (bishops) {
         Square bishopSq = Square(lsb_index(bishops));
-        Bitboard bishopMoves = getBishopAttacks(bishopSq, 0) & ~excludedSquares;
+        Bitboard bishopMoves =
+              getBishopAttacks(bishopSq, excludedSquares) & ~excludedSquares;
 
         int numMoves = popcount(bishopMoves);
         if (numMoves < 0)
@@ -492,7 +540,8 @@ constexpr Score Eval<T>::mobilityScore() {
 
     while (rooks) {
         Square rookSq = Square(lsb_index(rooks));
-        Bitboard rookMoves = getRookAttacks(rookSq, 0) & ~excludedSquares;
+        Bitboard rookMoves =
+              getRookAttacks(rookSq, excludedSquares) & ~excludedSquares;
 
         int numMoves = popcount(rookMoves);
         if (numMoves < 0)
@@ -510,9 +559,10 @@ constexpr Score Eval<T>::mobilityScore() {
 
     while (queens) {
         Square queenSq = Square(lsb_index(queens));
-        Bitboard rookMoves = getRookAttacks(queenSq, 0) & ~excludedSquares;
-        Bitboard bishopMoves = getBishopAttacks(queenSq, secondThirdRankPawns) &
-                               ~excludedSquares;
+        Bitboard rookMoves =
+              getRookAttacks(queenSq, excludedSquares) & ~excludedSquares;
+        Bitboard bishopMoves =
+              getBishopAttacks(queenSq, excludedSquares) & ~excludedSquares;
         Bitboard queenMoves = rookMoves | bishopMoves;
 
         int numMoves = popcount(queenMoves);
@@ -520,9 +570,6 @@ constexpr Score Eval<T>::mobilityScore() {
             numMoves = 0;
 
         if (T) {
-            if (numMoves == 0) {
-                trace.queenMobility[0][C]++;
-            }
             trace.queenMobility[numMoves][C]++;
         }
 
@@ -531,6 +578,90 @@ constexpr Score Eval<T>::mobilityScore() {
 
         queens &= queens - 1;
     }
+
+    return S(mgScore, egScore);
+}
+
+template <Tracing T>
+template <Color C>
+constexpr Score Eval<T>::kingAttackersScore() {
+    constexpr Direction Up = C == WHITE ? NORTH : SOUTH;
+    constexpr Direction Down = C == WHITE ? SOUTH : NORTH;
+    Bitboard king = board.pieces(KING, C);
+    Bitboard kingSafetyRegion = kingAttacks[Sq(king)];
+    kingSafetyRegion |= shift<Up>(kingSafetyRegion);
+    // kingSafetyRegion |= shift<Up>(kingSafetyRegion);
+
+    int numAttacks = 0;
+
+    Bitboard knights, kings, queenRooks, queenBishops;
+    knights = board.pieces(KNIGHT, ~C);
+    kings = board.pieces(KING, ~C);
+    queenRooks = queenBishops = board.pieces(QUEEN, ~C);
+    queenRooks |= board.pieces(ROOK, ~C);
+    queenBishops |= board.pieces(BISHOP, ~C);
+
+    Bitboard pawnAttacks = shift<Down>(board.pieces(PAWN, ~C));
+    pawnAttacks = shift<EAST>(pawnAttacks) | shift<WEST>(pawnAttacks);
+
+    Bitboard knightAtks = 0;
+    while (knights) {
+        Square knightSq = Square(lsb_index(knights));
+        knightAtks |= knightAttacks[knightSq];
+        knights &= knights - 1;
+    }
+
+    Bitboard kingAtks = kingAttacks[Sq(board.pieces(KING, ~C))];
+
+    Bitboard orthAttacks = 0;
+    while (queenRooks) {
+        Square orth = Square(lsb_index(queenRooks));
+        orthAttacks |= getRookAttacks(orth, board.pieces());
+        queenRooks &= queenRooks - 1;
+    }
+
+    Bitboard diagAttacks = 0;
+    while (queenBishops) {
+        Square diag = Square(lsb_index(queenBishops));
+        diagAttacks |= getBishopAttacks(diag, board.pieces());
+        queenBishops &= queenBishops - 1;
+    }
+
+    Bitboard slidingAttacks = diagAttacks | orthAttacks;
+
+    // Bitboards::print_bitboard(pawnAttacks & kingSafetyRegion);
+
+    // int c = (C == WHITE) ? 0 : 1;
+    numAttacks += popcount(pawnAttacks & kingSafetyRegion);
+    // std::cout << c << ": "
+    //           << "numAttacks: " << numAttacks << std::endl;
+
+    numAttacks += popcount(knightAtks & kingSafetyRegion);
+    // std::cout << c << ": "
+    //           << "numAttacks: " << numAttacks << std::endl;
+
+    numAttacks += popcount(kingAtks & kingSafetyRegion);
+    // std::cout << c << ": "
+    //           << "numAttacks: " << numAttacks << std::endl;
+
+    numAttacks += popcount(slidingAttacks & kingSafetyRegion);
+    // std::cout << c << ": "
+    //           << "numAttacks: " << numAttacks << std::endl;
+
+    if (numAttacks >= 15) {
+        numAttacks = 15;
+    }
+
+    int mgScore = 0, egScore = 0;
+
+    if (T) {
+        trace.kingAttackerCount[numAttacks][C]++;
+    }
+
+    // std::cout << "numAttacks: " << numAttacks << std::endl;
+
+    mgScore += MgScore(KingAttackerCountScore[numAttacks]);
+    egScore += EgScore(KingAttackerCountScore[numAttacks]);
 
     return S(mgScore, egScore);
 }

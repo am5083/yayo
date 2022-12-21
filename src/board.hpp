@@ -214,9 +214,9 @@ constexpr int Board::numRepetition() const {
     int num_rep = 0;
     for (int i = gamePly - halfMoves; i < gamePly; i++) {
         if (this->key == hist[i].key)
-            num_rep++;
+            return 1;
     }
-    return num_rep;
+    return 0;
 }
 
 constexpr Bitboard Board::xRayAtks(Square sq, Bitboard occ) {

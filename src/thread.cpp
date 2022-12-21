@@ -163,6 +163,7 @@ int Search::quiescent(int alpha, int beta) {
 
     bool nullMove = (_board.ply >= 1 && !Hist[ply - 1].move) ? true : false;
     bool ttHit = false;
+    bool inCheck = _board.checkPcs;
     int flag = -1;
     int evalScore = INF;
     int ttScore = 0;
@@ -177,6 +178,8 @@ int Search::quiescent(int alpha, int beta) {
         flag = entry.flag();
     }
 
+    int score = INF, best = -INF, oldAlpha = alpha;
+    unsigned bestMove = 0;
     Eval eval(_board);
 
     if (evalScore == INF) {
@@ -187,6 +190,7 @@ int Search::quiescent(int alpha, int beta) {
             evalScore = eval.eval();
             Hist[ply].eval = evalScore;
         }
+
     } else {
         Hist[ply].eval = evalScore;
 
@@ -197,9 +201,7 @@ int Search::quiescent(int alpha, int beta) {
         }
     }
 
-    int score = INF, best = evalScore, oldAlpha = alpha;
-    unsigned bestMove = 0;
-
+    best = evalScore != INF ? evalScore : -INF;
     alpha = std::max(best, alpha);
 
     if (best >= beta)
@@ -225,6 +227,11 @@ int Search::quiescent(int alpha, int beta) {
         mList.swapBest(i);
 
         unsigned move = mList.moves[i].move;
+
+        if (getCapture(move) < CAPTURE) {
+            continue;
+        }
+
         Hist[ply].move = move;
 
         nodes++;
@@ -289,10 +296,10 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         beta = std::min(beta, INF - _board.ply);
 
         if (alpha >= beta) {
-            if (killerMates[ply][0] != pvTable[ply][0]) {
-                killerMates[ply][1] = killerMates[ply][0];
-                killerMates[ply][0] = pvTable[ply][0];
-            }
+            // if (killerMates[ply][0] != pvTable[ply][0]) {
+            //     killerMates[ply][1] = killerMates[ply][0];
+            //     killerMates[ply][0] = pvTable[ply][0];
+            // }
 
             return alpha;
         }
@@ -332,9 +339,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
     unsigned move = 0;
     int score = 0;
 
-    if (!ttHit && depth >= 4)
-        depth--;
-
     if (inCheck) {
         evalScore = INF;
         Hist[ply].eval = INF;
@@ -365,8 +369,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
 
     // static NMP
     evalMargin = evalScore - (75 - 28 * improving) * depth;
-    if (!pvNode && !_board.checkPcs && depth <= 8 && evalMargin > beta &&
-        std::abs(alpha) < CHECKMATE) {
+    if (!pvNode && !_board.checkPcs && depth <= 8 && evalMargin > beta) {
         return evalMargin;
     }
 
@@ -396,9 +399,12 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         }
     }
 
-    // if (depth <= 3 && (evalScore + 130 + 150 * depth <= alpha)) {
-    //     return quiescent(alpha, beta);
-    // }
+    if (depth <= 3 && (evalScore + 130 + 150 * depth <= alpha)) {
+        return quiescent(alpha, beta);
+    }
+
+    if (!ttHit && depth >= 4)
+        depth--;
 
 move_loop:
 
@@ -530,6 +536,13 @@ move_loop:
     }
 
     if (best >= beta && getCapture(bestMove) < CAPTURE) {
+        if (std::abs(best) >= CHECKMATE) {
+            if (killerMates[ply][0] != bestMove) {
+                killerMates[ply][1] = killerMates[ply][0];
+                killerMates[ply][0] = pvTable[ply][0];
+            }
+        }
+
         if (killerMoves[ply][0] != bestMove) {
             killerMoves[ply][1] = killerMoves[ply][0];
             killerMoves[ply][0] = bestMove;
