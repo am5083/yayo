@@ -73,7 +73,8 @@ void Yayo::moveList::addMove(int move, bool promo, bool cap) {
 void Yayo::moveList::addMove(int move, bool promo, bool cap, int score) {
     moves[nMoves].move = move;
 
-    score += 100000;
+    if (score > 0)
+        score += 100000;
 
     moves[nMoves].score = score;
 

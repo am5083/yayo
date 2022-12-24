@@ -93,28 +93,31 @@ void Search::scoreMoves(moveList *mList, unsigned ttMove) {
                 toPc = board.board[toSq ^ 8];
             }
 
-            if (fromPc > toPc) {
+            if (fromPc > toPc || mList->moves[i].score <= 0) {
                 int see = board.see(toSq, toPc, fromSq, fromPc);
-                see += 100000;
+                if (see > 0)
+                    see += 100000;
+                else
+                    see += 71395;
                 mList->moves[i].score = see;
             }
         }
 
         else if (moveFlag < CAPTURE) {
             if (killerMates[board.ply][0] == move) {
-                mList->moves[i].score = 18000 + 100;
+                mList->moves[i].score = 72000 + 100;
             }
 
             else if (killerMates[board.ply][1] == move) {
-                mList->moves[i].score = 18000 + 95;
+                mList->moves[i].score = 72000 + 95;
             }
 
             else if (killerMoves[board.ply][0] == move) {
-                mList->moves[i].score = 16000 + 90;
+                mList->moves[i].score = 71000 + 90;
             }
 
             else if (killerMoves[board.ply][1] == move) {
-                mList->moves[i].score = 16000 + 80;
+                mList->moves[i].score = 66000 + 80;
             }
 
             else {
