@@ -125,10 +125,14 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
                    toPc = getPcType(board.board[s]);
 
             int score = mvvLvaTable[toPc][fromPc];
-            mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
-            mList->addMove(encodeMove(fromSq, s, CP_ROOK), true, true, score);
-            mList->addMove(encodeMove(fromSq, s, CP_BISHOP), true, true, score);
-            mList->addMove(encodeMove(fromSq, s, CP_KNIGHT), true, true, score);
+            mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true,
+                           score + CP_QUEEN);
+            mList->addMove(encodeMove(fromSq, s, CP_ROOK), true, true,
+                           score + CP_ROOK);
+            mList->addMove(encodeMove(fromSq, s, CP_BISHOP), true, true,
+                           score + CP_BISHOP);
+            mList->addMove(encodeMove(fromSq, s, CP_KNIGHT), true, true,
+                           score + CP_KNIGHT);
         }
 
         while (wPromoCapture) {
@@ -140,23 +144,27 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
                    toPc = getPcType(board.board[s]);
 
             int score = mvvLvaTable[toPc][fromPc];
-            mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
-            mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
-            mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
-            mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true, score);
+            mList->addMove(encodeMove(fromSq, s, CP_QUEEN), true, true,
+                           score + CP_QUEEN);
+            mList->addMove(encodeMove(fromSq, s, CP_ROOK), true, true,
+                           score + CP_ROOK);
+            mList->addMove(encodeMove(fromSq, s, CP_BISHOP), true, true,
+                           score + CP_BISHOP);
+            mList->addMove(encodeMove(fromSq, s, CP_KNIGHT), true, true,
+                           score + CP_KNIGHT);
         }
 
         while (pushPromo) {
             const Square s = (Sq(pushPromo));
             pushPromo &= pushPromo - 1;
             mList->addMove(encodeMove(Square(int(s) + int(Push)), s, P_QUEEN),
-                           true, false);
+                           true, false, QUEEN_VAL - 100);
             mList->addMove(encodeMove(Square(int(s) + int(Push)), s, P_ROOK),
-                           true, false);
+                           true, false, ROOK_VAL - 100);
             mList->addMove(encodeMove(Square(int(s) + int(Push)), s, P_BISHOP),
-                           true, false);
+                           true, false, BISHOP_VAL - 100);
             mList->addMove(encodeMove(Square(int(s) + int(Push)), s, P_KNIGHT),
-                           true, false);
+                           true, false, KNIGHT_VAL - 100);
         }
     }
 

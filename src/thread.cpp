@@ -85,18 +85,7 @@ void Search::scoreMoves(moveList *mList, unsigned ttMove) {
 
         int moveFlag = getCapture(move);
 
-        if (moveFlag >= P_KNIGHT) {
-            if (moveFlag >= CP_ROOK)
-                mList->moves[i].score = 200000 + 1400 + (moveFlag - 10);
-            else if (moveFlag >= CP_KNIGHT)
-                mList->moves[i].score = 20425 + (moveFlag - 10);
-            else if (moveFlag < CP_KNIGHT && moveFlag >= P_ROOK)
-                mList->moves[i].score = 20195 + 75 + moveFlag - 10;
-            else
-                mList->moves[i].score = 19800 + 75 + moveFlag - 10;
-        }
-
-        else if (moveFlag >= CAPTURE && moveFlag < P_KNIGHT) {
+        if (moveFlag >= CAPTURE && moveFlag < P_KNIGHT) {
             Square fromSq = getFrom(move), toSq = getTo(move);
             Piece fromPc = board.board[fromSq], toPc = board.board[toSq];
 
@@ -106,11 +95,7 @@ void Search::scoreMoves(moveList *mList, unsigned ttMove) {
 
             if (fromPc > toPc) {
                 int see = board.see(toSq, toPc, fromSq, fromPc);
-
-                if (see > 0) {
-                    see += 20000;
-                }
-
+                see += 100000;
                 mList->moves[i].score = see;
             }
         }

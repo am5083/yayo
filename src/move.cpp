@@ -71,12 +71,17 @@ void Yayo::moveList::addMove(int move, bool promo, bool cap) {
 }
 
 void Yayo::moveList::addMove(int move, bool promo, bool cap, int score) {
+    moves[nMoves].move = move;
+
+    score += 100000;
+
+    moves[nMoves].score = score;
+
     if (getCapture(move) >= CAPTURE)
         nTactical++;
-    moves[nMoves].move = move;
-    if (score > 0)
-        score += 20000;
-    moves[nMoves].score = score;
+    else if (getCapture(move) < CAPTURE)
+        moves[nMoves].score = 0;
+
     nMoves++;
 }
 
