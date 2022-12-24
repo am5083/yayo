@@ -80,7 +80,7 @@ class Search {
     int pvTableLen[MAX_PLY + 6];
     int killerMoves[MAX_PLY + 6][2];
     int killerMates[MAX_PLY + 6][2];
-    int historyMoves[2][64][64];
+    int historyMoves[17][64][64];
     long lmrDepthReduction[64][64];
     int lmpThresholds[2][9];
     HistEntry Hist[512];
@@ -109,31 +109,9 @@ class Search {
 
     std::unique_ptr<std::thread> searchThread;
     std::uint64_t nodes;
-    Board _board;
+    Board board;
     Info *info;
 };
-
-constexpr bool Search::canReduce(int alpha, int move, Move &m) {
-    if (getCapture(move) >= CAPTURE) {
-        if (m.score > 0)
-            return false;
-        else
-            return true;
-    }
-
-    if (historyMoves[board.turn][getFrom(move)][getTo(move)] >= 2500)
-        return false;
-
-    if (getPcType(board.board[getFrom(move)]) == PAWN)
-        return false;
-
-    if (killerMoves[board.ply][0] == move)
-        return false;
-    // if (eval(_board, mList) > alpha)
-    //     return false;
-
-    return true;
-}
 
 } // namespace Yayo
 #endif // THREAD_H_

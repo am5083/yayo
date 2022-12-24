@@ -264,7 +264,7 @@ void UCI::Main() {
             int movetime = -1;
             int time = -1;
             int increment = 0;
-            bool turn = board.turn;
+            bool turn = search.getBoard().turn;
             info->timeGiven = false;
 
             std::string tc;

@@ -59,7 +59,7 @@ enum MoveFlag {
 
 struct Move {
     unsigned move;
-    long score;
+    int score;
 };
 
 constexpr unsigned short encodeMove(Square from, Square to, MoveFlag flags) {

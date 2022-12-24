@@ -25,8 +25,8 @@
 
 #define START_POS "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-#define INF 32000
-#define CHECKMATE ((INF)-128)
+#define INF 32700
+#define CHECKMATE ((INF)-256)
 #define ABORT_SCORE 10000000
 #define NO_MOVE 0
 
