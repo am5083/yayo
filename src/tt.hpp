@@ -18,19 +18,8 @@
 
 #ifndef TT_H_
 #define TT_H_
-#include "board.hpp"
+
 #include "util.hpp"
-#include <cstdint>
-#include <iostream>
-
-#define TP_EXACT 0
-#define TP_ALPHA 1
-#define TP_BETA 2
-#define TP_UNKNOWN 9999999
-#define TP_INIT_SIZE 64
-
-#define TP_INF 30000
-#define NUM_BUCKETS 4
 
 namespace Yayo {
 
@@ -40,7 +29,8 @@ namespace Yayo {
 */
 
 struct TTHash {
-    std::uint64_t key;
+    std::uint64_t key = 0;
+
     union {
         struct {
             std::int16_t eval;
@@ -52,7 +42,7 @@ struct TTHash {
         std::uint64_t hash = 0;
     };
 
-    int score(int ply) const {
+    [[nodiscard]] int score(int ply) const {
         if (data.score >= CHECKMATE) {
             return data.score - ply;
         } else if (data.score <= -CHECKMATE) {
@@ -63,10 +53,10 @@ struct TTHash {
     }
 
     void age(int gen);
-    int flag() const { return data.info & 3u; }
-    int depth() const { return (data.info >> 2u) & 255u; }
+    [[nodiscard]] unsigned flag() const { return data.info & 3u; }
+    [[nodiscard]] unsigned depth() const { return (data.info >> 2u) & 255u; }
     int generation() const { return data.info >> 10u; }
-    int move() const { return data.move; }
+    unsigned move() const { return data.move; }
     int eval() const { return data.eval; }
 };
 
@@ -91,28 +81,6 @@ class TTable {
     void reset();
     void increaseAge();
     int percentFull();
-};
-
-struct TPHash {
-    std::uint64_t key;
-    short depth = 0;
-    short move = 0;
-    int flag = 0;
-    int score = 0;
-};
-
-struct TPTable {
-    TPHash t[TP_INIT_SIZE];
-    unsigned int n;
-    unsigned int overwrites;
-    unsigned int collisions;
-
-    void clear();
-    int probeHash(int ply, std::uint64_t key, int *move, int depth, int alpha,
-                  int beta, bool qsearch = false);
-    void recordHash(std::string fen, int ply, std::uint64_t key, int move,
-                    int depth, int score, unsigned char flag);
-    int hashfull() const;
 };
 
 extern TTable tt;

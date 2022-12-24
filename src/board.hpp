@@ -18,11 +18,9 @@
 
 #ifndef BOARD_H_
 #define BOARD_H_
+
 #include "bitboard.hpp"
-#include "move.hpp"
 #include "util.hpp"
-#include <cstdint>
-#include <string>
 
 namespace Yayo {
 
@@ -82,10 +80,10 @@ static const int castleMod[64] = {
 class Board {
   public:
     Hist hist[1000];
-    Piece board[64];
-    Bitboard color[2];
-    Bitboard pieceBB[PC_MAX];
-    Bitboard cPieceBB[7];
+    Piece board[64]{};
+    Bitboard color[2]{};
+    Bitboard pieceBB[PC_MAX]{};
+    Bitboard cPieceBB[7]{};
 
     mutable Bitboard checkPcs;
     uint64_t key;
@@ -107,7 +105,7 @@ class Board {
     constexpr bool isTMR() const;
 
     void print() const;
-    void setFen(const std::string fen);
+    void setFen(std::string& fen);
     std::string fen() const;
 
     constexpr Bitboard pieces() const { return this->color[WHITE] | this->color[BLACK]; }
@@ -120,13 +118,13 @@ class Board {
     constexpr CastleRights canCastle(Color c) const;
     constexpr Square epSq() const { return enPass; };
     constexpr Bitboard bCheckPcs() const { return checkPcs; };
-    constexpr Bitboard between(const Square s1, const Square s2) const { return rectArray[s1][s2]; };
-    constexpr Bitboard xRayAtks(Square sq, Bitboard occ);
-    constexpr Bitboard getLVA(Color side, Bitboard atkDefMap, Piece *p);
+    static constexpr Bitboard between(const Square s1, const Square s2) { return rectArray[s1][s2]; };
+    constexpr Bitboard xRayAtks(Square sq, Bitboard occ) const;
+    constexpr Bitboard getLVA(Color side, Bitboard atkDefMap, Piece *p) const;
     int see(Square toSq, Piece toPc, Square from, Piece fromPc);
     constexpr bool castleBlocked(CastleRights cr, Square sq) const;
     constexpr bool isSqAttacked(Square sq, Bitboard occ, Color byColor) const;
-    constexpr bool isDraw();
+    constexpr bool isDraw() const;
     std::uint64_t hash() const;
 
     template <Color C> constexpr Bitboard attacksToKing(Square sq, Bitboard occ) const {
@@ -148,12 +146,19 @@ class Board {
     }
 };
 
-constexpr bool Board::isDraw() {
-    const int num    = popcount(color[0] | color[1]);
+constexpr bool Board::isDraw() const {
+    const Bitboard num    = popcount(pieces());
+    const Bitboard wn = popcount(pieces(KNIGHT, WHITE));
+    const Bitboard bn = popcount(pieces(KNIGHT, BLACK));
+
+    bool twoKnights = false;
+    if (wn == 2) twoKnights = true;
+    if (bn == 2) twoKnights = true;
+
     const bool kvk   = num == 2;
-    const bool kvbk  = (num == 3) && (cPieceBB[BISHOP]);
-    const bool kvnk  = (num == 3) && (cPieceBB[KNIGHT]);
-    const bool kvnnk = (num == 4) && (popcount(cPieceBB[KNIGHT]) == 2);
+    const bool kvbk  = (num == 3) && pieces(BISHOP);
+    const bool kvnk  = (num == 3) && pieces(KNIGHT);
+    const bool kvnnk = (num == 4) && twoKnights;
 
     return kvk || kvbk || kvnk || kvnnk;
 }
@@ -219,7 +224,7 @@ constexpr int Board::numRepetition() const {
     return num_rep;
 }
 
-constexpr Bitboard Board::xRayAtks(Square sq, Bitboard occ) {
+constexpr Bitboard Board::xRayAtks(Square sq, Bitboard occ) const {
     Bitboard queenRooks = 0, queenBishops = 0;
 
     queenBishops = pieces(QUEEN);
@@ -236,7 +241,7 @@ constexpr Bitboard Board::xRayAtks(Square sq, Bitboard occ) {
     return q_b | q_r;
 }
 
-constexpr Bitboard Board::getLVA(Color side, Bitboard atkDefMap, Piece *p) {
+constexpr Bitboard Board::getLVA(Color side, Bitboard atkDefMap, Piece *p) const {
     for (PieceT pt = PAWN; pt <= KING; pt = pt + 1) {
         *p              = getCPiece(side, pt);
         Bitboard atkMap = atkDefMap & pieces(pt, side);

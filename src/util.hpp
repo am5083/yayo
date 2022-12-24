@@ -24,28 +24,28 @@
 #include <sys/time.h>
 
 #define START_POS "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-#define NO_MOVE 0
-
-#define PAWN_VAL 100
-#define KNIGHT_VAL 300
-#define BISHOP_VAL 320
-#define ROOK_VAL 500
-#define QUEEN_VAL 910
-#define KING_VAL 12000
 
 #define INF 32000
 #define CHECKMATE ((INF)-128)
 #define ABORT_SCORE 10000000
+#define NO_MOVE 0
 
 #define mirror(sq) ((7 - (sq) / 8) * 8 + (sq) % 8)
 
-typedef uint64_t Bitboard;
+constexpr std::uint16_t PAWN_VAL = 100;
+constexpr std::uint16_t KNIGHT_VAL = 300;
+constexpr std::uint16_t BISHOP_VAL = 320;
+constexpr std::uint16_t ROOK_VAL = 500;
+constexpr std::uint16_t QUEEN_VAL = 910;
+constexpr std::uint16_t KING_VAL = 12000;
 
-constexpr uint64_t B_ATK_TBL_SIZE = 0x1480;
-constexpr uint64_t R_ATK_TBL_SIZE = 0x190000;
+typedef std::uint64_t Bitboard;
 
-constexpr int MAX_MOVES = 256;
-constexpr int MAX_PLY = 246;
+constexpr std::uint64_t B_ATK_TBL_SIZE = 0x1480;
+constexpr std::uint64_t R_ATK_TBL_SIZE = 0x190000;
+
+constexpr std::uint16_t MAX_MOVES = 256;
+constexpr std::uint8_t MAX_PLY = 246;
 
 constexpr Bitboard A_FILEBB = 0x101010101010101;
 constexpr Bitboard B_FILEBB = 0x202020202020202;
@@ -65,11 +65,14 @@ constexpr Bitboard RANK_6BB = 0x0000000000ff0000;
 constexpr Bitboard RANK_7BB = 0x000000000000ff00;
 constexpr Bitboard RANK_8BB = 0x00000000000000ff;
 
+constexpr std::uint16_t TP_INIT_SIZE = 64;
+constexpr std::uint16_t NUM_BUCKETS = 4;
+
 constexpr std::uint64_t popcount(std::uint64_t n) {
     return __builtin_popcountll(n);
 }
 constexpr std::uint64_t lsb_index(std::uint64_t n) {
-    return __builtin_ffsll(n) - 1;
+    return __builtin_ctzll(n);
 }
 constexpr std::uint64_t pop_lsb(std::uint64_t n) { return (1 << lsb_index(n)); }
 
@@ -117,6 +120,12 @@ enum Direction : int {
     SOUTH_WEST = SOUTH + WEST,
 };
 
+enum {
+TP_EXACT = 0,
+TP_ALPHA = 1,
+TP_BETA = 2,
+};
+
 static std::string nToSq[64] = {
     "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8", "a7", "b7", "c7",
     "d7", "e7", "f7", "g7", "h7", "a6", "b6", "c6", "d6", "e6", "f6",
@@ -144,7 +153,7 @@ constexpr Rank RANK_OF(Square sq) {
 
 constexpr Square Sq(Bitboard bb) {
     if (bb == 0) return Square(A1);
-    return Square(63 - __builtin_clzll(bb));
+    return Square(lsb_index(bb));
 }
 
 enum Score : int { NO_SCORE };
@@ -185,23 +194,23 @@ constexpr PieceT operator+(PieceT p1, int p2) { return PieceT(std::uint8_t(p1) +
 
 constexpr Square& operator++(Square& sq) { return sq = Square(int(sq) + 1); }
 constexpr Square& operator--(Square& sq) { return sq = Square(int(sq) - 1); }
-constexpr Square& operator++(Square& sq, int) { ++sq; return sq = Square(int(sq)); }
-constexpr Square& operator--(Square& sq, int) { --sq; return sq = Square(int(sq)); }
+constexpr const Square  operator++(Square& sq, int) { ++sq; return sq = Square(int(sq)); }
+constexpr const Square  operator--(Square& sq, int) { --sq; return sq = Square(int(sq)); }
 
 constexpr Square operator+(Direction d, Square s) { return Square(int(s) + int(d)); }
 constexpr Square operator+(Square s, Direction d) { return Square(int(s) + int(d)); }
 
 constexpr Rank& operator++(Rank& sq) { return sq = Rank(int(sq) + 1); }
 constexpr Rank& operator--(Rank& sq) { return sq = Rank(int(sq) - 1); }
-constexpr Rank& operator++(Rank& sq, int) { ++sq; return sq = Rank(int(sq)); }
-constexpr Rank& operator--(Rank& sq, int) { --sq; return sq = Rank(int(sq)); }
+constexpr const Rank  operator++(Rank& sq, int) { ++sq; return sq = Rank(int(sq)); }
+constexpr const Rank  operator--(Rank& sq, int) { --sq; return sq = Rank(int(sq)); }
 
 constexpr Rank operator+(Rank r, Direction d) { return Rank(int(r) + int(d/8)); }
 
 constexpr File& operator++(File& sq) { return sq = File(int(sq) + 1); }
 constexpr File& operator--(File& sq) { return sq = File(int(sq) - 1); }
-constexpr File& operator++(File& sq, int) { ++sq; return sq = File(int(sq)); }
-constexpr File& operator--(File& sq, int) { --sq; return sq = File(int(sq)); }
+constexpr const File  operator++(File& sq, int) { ++sq; return sq = File(int(sq)); }
+constexpr const File  operator--(File& sq, int) { --sq; return sq = File(int(sq)); }
 
 constexpr Square GET_SQ(Rank r, File f) { return Square((int(r) * 8) + int(f));  }
 constexpr Square GET_SQ(int r, int f) { return Square(int(r) * 8 + int(f));  };
@@ -223,7 +232,7 @@ constexpr Direction pushDirection(Color C) {
 
 static inline unsigned long long get_time() {
     struct timeval te;
-    gettimeofday(&te, NULL);
+    gettimeofday(&te, nullptr);
     long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000;
     return milliseconds;
 }
@@ -232,7 +241,7 @@ namespace Log {
 #ifdef LOGGING
 static std::ofstream ofs("yayo_log.txt")
 #endif
-static inline void write(std::string out) {
+static inline void write(const std::string& out) {
     #ifdef LOGGING
     if (ofs.is_open()) {
         ofs >> out;

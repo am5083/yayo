@@ -43,7 +43,7 @@ void Yayo::moveList::print(int flag) const {
 
 void Yayo::moveList::addCaptures(Square from, Bitboard attacks) {
     while (attacks) {
-        int sq = (__builtin_ffsll(attacks) - 1);
+        int sq = lsb_index(attacks);
         Bitboard bb = (1 << sq);
         moves[nMoves].move = encodeMove(from, Square(sq), CAPTURE);
         nMoves++;
@@ -54,7 +54,7 @@ void Yayo::moveList::addCaptures(Square from, Bitboard attacks) {
 
 void Yayo::moveList::addQuiets(Square from, Bitboard pushes) {
     while (pushes) {
-        int sq = (__builtin_ffsll(pushes) - 1);
+        int sq = lsb_index(pushes);
         Bitboard bb = (1 << sq);
         moves[nMoves].move = encodeMove(from, Square(sq), QUIET);
         nMoves++;

@@ -15,10 +15,14 @@
 **    You should have received a copy of the GNU General Public License
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include "thread.hpp"
 #include "eval.hpp"
-#include <cassert>
-#include <stdio.h>
+#include "movegen.hpp"
+#include "tt.hpp"
+#include "util.hpp"
+#include <string>
+#include <thread>
 #include <vector>
 
 namespace Yayo {
@@ -26,7 +30,7 @@ namespace Yayo {
 void Search::startSearch(Info *_info) {
     if (searched)
         searchThread->join();
-    searched = 1;
+    searched = true;
     info = _info;
     nodes = 0;
     stopCount = 0;
@@ -43,7 +47,7 @@ void Search::startSearch(Info *_info) {
     searchThread = std::make_unique<std::thread>(&Search::search, this);
 }
 
-const bool Search::checkForStop() const {
+bool Search::checkForStop() const {
     stopCount++;
     stopCount &= 1023;
 

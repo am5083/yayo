@@ -18,11 +18,10 @@
 
 #ifndef SEARCH_H_
 #define SEARCH_H_
+
 #include "board.hpp"
-#include "move.hpp"
 #include "util.hpp"
 #include "weights.hpp"
-#include <thread>
 
 namespace Yayo {
 namespace {
@@ -76,7 +75,7 @@ enum Tracing : bool { NO_TRACE, TRACE };
 
 template <Tracing T = NO_TRACE> class Eval {
   public:
-    Eval(Board &b) : board(b), trace(tempTrace) { init(); };
+    explicit Eval(Board &b) : board(b), trace(tempTrace) { init(); };
     Eval(Board &b, Trace &t) : board(b), trace(t) { init(); }
 
     int eval() {
@@ -190,9 +189,9 @@ template <Tracing T = NO_TRACE> class Eval {
     }
 
   public:
-    int phase;
-    int mgPhase;
-    int egPhase;
+    int phase = 0;;
+    int mgPhase = 0;;
+    int egPhase = 0;;
 
   private:
     Board &board;
@@ -275,7 +274,7 @@ constexpr Score Eval<T>::backwardPawnScore() {
 
     int mgScore = 0, egScore = 0;
     while (bckPawns) {
-        Square psq = Square(lsb_index(bckPawns));
+        auto psq = Square(lsb_index(bckPawns));
         psq = (C == WHITE) ? psq : Square(mirror(psq));
 
         mgScore += MgScore(backwardPawnRankBonus[RANK_OF(psq)]);
@@ -298,7 +297,7 @@ constexpr Score Eval<T>::isolatedPawnPenalty() {
 
     int mgScore = 0, egScore = 0;
     while (pawns) {
-        Square psq = Square(lsb_index(pawns));
+        auto psq = Square(lsb_index(pawns));
         psq = (C == WHITE) ? psq : Square(mirror(psq));
 
         if (!(isolatedPawnMasks[psq] & board.pieces(PAWN, C))) {
@@ -338,7 +337,7 @@ constexpr Score Eval<T>::passedPawnScore() {
     int egScore = 0;
 
     while (passedPawns) {
-        Square psq = Square(lsb_index(passedPawns));
+        auto psq = Square(lsb_index(passedPawns));
         psq = (C == WHITE) ? psq : Square(mirror(psq));
 
         if (RANK_OF(psq) <= 0 || RANK_OF(psq) > 7) {
@@ -365,7 +364,7 @@ constexpr Score Eval<T>::doubledPawnPenalty() {
 
     int mgScore = 0, egScore = 0;
     while (dblPawns) {
-        Square psq = Square(lsb_index(dblPawns));
+        auto psq = Square(lsb_index(dblPawns));
         psq = (C == WHITE) ? psq : Square(mirror(psq));
 
         mgScore += MgScore(doubledPawnRankBonus[RANK_OF(psq)]);
@@ -455,7 +454,7 @@ constexpr Score Eval<T>::mobilityScore() {
     int egScore = 0;
 
     while (knights) {
-        Square knightSq = Square(lsb_index(knights));
+        auto knightSq = Square(lsb_index(knights));
         Bitboard knightMoves = knightAttacks[knightSq] & ~excludedSquares;
 
         int numMoves = popcount(knightMoves);
@@ -473,7 +472,7 @@ constexpr Score Eval<T>::mobilityScore() {
     }
 
     while (bishops) {
-        Square bishopSq = Square(lsb_index(bishops));
+        auto bishopSq = Square(lsb_index(bishops));
         Bitboard bishopMoves = getBishopAttacks(bishopSq, 0) & ~excludedSquares;
 
         int numMoves = popcount(bishopMoves);
@@ -491,7 +490,7 @@ constexpr Score Eval<T>::mobilityScore() {
     }
 
     while (rooks) {
-        Square rookSq = Square(lsb_index(rooks));
+        auto rookSq = Square(lsb_index(rooks));
         Bitboard rookMoves = getRookAttacks(rookSq, 0) & ~excludedSquares;
 
         int numMoves = popcount(rookMoves);
@@ -509,7 +508,7 @@ constexpr Score Eval<T>::mobilityScore() {
     }
 
     while (queens) {
-        Square queenSq = Square(lsb_index(queens));
+        auto queenSq = Square(lsb_index(queens));
         Bitboard rookMoves = getRookAttacks(queenSq, 0) & ~excludedSquares;
         Bitboard bishopMoves = getBishopAttacks(queenSq, secondThirdRankPawns) &
                                ~excludedSquares;

@@ -33,8 +33,8 @@ void initMvvLva() {
 
 void printMvvLvaTable() {
     for (int Atk = 0; Atk < 7; Atk++) {
-        for (int Vic = 0; Vic < 7; Vic++) {
-            std::cout << mvvLvaTable[Vic][Atk] << ", ";
+        for (auto & Vic : mvvLvaTable) {
+            std::cout << Vic[Atk] << ", ";
         }
         std::cout << std::endl;
     }
@@ -213,7 +213,7 @@ void make(Board &board, unsigned short move) {
     } break;
     case K_CASTLE: {
         Square rFrom, rTo;
-        Piece rPiece = Piece(W_ROOK + (8 * board.turn));
+        auto rPiece = Piece(W_ROOK + (8 * board.turn));
 
         rFrom = (board.turn == WHITE) ? H1 : H8;
         rTo = (board.turn == WHITE) ? F1 : F8;
@@ -241,7 +241,7 @@ void make(Board &board, unsigned short move) {
     } break;
     case Q_CASTLE: {
         Square rFrom, rTo;
-        Piece rPiece = Piece(W_ROOK + (8 * board.turn));
+        auto rPiece = Piece(W_ROOK + (8 * board.turn));
 
         rFrom = (board.turn == WHITE) ? A1 : A8;
         rTo = (board.turn == WHITE) ? D1 : D8;
@@ -272,7 +272,7 @@ void make(Board &board, unsigned short move) {
     case P_ROOK:
     case P_QUEEN: {
         int pTo = getCapture(move) - P_KNIGHT;
-        Piece promoPc = Piece(W_KNIGHT + pTo + (8 * board.turn));
+        auto promoPc = Piece(W_KNIGHT + pTo + (8 * board.turn));
 
         board.color[board.turn] ^= SQUARE_BB(fromSq) ^ SQUARE_BB(toSq);
         board.pieceBB[fromPc] ^= SQUARE_BB(fromSq);
@@ -292,7 +292,7 @@ void make(Board &board, unsigned short move) {
     case CP_ROOK:
     case CP_QUEEN: {
         int pTo = getCapture(move) - CP_KNIGHT;
-        Piece promoPc = Piece(W_KNIGHT + (pTo + (8 * board.turn)));
+        auto promoPc = Piece(W_KNIGHT + (pTo + (8 * board.turn)));
 
         board.color[board.turn] ^= SQUARE_BB(fromSq) ^ SQUARE_BB(toSq);
         board.pieceBB[fromPc] ^= SQUARE_BB(fromSq);
@@ -359,12 +359,6 @@ void unmake(Board &board, unsigned short move) {
 
     switch (getCapture(move)) {
     case QUIET:
-        board.color[board.turn] ^= SQUARE_BB(fromSq) ^ SQUARE_BB(toSq);
-        board.pieceBB[piece] ^= SQUARE_BB(fromSq) ^ SQUARE_BB(toSq);
-        board.cPieceBB[getPcType(piece)] ^= SQUARE_BB(fromSq) ^ SQUARE_BB(toSq);
-        board.board[fromSq] = piece;
-        board.board[toSq] = NO_PC;
-        break;
     case DOUBLE_PAWN:
         board.color[board.turn] ^= SQUARE_BB(fromSq) ^ SQUARE_BB(toSq);
         board.pieceBB[piece] ^= SQUARE_BB(fromSq) ^ SQUARE_BB(toSq);
@@ -390,7 +384,7 @@ void unmake(Board &board, unsigned short move) {
 
         Bitboard captured =
               board.turn == WHITE ? shift<SOUTH>(toSq) : shift<NORTH>(toSq);
-        Piece cPiece = Piece(W_PAWN + (8 * (~board.turn)));
+        auto cPiece = Piece(W_PAWN + (8 * (~board.turn)));
         board.color[~board.turn] ^= captured;
         board.pieceBB[cPiece] ^= captured;
         board.board[Sq(captured)] = cPiece;
@@ -401,7 +395,7 @@ void unmake(Board &board, unsigned short move) {
     } break;
     case K_CASTLE: {
         Square rFrom, rTo;
-        Piece rPiece = Piece(W_ROOK + (8 * board.turn));
+        auto rPiece = Piece(W_ROOK + (8 * board.turn));
 
         rFrom = (board.turn == WHITE) ? H1 : H8;
         rTo = (board.turn == WHITE) ? F1 : F8;
@@ -420,7 +414,7 @@ void unmake(Board &board, unsigned short move) {
     } break;
     case Q_CASTLE: {
         Square rFrom, rTo;
-        Piece rPiece = Piece(W_ROOK + (8 * board.turn));
+        auto rPiece = Piece(W_ROOK + (8 * board.turn));
 
         rFrom = (board.turn == WHITE) ? A1 : A8;
         rTo = (board.turn == WHITE) ? D1 : D8;
@@ -443,7 +437,7 @@ void unmake(Board &board, unsigned short move) {
     case P_ROOK:
     case P_QUEEN: {
         int pTo = getCapture(move) - P_KNIGHT;
-        Piece promoPc = Piece(W_KNIGHT + (pTo + (8 * board.turn)));
+        auto promoPc = Piece(W_KNIGHT + (pTo + (8 * board.turn)));
 
         board.color[board.turn] ^= SQUARE_BB(fromSq) ^ SQUARE_BB(toSq);
 
@@ -462,7 +456,7 @@ void unmake(Board &board, unsigned short move) {
     case CP_QUEEN: {
         Board c2(board);
         int pTo = getCapture(move) - CP_KNIGHT;
-        Piece promoPc = Piece(W_KNIGHT + (pTo + (8 * board.turn)));
+        auto promoPc = Piece(W_KNIGHT + (pTo + (8 * board.turn)));
 
         board.color[board.turn] ^= SQUARE_BB(fromSq) ^ SQUARE_BB(toSq);
 

@@ -43,7 +43,7 @@ struct TEntry {
 
 class TunerEntries {
   public:
-    TunerEntries(std::string file);
+    explicit TunerEntries(const std::string& file);
     ~TunerEntries() { delete[] entries; }
 
     void runTuner();
@@ -58,7 +58,7 @@ class TunerEntries {
     void computeGradient(double gradient[NUM_FEATURES][2],
                          double params[NUM_FEATURES][2], double K, int batch);
 
-    void updateSingleGradient(TEntry &entry, double gradient[NUM_FEATURES][2],
+    static void updateSingleGradient(TEntry &entry, double gradient[NUM_FEATURES][2],
                               double params[NUM_FEATURES][2], double K);
 
     void initUntunedWeights(double params[NUM_FEATURES][2]);

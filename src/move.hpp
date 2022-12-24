@@ -82,7 +82,7 @@ constexpr MoveFlag getCapture(unsigned short move) {
 
 static inline std::string move_str(unsigned short move) {
     int to = getTo(move), from = getFrom(move), flags = getCapture(move);
-    std::string m = "";
+    std::string m;
     m += nToSq[from];
     m += nToSq[to];
     m += flags;

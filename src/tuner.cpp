@@ -23,7 +23,10 @@
 */
 
 #include "tuner.hpp"
+#include "movegen.hpp"
 #include <limits>
+#include <utility>
+#include <vector>
 
 #define THREADS 8
 
@@ -33,7 +36,7 @@ double sigmoid(double K, double E) {
     return 1.0 / (1.0 + exp(-K * E / 400.00));
 }
 
-TunerEntries::TunerEntries(std::string file) {
+TunerEntries::TunerEntries(const std::string &file) {
     entries = new TEntry[NUM_ENTRIES];
 
     std::ifstream games;
@@ -82,7 +85,7 @@ void TEntry::init(Board &board, std::string fen) {
 
     Search search;
     search.setInfo(info);
-    search._setFen(fen);
+    search._setFen(std::move(fen));
     search.probe = false;
 
     // turn = board.turn;

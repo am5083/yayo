@@ -17,7 +17,6 @@
 */
 
 #include "eval.hpp"
-#include "board.hpp"
 #include "movegen.hpp"
 #include "util.hpp"
 
@@ -102,52 +101,52 @@ void TracePeek::print() {
 
     numTerms += 8;
     std::cout << "PASSED PAWN: " << std::endl;
-    for (int i = 0; i < 8; i++) {
-        std::cout << t.passedPawn[i][WHITE] - t.passedPawn[i][BLACK] << std::endl;
+    for (auto & i : t.passedPawn) {
+        std::cout << i[WHITE] - i[BLACK] << std::endl;
     }
 
     std::cout << "\n-----------\n";
 
     numTerms += 8;
     std::cout << "DOUBLED PAWN" << std::endl;
-    for (int i = 0; i < 8; i++) {
-        std::cout << t.doubledPawns[i][WHITE] - t.doubledPawns[i][BLACK] << std::endl;
+    for (auto & doubledPawn : t.doubledPawns) {
+        std::cout << doubledPawn[WHITE] - doubledPawn[BLACK] << std::endl;
     }
 
     numTerms += 8;
     std::cout << "ISOLATED PAWNS:" << std::endl;
-    for (int i = 0; i < 8; i++) {
-        std::cout << t.isolatedPawns[i][WHITE] - t.isolatedPawns[i][BLACK] << std::endl;
+    for (auto & isolatedPawn : t.isolatedPawns) {
+        std::cout << isolatedPawn[WHITE] - isolatedPawn[BLACK] << std::endl;
     }
 
     numTerms += 8;
     std::cout << "BACKWARD PAWNS:" << std::endl;
-    for (int i = 0; i < 8; i++) {
-        std::cout << t.backwardPawns[i][WHITE] - t.backwardPawns[i][BLACK] << std::endl;
+    for (auto & backwardPawn : t.backwardPawns) {
+        std::cout << backwardPawn[WHITE] - backwardPawn[BLACK] << std::endl;
     }
 
     numTerms += 18;
     std::cout << "knightMobility:" << std::endl;
-    for (int i = 0; i < 9; i++) {
-        std::cout << t.knightMobility[i][WHITE] - t.knightMobility[i][BLACK] << std::endl;
+    for (auto & i : t.knightMobility) {
+        std::cout << i[WHITE] - i[BLACK] << std::endl;
     }
 
     numTerms += 28;
     std::cout << "bishopMobility:" << std::endl;
-    for (int i = 0; i < 14; i++) {
-        std::cout << t.bishopMobility[i][WHITE] - t.bishopMobility[i][BLACK] << std::endl;
+    for (auto & i : t.bishopMobility) {
+        std::cout << i[WHITE] - i[BLACK] << std::endl;
     }
 
     numTerms += 30;
     std::cout << "rookMobility:" << std::endl;
-    for (int i = 0; i < 15; i++) {
-        std::cout << t.rookMobility[i][WHITE] - t.rookMobility[i][BLACK] << std::endl;
+    for (auto & i : t.rookMobility) {
+        std::cout << i[WHITE] - i[BLACK] << std::endl;
     }
 
     numTerms += 56;
     std::cout << "queenMobility:" << std::endl;
-    for (int i = 0; i < 28; i++) {
-        std::cout << t.queenMobility[i][WHITE] - t.queenMobility[i][BLACK] << std::endl;
+    for (auto & i : t.queenMobility) {
+        std::cout << i[WHITE] - i[BLACK] << std::endl;
     }
 
     std::cout << "\ntotal number of terms: " << numTerms << std::endl;

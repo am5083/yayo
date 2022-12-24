@@ -16,6 +16,7 @@
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "movegen.hpp"
 #include "thread.hpp"
 #include "tuner.hpp"
 #include "uci.hpp"

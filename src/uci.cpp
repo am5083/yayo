@@ -17,7 +17,15 @@
 */
 
 #include "uci.hpp"
+#include "board.hpp"
 #include "eval.hpp"
+#include "move.hpp"
+#include "movegen.hpp"
+#include "tt.hpp"
+#include "util.hpp"
+#include <sstream>
+
+namespace Yayo {
 
 static inline int parseMove(Board &board, std::string move) {
     moveList mList = {0};
@@ -28,7 +36,7 @@ static inline int parseMove(Board &board, std::string move) {
     int promPc = 0;
 
     for (int i = 0; i < mList.nMoves; i++) {
-        int mv = mList.moves[i].move;
+        unsigned mv = mList.moves[i].move;
         if (fromSq == getFrom(mv) && toSq == getTo(mv)) {
             promPc = getCapture(mv);
 
@@ -52,7 +60,7 @@ static inline int parseMove(Board &board, std::string move) {
     return encodeMove(Square(fromSq), Square(toSq), MoveFlag(QUIET));
 }
 
-Bitboard Yayo::divide(Board &board, moveList *mL, int start, int cur) {
+Bitboard divide(Board &board, moveList *mL, int start, int cur) {
     moveList mList = {0};
     generate(board, &mList);
 
@@ -146,7 +154,8 @@ void UCI::Stop() { search.stopSearch(); }
 
 std::uint64_t UCI::Perft(int depth) {
     Board board;
-    board.setFen(START_POS);
+    std::string START = START_POS;
+    board.setFen(START);
 
     unsigned long long n;
     if (depth == 1) {
@@ -174,8 +183,8 @@ void UCI::Main() {
     initMvvLva();
 
     Board board;
-    board.setFen(START_POS);
-    search._setFen(START_POS);
+    board.setFen(start_pos);
+    search._setFen(start_pos);
 
     EvalWeights ev;
     Info info[1];
@@ -187,7 +196,7 @@ void UCI::Main() {
 
     // std::cout << "uciok" << std::endl;
 
-    while (1) {
+    while (true) {
         std::string input;
         getline(std::cin, input);
 
@@ -203,7 +212,7 @@ void UCI::Main() {
 
             while (iss >> position) {
                 if (position == "startpos") {
-                    board.setFen(START_POS);
+                    board.setFen(start_pos);
                     search._setFen(START_POS);
                 } else if (position == "fen") {
                     std::string fen;
@@ -395,3 +404,4 @@ void UCI::Main() {
         }
     }
 }
+} // namespace Yayo

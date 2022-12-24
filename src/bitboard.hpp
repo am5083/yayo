@@ -41,7 +41,7 @@ struct Magic {
     unsigned int shift;
     int idx;
 
-    constexpr uint64_t index(Bitboard occ) const {
+    [[nodiscard]] constexpr uint64_t index(Bitboard occ) const {
         if (std::is_constant_evaluated()) {
             occ &= mask;
             occ *= g_rookMagics[idx];
@@ -51,7 +51,7 @@ struct Magic {
             return __builtin_ia32_pext_di(occ, mask);
         }
     };
-    constexpr Bitboard c_attacks(Bitboard occ) const {
+    [[nodiscard]] constexpr Bitboard c_attacks(Bitboard occ) const {
         return attacks[index(occ)];
     }
 };
@@ -263,10 +263,9 @@ template <> constexpr Bitboard getAttacks<KING>(Square s, Bitboard) {
     return kingAttacks[s];
 }
 
-namespace Bitboards {
 void init_arrays();
 void print_bitboard(Bitboard bitboard);
-} // namespace Bitboards
+
 } // namespace Yayo
 
 #endif // BITBOARDS_H_

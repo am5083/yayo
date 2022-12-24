@@ -18,8 +18,9 @@
 
 #include "board.hpp"
 #include "bitboard.hpp"
-#include "tt.hpp"
 #include <algorithm>
+#include <array>
+#include <cstdint>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -87,7 +88,7 @@ void Board::print() const {
 }
 
 std::string Board::fen() const {
-    std::string fen = "";
+    std::string fen;
     std::unordered_map<Piece, char> pieceToChar{
           {W_PAWN, 'P'},   {W_KNIGHT, 'N'}, {W_BISHOP, 'B'}, {W_ROOK, 'R'},
           {W_QUEEN, 'Q'},  {W_KING, 'K'},   {B_PAWN, 'p'},   {B_KNIGHT, 'n'},
@@ -137,7 +138,7 @@ std::string Board::fen() const {
     }
 
     fen += " ";
-    std::string nmoves = "";
+    std::string nmoves;
     int num = halfMoves;
     while (num)
         nmoves += char('0' + num % 10), num /= 10;
@@ -160,7 +161,7 @@ std::string Board::fen() const {
     return fen;
 }
 
-void Board::setFen(const std::string fen) {
+void Board::setFen(std::string &fen) {
     key = 0;
     ply = 0;
     gamePly = 0;
@@ -215,9 +216,9 @@ void Board::setFen(const std::string fen) {
                 int64_t p = -1;
                 int j = fen[idx] - '0';
 
-                for (int i = 0; i < 7; i++)
-                    if (GET(cPieceBB[i], sq))
-                        p = GET(cPieceBB[i], sq);
+                for (unsigned long long i : cPieceBB)
+                    if (GET(i, sq))
+                        p = GET(i, sq);
 
                 if (p == -1) {
                     for (int i = 0; i < j; i++) {
@@ -320,8 +321,9 @@ int Board::see(Square toSq, Piece toPc, Square from, Piece fromPc) {
     Bitboard fromMap = SQUARE_BB(from);
     Bitboard atkDefMap = attacksToSq(toSq, occ);
 
-    auto pcVal = std::array{0,        PAWN_VAL,  KNIGHT_VAL, BISHOP_VAL,
-                            ROOK_VAL, QUEEN_VAL, KING_VAL,   0};
+    std::array<std::uint16_t, 8> pcVal = {0,          PAWN_VAL, KNIGHT_VAL,
+                                          BISHOP_VAL, ROOK_VAL, QUEEN_VAL,
+                                          KING_VAL,   0};
 
     if (toPc != NO_PC)
         gain[ply] = pcVal[getPcType(toPc)];
@@ -367,15 +369,11 @@ Board::Board() {
     fullMoves = 0;
     enPass = SQUARE_64;
     castleRights = 0;
-    color[WHITE] = 0;
-    color[BLACK] = 0;
 
-    for (int i = 0; i < 13; i++)
-        pieceBB[i] = 0;
-    for (int i = 0; i < 7; i++)
-        cPieceBB[i] = 0;
-    for (int i = 0; i < 64; i++)
-        board[i] = NO_PC;
+    memset(color, 0, sizeof(color));
+    memset(board, 0, sizeof(board));
+    memset(pieceBB, 0, sizeof(pieceBB));
+    memset(cPieceBB, 0, sizeof(cPieceBB));
 }
 
 Board::Board(const Board &other) {
@@ -473,8 +471,10 @@ constexpr bool Board::operator==(const Board &b1) const {
         if (!equal) {
             std::cout << "ERROR! CPIECEBB ARRAY"
                       << "; INDEX: " << i << "\n";
-            Bitboards::print_bitboard(cPieceBB[1]);
-            Bitboards::print_bitboard(b1.cPieceBB[1]);
+
+            print_bitboard(cPieceBB[1]);
+            print_bitboard(b1.cPieceBB[1]);
+
             print();
             b1.print();
             return false;

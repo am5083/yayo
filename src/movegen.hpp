@@ -40,7 +40,7 @@ void printMvvLvaTable();
 
 template <Color Turn, MoveType Type>
 constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
-                                      const Bitboard targets);
+                                      Bitboard targets);
 
 template <Color C, PieceT P, MoveType T>
 constexpr moveList *generateMoves(const Board &board, moveList *mList,
@@ -92,14 +92,14 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
         }
 
         while (singlePush) {
-            const Square s = Square(__builtin_ctzll(singlePush));
+            const auto s = (Sq(singlePush));
             singlePush &= singlePush - 1;
             mList->addMove(encodeMove(Square(int(s) + int(Push)), s, QUIET),
                            false, false);
         }
 
         while (doublePush) {
-            const Square s = Square(__builtin_ctzll(doublePush));
+            const Square s = (Sq(doublePush));
             doublePush &= doublePush - 1;
             mList->addMove(encodeMove(Square(int(s) + int(Push) + int(Push)), s,
                                       DOUBLE_PAWN),
@@ -117,7 +117,7 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
         }
 
         while (ePromoCapture) {
-            const Square s = Square(__builtin_ctzll(ePromoCapture));
+            const Square s = (Sq(ePromoCapture));
             ePromoCapture &= ePromoCapture - 1;
 
             Square fromSq = Square(int(s) + int(wAttack));
@@ -132,7 +132,7 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
         }
 
         while (wPromoCapture) {
-            const Square s = Square(__builtin_ctzll(wPromoCapture));
+            const Square s = (Sq(wPromoCapture));
             wPromoCapture &= wPromoCapture - 1;
 
             Square fromSq = Square(int(s) + int(eAttack));
@@ -147,7 +147,7 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
         }
 
         while (pushPromo) {
-            const Square s = Square(__builtin_ctzll(pushPromo));
+            const Square s = (Sq(pushPromo));
             pushPromo &= pushPromo - 1;
             mList->addMove(encodeMove(Square(int(s) + int(Push)), s, P_QUEEN),
                            true, false);
@@ -172,7 +172,7 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
               capture;
 
         while (eastAttacks) {
-            const Square s = Square(__builtin_ctzll(eastAttacks));
+            const Square s = (Sq(eastAttacks));
             eastAttacks &= eastAttacks - 1;
 
             Square fromSq = Square(int(s) + int(wAttack));
@@ -184,7 +184,7 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
         }
 
         while (westAttacks) {
-            const Square s = Square(__builtin_ctzll(westAttacks));
+            const Square s = (Sq(westAttacks));
             westAttacks &= westAttacks - 1;
 
             Square fromSq = Square(int(s) + int(eAttack));
@@ -206,7 +206,7 @@ constexpr moveList *generatePawnMoves(const Board &board, moveList *mList,
 
             eastAttacks = singlePushPawns & getPawnAttacks(enemy, board.epSq());
             while (eastAttacks) {
-                const Square s = Square(__builtin_ctzll(eastAttacks));
+                const Square s = (Sq(eastAttacks));
                 const Bitboard pawn = SQUARE_BB(s);
                 eastAttacks &= eastAttacks - 1;
 
@@ -233,12 +233,12 @@ constexpr moveList *generateMoves(const Board &board, moveList *mList,
     Bitboard Turn = board.pieces(P, C);
 
     while (Turn) {
-        const Square s = Square(__builtin_ctzll(Turn));
+        const Square s = (Sq(Turn));
         Turn &= Turn - 1;
         Bitboard b =
               getAttacks<P>(s, board.pieces()) & targets & ~board.pieces(KING);
         while (b) {
-            const Square t = Square(__builtin_ctzll(b));
+            const Square t = (Sq(b));
             const MoveFlag mf =
                   (SQUARE_BB(t) & board.pieces(~C)) ? CAPTURE : QUIET;
 
@@ -256,7 +256,7 @@ constexpr moveList *generateMoves(const Board &board, moveList *mList,
 using namespace Yayo;
 template <Color C, MoveType T>
 constexpr moveList *generateLegal(const Board &board, moveList *mList) {
-    const Square kingSq = Square(__builtin_ctzll(board.pieces(KING, C)));
+    const Square kingSq = (Sq(board.pieces(KING, C)));
 
     Bitboard orth = getRookAttacks(kingSq, board.pieces(~C));
     Bitboard diag = getBishopAttacks(kingSq, board.pieces(~C));
@@ -266,7 +266,7 @@ constexpr moveList *generateLegal(const Board &board, moveList *mList) {
     pinners |= (board.pieces(QUEEN, ~C) | board.pieces(BISHOP, ~C)) & diag;
     Bitboard pinned = 0;
     while (pinners) {
-        const Square sq = Square(__builtin_ctzll(pinners));
+        const Square sq = (Sq(pinners));
         Bitboard pp = rectArray[sq][kingSq] & board.pieces(C);
         if (__builtin_popcountll(pp) == 1)
             pinned ^= pp;
@@ -279,8 +279,7 @@ constexpr moveList *generateLegal(const Board &board, moveList *mList) {
     if (T != CHECK_EVASION || __builtin_popcountll(board.bCheckPcs()) < 1) {
         switch (T) {
         case CHECK_EVASION:
-            targets = board.between(kingSq,
-                                    Square(__builtin_ctzll(board.bCheckPcs())));
+            targets = board.between(kingSq, (Sq(board.bCheckPcs())));
             break;
         case M_CAPTURE:
             targets = board.pieces(~C);
@@ -322,7 +321,7 @@ constexpr moveList *generateLegal(const Board &board, moveList *mList) {
     }
 
     while (b) {
-        const Square s = Square(__builtin_ctzll(b));
+        const Square s = (Sq(b));
         b &= b - 1;
         if (board.isSqAttacked(s, board.pieces() ^ board.pieces(KING, C), ~C)) {
             continue;
@@ -348,7 +347,7 @@ constexpr moveList *generateLegal(const Board &board, moveList *mList) {
                 Square to = SQUARE_64;
                 bool attacked = false;
                 while (betweenMask && !attacked) {
-                    to = Square(__builtin_ctzll(betweenMask));
+                    to = (Sq(betweenMask));
                     betweenMask &= betweenMask - 1;
                     attacked = attacked ||
                                board.attacksToKing<~C>(to, board.pieces());
@@ -368,7 +367,7 @@ constexpr moveList *generateLegal(const Board &board, moveList *mList) {
                 Square to = SQUARE_64;
                 bool attacked = false;
                 while (betweenMask && !attacked) {
-                    to = Square(__builtin_ctzll(betweenMask));
+                    to = (Sq(betweenMask));
                     betweenMask &= betweenMask - 1;
                     attacked = attacked ||
                                board.attacksToKing<~C>(to, board.pieces());

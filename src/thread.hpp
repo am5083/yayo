@@ -19,23 +19,15 @@
 #ifndef THREAD_H_
 #define THREAD_H_
 #include "board.hpp"
-#include "eval.hpp"
 #include "move.hpp"
-#include "movegen.hpp"
-#include "tt.hpp"
 #include "util.hpp"
 #include <cmath>
-#include <cstring>
-#include <fstream>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
 
 namespace Yayo {
 
 struct HistEntry {
-    int move, eval;
+    unsigned move;
+    int eval;
 };
 
 class Search {
@@ -61,7 +53,7 @@ class Search {
     Search &operator=(const Search &) = delete;
 
   public:
-    const bool checkForStop() const;
+    bool checkForStop() const;
     constexpr bool canReduce(int alpha, int move, Move &m);
 
     void startSearch(Info *_info);
@@ -129,13 +121,13 @@ constexpr bool Search::canReduce(int alpha, int move, Move &m) {
             return true;
     }
 
-    if (historyMoves[_board.turn][getFrom(move)][getTo(move)] >= 2500)
+    if (historyMoves[board.turn][getFrom(move)][getTo(move)] >= 2500)
         return false;
 
-    if (getPcType(_board.board[getFrom(move)]) == PAWN)
+    if (getPcType(board.board[getFrom(move)]) == PAWN)
         return false;
 
-    if (killerMoves[_board.ply][0] == move)
+    if (killerMoves[board.ply][0] == move)
         return false;
     // if (eval(_board, mList) > alpha)
     //     return false;

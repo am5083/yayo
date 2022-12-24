@@ -18,18 +18,10 @@
 
 #ifndef UCI_H_
 #define UCI_H_
+
 #include "board.hpp"
-#include "eval.hpp"
-#include "move.hpp"
-#include "movegen.hpp"
 #include "thread.hpp"
 #include "util.hpp"
-#include <iostream>
-#include <sstream>
-#include <string>
-
-using namespace Yayo;
-using namespace Yayo::Bitboards;
 
 static const std::string benchPos[] = {
       "r3k2r/2pb1ppp/2pp1q2/p7/1nP1B3/1P2P3/P2N1PPP/R2QK2R w KQkq a6 0 14   ",
@@ -86,21 +78,21 @@ static const std::string benchPos[] = {
       "2r2b2/5p2/5k2/p1r1pP2/P2pB3/1P3P2/K1P3R1/7R w - - 23 93",
 };
 
-static inline int parseMove(Board &board, std::string move);
-
 namespace Yayo {
+
+static inline int parseMove(Board &board, std::string move);
 
 Bitboard divide(Board &board, moveList *mL, int start, int cur);
 
 class UCI {
   public:
-    UCI(Search &searcher) : search(searcher){};
+    explicit UCI(Search &searcher) : search(searcher){};
     void Main();
     void Bench();
-    std::uint64_t Perft(int depth);
+    static std::uint64_t Perft(int depth);
 
   private:
-    void Uci();
+    static void Uci();
     void NewGame();
     void IsReady();
     void Go(Info *info);
@@ -109,7 +101,7 @@ class UCI {
   private:
     Search &search;
     int ttSize = TP_INIT_SIZE;
+    std::string start_pos = START_POS;
 };
-
 } // namespace Yayo
 #endif // UCI_H_

@@ -21,8 +21,8 @@
 #include "util.hpp"
 #include <algorithm>
 #include <array>
+#include <cstdio>
 #include <iostream>
-#include <stdio.h>
 
 namespace Yayo {
 Bitboard bishopAttacks[B_ATK_TBL_SIZE];
@@ -70,7 +70,7 @@ void initMasks(const PieceT pc, Bitboard attack_table[], Magic mask[]) {
     }
 }
 
-void Bitboards::init_arrays() {
+void init_arrays() {
     initMasks(ROOK, rookAttacks, rookMagics);
     initMasks(BISHOP, bishopAttacks, bishopMagics);
 
@@ -134,7 +134,7 @@ void Bitboards::init_arrays() {
     }
 }
 
-void Bitboards::print_bitboard(Bitboard bitboard) {
+void print_bitboard(Bitboard bitboard) {
     for (int rank = 0; rank < 8; rank++) {
         // print all the file letters before the first rank
         if (rank == 0) {
