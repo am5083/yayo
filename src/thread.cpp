@@ -83,11 +83,6 @@ void Search::scoreMoves(moveList *mList, unsigned ttMove) {
             continue;
         }
 
-        // if (move == pvTable[_board.ply - 1][0]) {
-        //             mList->moves[i].score = 500000;
-        //             continue;
-        //         }
-
         int moveFlag = getCapture(move);
 
         if (moveFlag >= P_KNIGHT) {
@@ -138,10 +133,11 @@ void Search::scoreMoves(moveList *mList, unsigned ttMove) {
             }
 
             else {
+                Square fromSq = getFrom(move), toSq = getTo(move);
+                Piece fromPc = board.board[fromSq], toPc = board.board[toSq];
                 int historyScore =
-                      historyMoves[board.turn][getFrom(move)][getTo(move)];
-                mList->moves[i].score =
-                      (historyScore <= 16000) ? historyScore : historyScore;
+                      historyMoves[fromPc][getFrom(move)][getTo(move)];
+                mList->moves[i].score = historyScore;
             }
         }
     }
@@ -532,13 +528,17 @@ move_loop:
     }
 
     if (best >= beta && getCapture(bestMove) < CAPTURE) {
+        Square fromSq = getFrom(bestMove);
+        Square toSq = getTo(bestMove);
+        Piece fromPc = board.board[fromSq];
+        int *hm = &historyMoves[fromPc][fromSq][toSq];
+
         if (killerMoves[ply][0] != bestMove) {
             killerMoves[ply][1] = killerMoves[ply][0];
             killerMoves[ply][0] = bestMove;
         }
 
-        historyMoves[board.turn][getFrom(bestMove)][getTo(bestMove)] +=
-              depth * depth;
+        *hm += depth * depth;
     }
 
     tt.record(board.key, board.ply, bestMove, depth, Hist[ply].eval, best,
