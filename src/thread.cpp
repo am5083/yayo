@@ -178,7 +178,7 @@ int Search::quiescent(int alpha, int beta) {
     } else {
         Hist[ply].eval = evalScore;
 
-        if (ttHit &&
+        if (ttHit && !pvNode &&
             (flag == TP_EXACT || (flag == TP_BETA && ttScore >= evalScore) ||
              (flag == TP_ALPHA && ttScore <= evalScore))) {
             evalScore = ttScore;
@@ -318,9 +318,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
     unsigned move = 0;
     int score = 0;
 
-    if (!ttHit && depth >= 4)
-        depth--;
-
     if (inCheck) {
         evalScore = INF;
         Hist[ply].eval = INF;
@@ -340,7 +337,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         Hist[ply].eval = evalScore;
         // try tt score
 
-        if (ttHit &&
+        if (ttHit && !pvNode &&
             (flag == TP_EXACT || (flag == TP_BETA && ttScore >= evalScore) ||
              (flag == TP_ALPHA && ttScore <= evalScore))) {
             evalScore = ttScore;
@@ -385,6 +382,9 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
     // if (depth <= 3 && (evalScore + 130 + 150 * depth <= alpha)) {
     //     return quiescent(alpha, beta);
     // }
+
+    if (!ttHit && depth >= 4)
+        depth--;
 
 move_loop:
 
