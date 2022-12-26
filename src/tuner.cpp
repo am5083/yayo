@@ -214,7 +214,7 @@ double TEntry::linearEval(double params[NUM_FEATURES][2]) {
 
 // clang-format off
 void TunerEntries::computeGradient(double gradient[NUM_FEATURES][2], double params[NUM_FEATURES][2], double K, int batch) {
-    double local[NUM_FEATURES][2] = {{0}};
+    double local[NUM_FEATURES][2];
 
     for (int i = batch * BATCH_SIZE; i < (batch + 1) * BATCH_SIZE; i++) {
         updateSingleGradient(entries[i], local, params, K);
@@ -397,7 +397,7 @@ void TunerEntries::runTuner() {
     std::ofstream out("new_weights.txt");
     for (int epoch = 0; epoch < MAX_EPOCHS; epoch++) {
         for (int batch = 0; batch < NUM_ENTRIES / BATCH_SIZE; batch++) {
-            double gradient[NUM_FEATURES][2] = {0};
+            double gradient[NUM_FEATURES][2];
             computeGradient(gradient, params, K, batch);
 
             for (int i = 1; i < NUM_FEATURES; i++) {

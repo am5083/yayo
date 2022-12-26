@@ -68,7 +68,7 @@ bool Search::checkForStop() const {
 }
 
 moveList Search::generateMoves() {
-    moveList mList = {0};
+    moveList mList;
     generate(board, &mList);
     return mList;
 }
@@ -156,7 +156,7 @@ int Search::quiescent(int alpha, int beta) {
     int evalScore = INF;
     int ttScore = 0;
     unsigned tpMove = 0;
-    TTHash entry = {0};
+    TTHash entry;
 
     if (!nullMove && tt.probe(board.key, entry)) {
         ttHit = true;
@@ -204,7 +204,7 @@ int Search::quiescent(int alpha, int beta) {
         return alpha;
     }
 
-    moveList mList = {0};
+    moveList mList;
     generateCaptures(board, &mList);
     scoreMoves(&mList, tpMove);
 
@@ -291,7 +291,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
     int ttScore = 0;
     unsigned ttMove = 0;
     int flag = -1;
-    TTHash entry = {0};
+    TTHash entry;
 
     if (!nullMove && tt.probe(board.key, entry)) {
         ttHit = true;
@@ -390,7 +390,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
 
 move_loop:
 
-    moveList mList = {{{0}}};
+    moveList mList;
     generate(board, &mList);
     scoreMoves(&mList, ttMove);
 
@@ -626,7 +626,7 @@ int Search::search() {
     }
 
     if (!bestMove) {
-        moveList mList = {{0}};
+        moveList mList;
         generate(board, &mList);
         mList.swapBest(0);
         bestMove = mList.moves[0].move;

@@ -85,7 +85,7 @@ void TTable::record(std::uint64_t key, int ply, unsigned short move, int depth,
     else if (score <= -CHECKMATE)
         score -= ply;
 
-    TTHash temp = {0};
+    TTHash temp;
     temp.data.info = uint16_t(flag | (depth << 2u) | (age << 10u));
     temp.data.move = move;
     temp.data.score = score;

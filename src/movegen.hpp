@@ -282,7 +282,7 @@ constexpr moveList *generateLegal(const Board &board, moveList *mList) {
         pinners &= pinners - 1;
     }
 
-    moveList temp = {0};
+    moveList temp;
     Bitboard targets = 0;
     if (T != CHECK_EVASION || __builtin_popcountll(board.bCheckPcs()) < 1) {
         switch (T) {
