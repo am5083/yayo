@@ -93,7 +93,8 @@ void TTable::record(std::uint64_t key, int ply, unsigned short move, int depth,
     temp.key = key ^ temp.hash;
 
     if ((bucket->key ^ bucket->hash) == key) {
-        if (flag == TP_EXACT || depth + 1 + 2 * pvNode >= bucket->depth() - 3) {
+        if (flag == TP_EXACT ||
+            depth + ttP1 + ttP2 * pvNode >= bucket->depth() - ttDpthR) {
             *bucket = temp;
         }
         return;
@@ -103,8 +104,8 @@ void TTable::record(std::uint64_t key, int ply, unsigned short move, int depth,
     for (int i = 1; i < NUM_BUCKETS; i++) {
         std::uint64_t bucket_key = (bucket + i)->key ^ (bucket + i)->hash;
         if (bucket_key == key) {
-            if (flag == TP_EXACT ||
-                depth + 1 + 2 * pvNode >= (bucket + i)->depth() - 3) {
+            if (flag == TP_EXACT || depth + ttP1 + ttP2 * pvNode >=
+                                          (bucket + i)->depth() - ttDpthR) {
                 *(bucket + i) = temp;
             }
             return;

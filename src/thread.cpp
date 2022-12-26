@@ -38,6 +38,7 @@ void Search::startSearch(Info *_info) {
     info->uciStop = false;
     info->uciQuit = false;
     numRep = 0;
+    selDepth = 0;
 
     memset(&historyMoves, 0, sizeof(historyMoves));
     memset(&pvTableLen, NO_MOVE, sizeof(pvTableLen));
@@ -198,8 +199,8 @@ int Search::quiescent(int alpha, int beta) {
         return ttScore;
     }
 
-    int deltaMargin = best + 200 + QUEEN_VAL;
-    if (deltaMargin < alpha) {
+    int delta = best + deltaMargin + QUEEN_VAL;
+    if (delta < alpha) {
         return alpha;
     }
 
@@ -347,20 +348,20 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
     improving = (!inCheck && ply >= 2 && Hist[ply].eval > Hist[ply - 2].eval);
 
     // static NMP
-    evalMargin = evalScore - (75 - 28 * improving) * depth;
-    if (!pvNode && !board.checkPcs && depth <= 8 && evalMargin > beta &&
+    evalMargin = evalScore - (rfpP1 - rfpP2 * improving) * depth;
+    if (!pvNode && !board.checkPcs && depth <= rfpDepth && evalMargin > beta &&
         std::abs(alpha) < CHECKMATE) {
         return evalMargin;
     }
 
-    if (depth > 2 && !board.checkPcs && !pvNode && Hist[ply - 1].move &&
+    if (depth > nmpDepth && !board.checkPcs && !pvNode && Hist[ply - 1].move &&
         evalScore >= beta &&
         (board.pieces(board.turn) ^ board.pieces(PAWN, board.turn) ^
          board.pieces(KING, board.turn)) &&
         (!ttHit || flag == TP_BETA || ttScore >= beta)) {
 
-        int R =
-              4 + depth / 6 + std::min(3, (evalScore - beta) / 100) + improving;
+        int R = nmpRed + depth / nmpDepthDiv +
+                std::min(nmpPar1, (evalScore - beta) / nmpPar2) + improving;
 
         Hist[ply].move = NO_MOVE;
         makeNullMove(board);
@@ -379,11 +380,12 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         }
     }
 
-    // if (depth <= 3 && (evalScore + 130 + 150 * depth <= alpha)) {
-    //     return quiescent(alpha, beta);
-    // }
+    if (depth <= razorDepth &&
+        (evalScore + razorMargin1 + razorMargin2 * depth <= alpha)) {
+        return quiescent(alpha, beta);
+    }
 
-    if (!ttHit && depth >= 4)
+    if (!ttHit && depth >= iidDepth)
         depth--;
 
 move_loop:
@@ -424,7 +426,9 @@ move_loop:
                                     63, depth)][std::min(63, movesSearched)]);
 
                 if (reducedDepth <= 8 && !inCheck &&
-                    evalScore + 125 + 100 * reducedDepth < alpha) {
+                    evalScore + futilityMargin1 +
+                                futilityMargin2 * reducedDepth <
+                          alpha) {
                     skip = true;
                 }
 

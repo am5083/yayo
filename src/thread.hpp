@@ -22,8 +22,45 @@
 #include "move.hpp"
 #include "util.hpp"
 #include <cmath>
+#include <cstring>
+#include <memory>
+#include <thread>
+#include <vector>
 
 namespace Yayo {
+
+static int deltaMargin = 200;
+
+static int rfpDepth = 8;
+static int rfpP1 = 75;
+static int rfpP2 = 28;
+
+// currently tuning
+static int nmpDepth = 2;
+static int nmpRed = 4;
+static int nmpDepthDiv = 6;
+static int nmpPar1 = 3;
+static int nmpPar2 = 100;
+
+static int razorDepth = 3;
+static int razorMargin1 = 130;
+static int razorMargin2 = 150;
+
+static int iidDepth = 4;
+
+static int futilityMargin1 = 125;
+static int futilityMargin2 = 100;
+
+static int quietSeeThrshld = -60;
+static int capSeeThrshld = -80;
+
+// next to tune
+static int maxNumFailed = 5;
+static int alphaWindowInit = -12;
+static int betaWindowInit = 12;
+static double alphaWindowMultiplier = 1.45;
+static double betaWindowMultiplier = 1.45;
+static int aspDepth = 3;
 
 struct HistEntry {
     unsigned move;

@@ -23,6 +23,10 @@
 
 namespace Yayo {
 
+static int ttP1 = 1;
+static int ttP2 = 2;
+static int ttDpthR = 3;
+
 /*
 ** 0000 0000 0000 0000
 **    gen

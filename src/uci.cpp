@@ -28,7 +28,7 @@
 namespace Yayo {
 
 static inline int parseMove(Board &board, std::string move) {
-    moveList mList = {0};
+    moveList mList;
     generate(board, &mList);
 
     int fromSq = (move[0] - 'a') + (8 - (move[1] - '0')) * 8;
@@ -61,7 +61,7 @@ static inline int parseMove(Board &board, std::string move) {
 }
 
 Bitboard divide(Board &board, moveList *mL, int start, int cur) {
-    moveList mList = {0};
+    moveList mList;
     generate(board, &mList);
 
     if (cur == 1) {
@@ -134,6 +134,17 @@ void UCI::Uci() {
     std::cout << "option name Hash type spin default " << TP_INIT_SIZE
               << " min 1 max 1024" << std::endl;
     std::cout << "option name Ponder type check default False" << std::endl;
+
+    std::cout << "option name nmpDepth type spin default " << nmpDepth
+              << std::endl;
+    std::cout << "option name nmpRed type spin default " << nmpRed << std::endl;
+    std::cout << "option name nmpDepthDiv type spin default " << nmpDepthDiv
+              << std::endl;
+    std::cout << "option name nmpPar1 type spin default " << nmpPar1
+              << std::endl;
+    std::cout << "option name nmpPar2 type spin default " << nmpPar2
+              << std::endl;
+
     std::cout << "uciok" << std::endl;
 }
 
@@ -159,7 +170,7 @@ std::uint64_t UCI::Perft(int depth) {
 
     unsigned long long n;
     if (depth == 1) {
-        moveList mList = {0};
+        moveList mList;
         n = divide(board, &mList, depth, depth);
 
         for (int i = 0; i < mList.nMoves; i++) {
@@ -176,6 +187,22 @@ std::uint64_t UCI::Perft(int depth) {
     std::cout << "total: " << n << "\n";
 
     return n;
+}
+
+void setOption(std::istringstream &ss, int &val) {
+    std::string args;
+    ss >> args;
+    int n;
+    ss >> n;
+    val = n;
+}
+
+void setOptionD(std::istringstream &ss, double &val) {
+    std::string args;
+    ss >> args;
+    int n;
+    ss >> n;
+    val = n;
 }
 
 void UCI::Main() {
@@ -301,7 +328,7 @@ void UCI::Main() {
             int cStopTime, hStopTime;
 
             if (time != -1) {
-                cStopTime = time / (movestogo + 1) + increment - 5;
+                cStopTime = (time / (movestogo + 1)) + increment - 10;
                 hStopTime =
                       std::min(cStopTime * 5, time / std::min(4, movestogo));
 
@@ -374,10 +401,71 @@ void UCI::Main() {
                         NewGame();
                     }
                 }
+
+                if (args == "deltaMargin")
+                    setOption(iss, deltaMargin);
+
+                if (args == "rfpDepth")
+                    setOption(iss, rfpDepth);
+                if (args == "rfpP1")
+                    setOption(iss, rfpP1);
+                if (args == "rfpP2")
+                    setOption(iss, rfpP2);
+
+                if (args == "nmpDepth")
+                    setOption(iss, nmpDepth);
+                if (args == "nmpRed")
+                    setOption(iss, nmpRed);
+                if (args == "nmpDepthDiv")
+                    setOption(iss, nmpDepthDiv);
+                if (args == "nmpPar1")
+                    setOption(iss, nmpPar1);
+                if (args == "nmpPar2")
+                    setOption(iss, nmpPar2);
+
+                if (args == "razorDepth")
+                    setOption(iss, razorDepth);
+                if (args == "razorMargin1")
+                    setOption(iss, razorMargin1);
+                if (args == "razorMargin2")
+                    setOption(iss, razorMargin2);
+
+                if (args == "iidDepth")
+                    setOption(iss, iidDepth);
+
+                if (args == "futilityMargin1")
+                    setOption(iss, futilityMargin1);
+                if (args == "futilityMargin2")
+                    setOption(iss, futilityMargin2);
+
+                if (args == "quietSeeThrshld")
+                    setOption(iss, quietSeeThrshld);
+                if (args == "capSeeThrshld")
+                    setOption(iss, capSeeThrshld);
+
+                if (args == "maxNumFailed")
+                    setOption(iss, maxNumFailed);
+                if (args == "alphaWindowInit")
+                    setOption(iss, alphaWindowInit);
+                if (args == "betaWindowInit")
+                    setOption(iss, betaWindowInit);
+                if (args == "alphaWindowMultiplier")
+                    setOptionD(iss, alphaWindowMultiplier);
+                if (args == "betaWindowMultiplier")
+                    setOptionD(iss, betaWindowMultiplier);
+                if (args == "aspDepth")
+                    setOption(iss, aspDepth);
+
+                if (args == "ttP1")
+                    setOption(iss, ttP1);
+                if (args == "ttP2")
+                    setOption(iss, ttP2);
+                if (args == "ttDpthR")
+                    setOption(iss, ttDpthR);
             }
 
         } else if (cmd == "eval") {
-            moveList mList = {0};
+            moveList mList;
             generate(board, &mList);
             std::cout << Eval(board).eval() << std::endl;
         } else if (cmd == "perft") {
@@ -386,7 +474,7 @@ void UCI::Main() {
 
             unsigned long long n;
             if (depth == 1) {
-                moveList mList = {0};
+                moveList mList;
                 n = divide(board, &mList, depth, depth);
 
                 for (int i = 0; i < mList.nMoves; i++) {
