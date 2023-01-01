@@ -94,7 +94,7 @@ void print_move(unsigned short move);
 
 struct moveList {
     Move moves[256];
-    unsigned short nMoves, nTactical, nQuiet;
+    unsigned short nMoves = 0, nTactical = 0, nQuiet = 0;
 
     void print() const;
 

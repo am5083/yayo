@@ -62,6 +62,13 @@ static double alphaWindowMultiplier = 1.45;
 static double betaWindowMultiplier = 1.45;
 static int aspDepth = 3;
 
+static int lmpPar1 = 6;
+static int lmpDiv1 = 2;
+static int lmpPar2 = 5;
+static int lmpM1 = 2;
+static int lmpM2 = 3;
+static int lmpDiv2 = 2;
+
 struct HistEntry {
     unsigned move;
     int eval;
@@ -72,7 +79,7 @@ class Search {
     Search() {
         info = nullptr;
         memset(lmrDepthReduction, 0, sizeof(lmrDepthReduction));
-        memset(lmpThresholds, 5, sizeof(lmpThresholds));
+        memset(lmpThresholds, 0, sizeof(lmpThresholds));
 
         for (int depth = 0; depth < 64; depth++) {
             for (int moves = 0; moves < 64; moves++) {
@@ -82,8 +89,8 @@ class Search {
         }
 
         for (int i = 1; i < 9; i++) {
-            lmpThresholds[0][i] = (6 + i * (i + 1)) / 2;
-            lmpThresholds[1][i] = 5 + i * (i + 1);
+            lmpThresholds[0][i] = (lmpPar1 + lmpM1 + i * i) / lmpDiv1;
+            lmpThresholds[1][i] = (lmpPar2 + lmpM2 + i * i) / lmpDiv2;
         }
     }
     Search(const Search &) = delete;

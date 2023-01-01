@@ -135,6 +135,14 @@ void UCI::Uci() {
               << " min 1 max 1024" << std::endl;
     std::cout << "option name Ponder type check default False" << std::endl;
 
+    std::cout << "option name deltaMargin type spin default " << deltaMargin
+              << std::endl;
+
+    std::cout << "option name rfpDepth type spin default " << rfpDepth
+              << std::endl;
+    std::cout << "option name rfpP1 type spin default " << rfpP1 << std::endl;
+    std::cout << "option name rfpP2 type spin default " << rfpP2 << std::endl;
+
     std::cout << "option name nmpDepth type spin default " << nmpDepth
               << std::endl;
     std::cout << "option name nmpRed type spin default " << nmpRed << std::endl;
@@ -143,6 +151,24 @@ void UCI::Uci() {
     std::cout << "option name nmpPar1 type spin default " << nmpPar1
               << std::endl;
     std::cout << "option name nmpPar2 type spin default " << nmpPar2
+              << std::endl;
+
+    std::cout << "option name futilityMargin1 type spin default "
+              << futilityMargin1 << std::endl;
+    std::cout << "option name futilityMargin2 type spin default "
+              << futilityMargin2 << std::endl;
+
+    std::cout << "option name maxNumFailed type spin default " << maxNumFailed
+              << std::endl;
+    std::cout << "option name alphaWindowInit type spin default "
+              << alphaWindowInit << std::endl;
+    std::cout << "option name betaWindowInit type spin default "
+              << betaWindowInit << std::endl;
+    std::cout << "option name alphaWindowMultiplier type spin default "
+              << alphaWindowMultiplier << std::endl;
+    std::cout << "option name betaWindowMultiplier type spin default "
+              << betaWindowMultiplier << std::endl;
+    std::cout << "option name aspDepth type spin default " << aspDepth
               << std::endl;
 
     std::cout << "uciok" << std::endl;

@@ -425,6 +425,8 @@ move_loop:
                       depth - int(lmrDepthReduction[std::min(
                                     63, depth)][std::min(63, movesSearched)]);
 
+                reducedDepth = std::max(0, reducedDepth);
+
                 if (reducedDepth <= 8 && !inCheck &&
                     evalScore + futilityMargin1 +
                                 futilityMargin2 * reducedDepth <
@@ -437,12 +439,12 @@ move_loop:
                 //     skip = true;
                 // }
 
-                if (depth <= 8 &&
-                    board.see(toSq, toPc, fromSq, fromPc) < -60 * depth)
+                if (depth <= 8 && board.see(toSq, toPc, fromSq, fromPc) <
+                                        quietSeeThrshld * depth)
                     continue;
             } else if (isCapture) {
-                if (depth <= 8 &&
-                    board.see(toSq, toPc, fromSq, fromPc) < -80 * depth)
+                if (depth <= 8 && board.see(toSq, toPc, fromSq, fromPc) <
+                                        capSeeThrshld * depth)
                     continue;
             }
         }
@@ -547,8 +549,8 @@ int Search::search() {
     double totalTime = 0;
     int depth = info->depth;
 
-    int alphaWindow = -12;
-    int betaWindow = 12;
+    int alphaWindow = alphaWindowInit;
+    int betaWindow = betaWindowInit;
     int numFailed = 0;
     int failDepth = -1;
     for (int i = 1; i <= depth; i++) {
@@ -557,12 +559,12 @@ int Search::search() {
         score = negaMax(alpha, beta, i, false);
 
         if (score <= alpha) {
-            if (numFailed > 5) {
+            if (numFailed > maxNumFailed) {
                 alpha = -INF;
             }
 
             beta = (alpha + beta) / 2;
-            alphaWindow *= 1.45;
+            alphaWindow *= alphaWindowMultiplier;
             alpha += alphaWindow + 1;
             numFailed++;
             i--;
@@ -570,11 +572,11 @@ int Search::search() {
         }
 
         if (score >= beta) {
-            if (numFailed > 5) {
+            if (numFailed > maxNumFailed) {
                 beta = INF;
             }
 
-            betaWindow *= 1.45;
+            betaWindow *= betaWindowMultiplier;
             beta += betaWindow + 1;
             numFailed++;
             i--;
