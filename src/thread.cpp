@@ -347,6 +347,11 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
 
     improving = (!inCheck && ply >= 2 && Hist[ply].eval > Hist[ply - 2].eval);
 
+    if (depth <= razorDepth &&
+        (evalScore + razorMargin1 + razorMargin2 * depth <= alpha)) {
+        return quiescent(alpha, beta);
+    }
+
     // static NMP
     evalMargin = evalScore - (rfpP1 - rfpP2 * improving) * depth;
     if (!pvNode && !board.checkPcs && depth <= rfpDepth && evalMargin > beta &&
@@ -354,14 +359,14 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
         return evalMargin;
     }
 
-    if (depth > nmpDepth && !board.checkPcs && !pvNode && Hist[ply - 1].move &&
+    if (depth >= nmpDepth && !board.checkPcs && !pvNode && Hist[ply - 1].move &&
         evalScore >= beta &&
         (board.pieces(board.turn) ^ board.pieces(PAWN, board.turn) ^
          board.pieces(KING, board.turn)) &&
         (!ttHit || flag == TP_BETA || ttScore >= beta)) {
 
-        int R = nmpRed + depth / nmpDepthDiv +
-                std::min(nmpPar1, (evalScore - beta) / nmpPar2) + improving;
+        int R = nmpRed + depth / nmpDepthDiv + (evalScore - beta) / nmpPar1 +
+                improving;
 
         Hist[ply].move = NO_MOVE;
         makeNullMove(board);
@@ -378,11 +383,6 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
                 return score;
             }
         }
-    }
-
-    if (depth <= razorDepth &&
-        (evalScore + razorMargin1 + razorMargin2 * depth <= alpha)) {
-        return quiescent(alpha, beta);
     }
 
     if (!ttHit && depth >= iidDepth)
@@ -425,7 +425,7 @@ move_loop:
                       depth - int(lmrDepthReduction[std::min(
                                     63, depth)][std::min(63, movesSearched)]);
 
-                reducedDepth = std::max(0, reducedDepth);
+                reducedDepth = std::max(1, reducedDepth);
 
                 if (reducedDepth <= 8 && !inCheck &&
                     evalScore + futilityMargin1 +
@@ -434,10 +434,10 @@ move_loop:
                     skip = true;
                 }
 
-                // if (depth <= 8 && !inCheck && !pvNode &&
-                //     numQuiets > lmpThresholds[improving][depth]) {
-                //     skip = true;
-                // }
+               // if (depth <= 8 && !inCheck && !pvNode &&
+                //    numQuiets >= lmpThresholds[improving][depth]) {
+                 //   skip = true;
+//                }
 
                 if (depth <= 8 && board.see(toSq, toPc, fromSq, fromPc) <
                                         quietSeeThrshld * depth)
@@ -710,6 +710,19 @@ void Search::joinThread() {
     }
 }
 
-void Search::clearTT(int size) { tt.init(size); }
+void Search::clearTT(int size) {
+    tt.init(size);
 
+    for (int i = 1; i < 9; i++) {
+        lmpThresholds[0][i] = (lmpPar1 + i * i) / lmpDiv1;
+        lmpThresholds[1][i] = (lmpPar2 + i * i) / lmpDiv2;
+    }
+
+    for (int depth = 0; depth < 64; depth++) {
+        for (int moves = 0; moves < 64; moves++) {
+            lmrDepthReduction[depth][moves] =
+                  lmrP1 + std::log(depth) * std::log(moves) / lmrP2;
+        }
+    }
+}
 } // namespace Yayo
