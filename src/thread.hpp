@@ -29,45 +29,45 @@
 
 namespace Yayo {
 
-static int deltaMargin = 200;
+static int deltaMargin = 210;
 
 static int rfpDepth = 8;
-static int rfpP1 = 75;
-static int rfpP2 = 28;
+static int rfpP1 = 61;
+static int rfpP2 = 7;
 
 // currently tuning
 static int nmpDepth = 2;
 static int nmpRed = 4;
-static int nmpDepthDiv = 6;
-static int nmpPar1 = 3;
-static int nmpPar2 = 100;
+static int nmpDepthDiv = 2;
+static int nmpPar1 = 101;
 
 static int razorDepth = 3;
-static int razorMargin1 = 130;
-static int razorMargin2 = 150;
+static int razorMargin1 = 142;
+static int razorMargin2 = 166;
 
 static int iidDepth = 4;
 
-static int futilityMargin1 = 125;
-static int futilityMargin2 = 100;
+static int futilityMargin1 = 138;
+static int futilityMargin2 = 86;
 
-static int quietSeeThrshld = -60;
-static int capSeeThrshld = -80;
+static int quietSeeThrshld = -66;
+static int capSeeThrshld = -101;
 
 // next to tune
 static int maxNumFailed = 5;
-static int alphaWindowInit = -12;
-static int betaWindowInit = 12;
-static double alphaWindowMultiplier = 1.45;
-static double betaWindowMultiplier = 1.45;
+static int betaWindowInit = 18;
+static int alphaWindowInit = -18;
+static double alphaWindowMultiplier = 1.32;
+static double betaWindowMultiplier = 1.57;
 static int aspDepth = 3;
 
-static int lmpPar1 = 6;
-static int lmpDiv1 = 2;
+static int lmrP1 = 1;
+static double lmrP2 = 2.5;
+
+static int lmpPar1 = 3;
 static int lmpPar2 = 5;
-static int lmpM1 = 2;
-static int lmpM2 = 3;
-static int lmpDiv2 = 2;
+static double lmpDiv1 = 1.3262048850827794;
+static double lmpDiv2 = 2.2026788100055468;
 
 struct HistEntry {
     unsigned move;
@@ -84,13 +84,13 @@ class Search {
         for (int depth = 0; depth < 64; depth++) {
             for (int moves = 0; moves < 64; moves++) {
                 lmrDepthReduction[depth][moves] =
-                      1 + std::log(depth) * std::log(moves) / 2.5;
+                      lmrP1 + std::log(depth) * std::log(moves) / lmrP2;
             }
         }
 
         for (int i = 1; i < 9; i++) {
-            lmpThresholds[0][i] = (lmpPar1 + lmpM1 + i * i) / lmpDiv1;
-            lmpThresholds[1][i] = (lmpPar2 + lmpM2 + i * i) / lmpDiv2;
+            lmpThresholds[0][i] = (lmpPar1 + i * i) / lmpDiv1;
+            lmpThresholds[1][i] = (lmpPar2 + i * i) / lmpDiv2;
         }
     }
     Search(const Search &) = delete;

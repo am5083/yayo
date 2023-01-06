@@ -244,7 +244,7 @@ void setOptionD(std::istringstream &ss, double &val) {
     ss >> args;
     double n;
     ss >> n;
-    val = n / 100;
+    val = n;
 }
 
 void UCI::Main() {
@@ -487,8 +487,9 @@ void UCI::Main() {
                     setOption(iss, maxNumFailed);
                 if (args == "alphaWindowInit")
                     setOption(iss, alphaWindowInit);
-                if (args == "betaWindowInit")
+                if (args == "betaWindowInit") {
                     setOption(iss, betaWindowInit);
+                }
                 if (args == "alphaWindowMultiplier")
                     setOptionD(iss, alphaWindowMultiplier);
                 if (args == "betaWindowMultiplier")
@@ -501,9 +502,9 @@ void UCI::Main() {
                 if (args == "lmpPar2")
                     setOption(iss, lmpPar2);
                 if (args == "lmpDiv1")
-                    setOption(iss, lmpDiv1);
+                    setOptionD(iss, lmpDiv1);
                 if (args == "lmpDiv2")
-                    setOption(iss, lmpDiv2);
+                    setOptionD(iss, lmpDiv2);
 
                 if (args == "lmrP1")
                     setOption(iss, lmrP1);
