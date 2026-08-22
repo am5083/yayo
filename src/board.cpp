@@ -320,7 +320,8 @@ int Board::see(Square toSq, Piece toPc, Square from, Piece fromPc) {
     Bitboard xRayPcs =
           pieces(PAWN) | pieces(BISHOP) | pieces(ROOK) | pieces(QUEEN);
     Bitboard fromMap = SQUARE_BB(from);
-    Bitboard atkDefMap = attacksToSq(toSq, occ);
+    Bitboard atkDefMap =
+          attacksToKing<WHITE>(toSq, occ) | attacksToKing<BLACK>(toSq, occ);
 
     std::array<std::uint16_t, 8> pcVal = {0,          PAWN_VAL, KNIGHT_VAL,
                                           BISHOP_VAL, ROOK_VAL, QUEEN_VAL,
@@ -337,8 +338,6 @@ int Board::see(Square toSq, Piece toPc, Square from, Piece fromPc) {
         ply++;
 
         gain[ply] = pcVal[getPcType(fromPc)] - gain[ply - 1];
-        if (std::max(-gain[ply - 1], ply) < 0)
-            break;
 
         atkDefMap ^= fromMap;
         occ ^= fromMap;
@@ -350,7 +349,7 @@ int Board::see(Square toSq, Piece toPc, Square from, Piece fromPc) {
 
         startTurn ^= 1;
         fromMap = getLVA(Color(startTurn), atkDefMap, &fromPc);
-    } while (fromMap && ply < 32);
+    } while (fromMap && ply < 31);
 
     while (--ply && (ply - 1) >= 0) {
         gain[ply - 1] = -std::max(-gain[ply - 1], gain[ply]);
