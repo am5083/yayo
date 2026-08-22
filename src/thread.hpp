@@ -29,45 +29,45 @@
 
 namespace Yayo {
 
-static int deltaMargin = 210;
+inline int deltaMargin = 210;
 
-static int rfpDepth = 8;
-static int rfpP1 = 61;
-static int rfpP2 = 7;
+inline int rfpDepth = 8;
+inline int rfpP1 = 61;
+inline int rfpP2 = 7;
 
 // currently tuning
-static int nmpDepth = 2;
-static int nmpRed = 4;
-static int nmpDepthDiv = 2;
-static int nmpPar1 = 101;
+inline int nmpDepth = 2;
+inline int nmpRed = 4;
+inline int nmpDepthDiv = 2;
+inline int nmpPar1 = 101;
 
-static int razorDepth = 3;
-static int razorMargin1 = 142;
-static int razorMargin2 = 166;
+inline int razorDepth = 3;
+inline int razorMargin1 = 142;
+inline int razorMargin2 = 166;
 
-static int iidDepth = 4;
+inline int iidDepth = 4;
 
-static int futilityMargin1 = 138;
-static int futilityMargin2 = 86;
+inline int futilityMargin1 = 138;
+inline int futilityMargin2 = 86;
 
-static int quietSeeThrshld = -66;
-static int capSeeThrshld = -101;
+inline int quietSeeThrshld = -66;
+inline int capSeeThrshld = -101;
 
 // next to tune
-static int maxNumFailed = 5;
-static int betaWindowInit = 18;
-static int alphaWindowInit = -18;
-static double alphaWindowMultiplier = 1.32;
-static double betaWindowMultiplier = 1.57;
-static int aspDepth = 3;
+inline int maxNumFailed = 5;
+inline int betaWindowInit = 18;
+inline int alphaWindowInit = -18;
+inline double alphaWindowMultiplier = 1.32;
+inline double betaWindowMultiplier = 1.57;
+inline int aspDepth = 3;
 
-static int lmrP1 = 1;
-static double lmrP2 = 2.5;
+inline int lmrP1 = 1;
+inline double lmrP2 = 2.5;
 
-static int lmpPar1 = 3;
-static int lmpPar2 = 5;
-static double lmpDiv1 = 1.3262048850827794;
-static double lmpDiv2 = 2.2026788100055468;
+inline int lmpPar1 = 3;
+inline int lmpPar2 = 5;
+inline double lmpDiv1 = 1.3262048850827794;
+inline double lmpDiv2 = 2.2026788100055468;
 
 struct HistEntry {
     unsigned move;
