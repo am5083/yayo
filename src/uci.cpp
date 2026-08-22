@@ -112,9 +112,11 @@ void UCI::Bench() {
     }
 
     search.joinThread();
-    std::uint64_t total_nodes = search.get_nodes(); // bench_nodes accumulates across searches
+    std::uint64_t total_nodes =
+          search.get_nodes(); // bench_nodes accumulates across searches
 
-    std::uint64_t elapsed_ms = std::max<std::uint64_t>(1, get_time() - start_time);
+    std::uint64_t elapsed_ms =
+          std::max<std::uint64_t>(1, get_time() - start_time);
 
     std::cout << total_nodes << " nodes " << (total_nodes * 1000 / elapsed_ms)
               << " nps" << std::endl;
@@ -131,57 +133,69 @@ void UCI::Uci() {
               << " min 1 max 1024" << std::endl;
     std::cout << "option name Ponder type check default False" << std::endl;
 
-    std::cout << "option name deltaMargin type spin var " << deltaMargin
+    // Tunable search parameters. Integers are spins; floats are strings (UCI
+    // has no float type).
+    std::cout << "option name deltaMargin type spin default " << deltaMargin
+              << " min 0 max 1000" << std::endl;
+    std::cout << "option name rfpDepth type spin default " << rfpDepth
+              << " min 0 max 12" << std::endl;
+    std::cout << "option name rfpP1 type spin default " << rfpP1
+              << " min 0 max 300" << std::endl;
+    std::cout << "option name rfpP2 type spin default " << rfpP2
+              << " min 0 max 100" << std::endl;
+    std::cout << "option name nmpDepth type spin default " << nmpDepth
+              << " min 1 max 8" << std::endl;
+    std::cout << "option name nmpRed type spin default " << nmpRed
+              << " min 1 max 8" << std::endl;
+    std::cout << "option name nmpDepthDiv type spin default " << nmpDepthDiv
+              << " min 1 max 8" << std::endl;
+    std::cout << "option name nmpPar1 type spin default " << nmpPar1
+              << " min 20 max 400" << std::endl;
+    std::cout << "option name razorDepth type spin default " << razorDepth
+              << " min 0 max 8" << std::endl;
+    std::cout << "option name razorMargin1 type spin default " << razorMargin1
+              << " min 0 max 500" << std::endl;
+    std::cout << "option name razorMargin2 type spin default " << razorMargin2
+              << " min 0 max 500" << std::endl;
+    std::cout << "option name iidDepth type spin default " << iidDepth
+              << " min 1 max 12" << std::endl;
+    std::cout << "option name futilityMargin1 type spin default "
+              << futilityMargin1 << " min 0 max 500" << std::endl;
+    std::cout << "option name futilityMargin2 type spin default "
+              << futilityMargin2 << " min 0 max 300" << std::endl;
+    std::cout << "option name quietSeeThrshld type spin default "
+              << quietSeeThrshld << " min -300 max 0" << std::endl;
+    std::cout << "option name capSeeThrshld type spin default " << capSeeThrshld
+              << " min -300 max 0" << std::endl;
+    std::cout << "option name maxNumFailed type spin default " << maxNumFailed
+              << " min 1 max 20" << std::endl;
+    std::cout << "option name alphaWindowInit type spin default "
+              << alphaWindowInit << " min -100 max -1" << std::endl;
+    std::cout << "option name betaWindowInit type spin default "
+              << betaWindowInit << " min 1 max 100" << std::endl;
+    std::cout << "option name aspDepth type spin default " << aspDepth
+              << " min 1 max 10" << std::endl;
+    std::cout << "option name lmpPar1 type spin default " << lmpPar1
+              << " min 0 max 20" << std::endl;
+    std::cout << "option name lmpPar2 type spin default " << lmpPar2
+              << " min 0 max 20" << std::endl;
+    std::cout << "option name lmrP1 type spin default " << lmrP1
+              << " min 0 max 4" << std::endl;
+    std::cout << "option name ttP1 type spin default " << ttP1 << " min 0 max 8"
               << std::endl;
-
-    std::cout << "option name rfpDepth type spin var " << rfpDepth << std::endl;
-    std::cout << "option name rfpP1 type spin var " << rfpP1 << std::endl;
-    std::cout << "option name rfpP2 type spin var " << rfpP2 << std::endl;
-
-    std::cout << "option name nmpDepth type spin var " << nmpDepth << std::endl;
-    std::cout << "option name nmpRed type spin var " << nmpRed << std::endl;
-    std::cout << "option name nmpDepthDiv type spin var " << nmpDepthDiv
+    std::cout << "option name ttP2 type spin default " << ttP2 << " min 0 max 8"
               << std::endl;
-    std::cout << "option name nmpPar1 type spin var " << nmpPar1 << std::endl;
-
-    std::cout << "option name razorDepth type spin var " << razorDepth
-              << std::endl;
-    std::cout << "option name razorMargin1 type spin var " << razorMargin1
-              << std::endl;
-    std::cout << "option name razorMargin2 type spin var " << razorMargin2
-              << std::endl;
-
-    std::cout << "option name iidDepth type spin var " << iidDepth << std::endl;
-
-    std::cout << "option name futilityMargin1 type spin var " << futilityMargin1
-              << std::endl;
-    std::cout << "option name futilityMargin2 type spin var " << futilityMargin2
-              << std::endl;
-
-    std::cout << "option name quietSeeThrshld type spin var " << quietSeeThrshld
-              << std::endl;
-    std::cout << "option name capSeeThrshld type spin var " << capSeeThrshld
-              << std::endl;
-
-    std::cout << "option name maxNumFailed type spin var " << maxNumFailed
-              << std::endl;
-    std::cout << "option name alphaWindowInit type spin var " << alphaWindowInit
-              << std::endl;
-    std::cout << "option name betaWindowInit type spin var " << betaWindowInit
-              << std::endl;
-    std::cout << "option name alphaWindowMultiplier type spin var "
+    std::cout << "option name ttDpthR type spin default " << ttDpthR
+              << " min 0 max 8" << std::endl;
+    std::cout << "option name alphaWindowMultiplier type string default "
               << alphaWindowMultiplier << std::endl;
-    std::cout << "option name betaWindowMultiplier type spin var "
+    std::cout << "option name betaWindowMultiplier type string default "
               << betaWindowMultiplier << std::endl;
-    std::cout << "option name aspDepth type spin var " << aspDepth << std::endl;
-
-    std::cout << "option name lmpPar1 type spin var " << lmpPar1 << std::endl;
-    std::cout << "option name lmpPar2 type spin var " << lmpPar2 << std::endl;
-    std::cout << "option name lmpDiv1 type spin var " << lmpDiv1 << std::endl;
-    std::cout << "option name lmpDiv2 type spin var " << lmpDiv2 << std::endl;
-
-    std::cout << "option name lmrP1 type spin var " << lmrP1 << std::endl;
-    std::cout << "option name lmrP2 type spin var " << lmrP2 << std::endl;
+    std::cout << "option name lmpDiv1 type string default " << lmpDiv1
+              << std::endl;
+    std::cout << "option name lmpDiv2 type string default " << lmpDiv2
+              << std::endl;
+    std::cout << "option name lmrP2 type string default " << lmrP2 << std::endl;
 
     std::cout << "uciok" << std::endl;
 }
