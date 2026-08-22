@@ -23,6 +23,7 @@
 #include "movegen.hpp"
 #include "tt.hpp"
 #include "util.hpp"
+#include <algorithm>
 #include <sstream>
 
 namespace Yayo {
@@ -99,8 +100,6 @@ void UCI::Bench() {
     Info info[1];
 
     std::uint64_t start_time = get_time();
-    std::uint64_t total_nodes = 0;
-    std::uint64_t total_time = 0;
 
     for (auto &fen : benchPos) {
         search.clearTT(8);
@@ -110,17 +109,14 @@ void UCI::Bench() {
         info->startTime = start_time;
         search.startSearch(info);
         search.wait();
-        total_time += get_time() - start_time;
-        total_nodes += search.get_nodes();
     }
 
     search.joinThread();
-    total_nodes += search.get_nodes();
+    std::uint64_t total_nodes = search.get_nodes(); // bench_nodes accumulates across searches
 
-    std::uint64_t end_time = get_time();
-    total_time /= 1000;
+    std::uint64_t elapsed_ms = std::max<std::uint64_t>(1, get_time() - start_time);
 
-    std::cout << total_nodes << " nodes " << (long)(total_nodes / total_time)
+    std::cout << total_nodes << " nodes " << (total_nodes * 1000 / elapsed_ms)
               << " nps" << std::endl;
 }
 
@@ -267,7 +263,12 @@ void UCI::Main() {
 
     while (true) {
         std::string input;
-        getline(std::cin, input);
+        if (!getline(std::cin, input)) {
+            // stdin closed: stop any search and exit (OpenBench requirement)
+            Stop();
+            search.joinThread();
+            break;
+        }
 
         std::istringstream iss(input);
         std::string cmd;
