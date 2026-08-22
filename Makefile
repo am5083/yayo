@@ -1,34 +1,28 @@
-CXX=g++-12
-CXXFLAGS=-I. -funroll-loops -O3 -std=c++20 -fopenmp -mbmi2 -Wall -Wextra -pedantic-errors
-LDFLAGS=-L /usr/lib/llvm-14/lib/
-LDLIBS=-lomp
-EXE=yayo
+# OpenBench-compatible Makefile.
+#   make                       -> builds ./yayo
+#   make EXE=Yayo-abc CXX=g++  -> builds ./Yayo-abc with the given compiler
+# The engine uses the pext instruction at run time, so BMI2 is required.
 
-SRC := src
-TARGET := $(EXE)
-BUILD := build
+EXE ?= yayo
+CXX ?= g++
 
-SEARCHHPP = $(addsuffix /*.hpp ,$(SRC))
-SEARCHCPP = $(addsuffix /*.cpp ,$(SRC))
-SRCS := $(wildcard $(SEARCHCPP))
+SRC  := src
+OBJ  := obj
+SRCS := $(wildcard $(SRC)/*.cpp)
+OBJS := $(patsubst $(SRC)/%.cpp,$(OBJ)/%.o,$(SRCS))
 
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S), Darwin)
-    LDFLAGS = -L /usr/local/opt/libomp/lib/
-endif
+CXXFLAGS ?= -std=c++20 -O3 -funroll-loops -flto -mbmi -mbmi2 -mpopcnt -march=native -fopenmp -DNDEBUG -w
+LDFLAGS  ?= -flto -fopenmp -pthread
 
-OBJS := $(subst $(SRC)/,$(BUILD)/,$(addsuffix .o,$(basename $(SRCS))))
+.PHONY: all clean
+all: $(EXE)
 
-$(TARGET): $(OBJS)
-	@echo $(SRCS)
-	@echo $(OBJS)
-	$(CXX) $(OBJS) -o $@ $(LDFLAGS) $(LDLIBS)
+$(EXE): $(OBJS)
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDFLAGS)
 
-$(BUILD)/%.o: $(SRC)/%.cpp
-	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -c -o $@ $< $(LDFLAGS) $(LDLIBS)
+$(OBJ)/%.o: $(SRC)/%.cpp $(wildcard $(SRC)/*.hpp) $(wildcard $(SRC)/*.h)
+	@mkdir -p $(OBJ)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(BUILD)/*.o
-	rm -f $(TARGET)
-	rm -rf $(BUILD)/*.o
+	rm -rf $(OBJ) $(EXE)
