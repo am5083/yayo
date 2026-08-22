@@ -158,7 +158,7 @@ int Search::quiescent(int alpha, int beta) {
     unsigned tpMove = 0;
     TTHash entry;
 
-    if (!nullMove && tt.probe(board.key, entry)) {
+    if (!nullMove && probe && tt.probe(board.key, entry)) {
         ttHit = true;
         ttScore = entry.score(board.ply);
         tpMove = entry.move();
@@ -238,8 +238,9 @@ int Search::quiescent(int alpha, int beta) {
         }
     }
 
-    tt.record(board.key, board.ply, bestMove, 0, Hist[ply].eval, best, pvNode,
-              hashFlag);
+    if (probe)
+        tt.record(board.key, board.ply, bestMove, 0, Hist[ply].eval, best,
+                  pvNode, hashFlag);
 
     return best;
 }
@@ -293,7 +294,7 @@ int Search::negaMax(int alpha, int beta, int depth, bool cutNode,
     int flag = -1;
     TTHash entry;
 
-    if (!nullMove && tt.probe(board.key, entry)) {
+    if (!nullMove && probe && tt.probe(board.key, entry)) {
         ttHit = true;
         ttScore = entry.score(board.ply);
         ttMove = entry.move();
@@ -535,8 +536,9 @@ move_loop:
         *hm += depth * depth;
     }
 
-    tt.record(board.key, board.ply, bestMove, depth, Hist[ply].eval, best,
-              pvNode, hashFlag);
+    if (probe)
+        tt.record(board.key, board.ply, bestMove, depth, Hist[ply].eval, best,
+                  pvNode, hashFlag);
 
     return best;
 }

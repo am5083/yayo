@@ -5,13 +5,27 @@
 #include "thread.hpp"
 #include <fstream>
 
+#ifndef NUM_ENTRIES
 #define NUM_ENTRIES 500000
+#endif
+#ifndef MAX_EPOCHS
 #define MAX_EPOCHS 100000
+#endif
+#ifndef BATCH_SIZE
 #define BATCH_SIZE 500000
+#endif
+#ifndef LRRATE
 #define LRRATE 0.10
+#endif
+#ifndef LRDROPRATE
 #define LRDROPRATE 2.00
+#endif
+#ifndef LRSTEPRATE
 #define LRSTEPRATE 500
+#endif
+#ifndef REPORTING
 #define REPORTING 50
+#endif
 #define NUM_FEATURES 487
 
 namespace Yayo {
@@ -50,6 +64,7 @@ class TunerEntries {
 
   private:
     TEntry *entries;
+    int numEntries = 0;
 
     double staticEvalErrors(double K);
     double tunedEvalErrors(double params[NUM_FEATURES][2], double K);

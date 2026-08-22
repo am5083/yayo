@@ -78,6 +78,12 @@ class Search {
   public:
     Search() {
         info = nullptr;
+        memset(pvTable, 0, sizeof(pvTable));
+        memset(pvTableLen, 0, sizeof(pvTableLen));
+        memset(killerMoves, 0, sizeof(killerMoves));
+        memset(killerMates, 0, sizeof(killerMates));
+        memset(historyMoves, 0, sizeof(historyMoves));
+        memset(Hist, 0, sizeof(Hist));
         memset(lmrDepthReduction, 0, sizeof(lmrDepthReduction));
         memset(lmpThresholds, 0, sizeof(lmpThresholds));
 

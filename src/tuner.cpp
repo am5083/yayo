@@ -24,6 +24,7 @@
 
 #include "tuner.hpp"
 #include "movegen.hpp"
+#include <algorithm>
 #include <limits>
 #include <utility>
 #include <vector>
@@ -49,20 +50,25 @@ TunerEntries::TunerEntries(const std::string &file) {
 
     std::string line;
     std::vector<std::string> fens;
-    for (int i = 0; i < NUM_ENTRIES; i++) {
-        getline(games, line);
+    while ((int)fens.size() < NUM_ENTRIES && getline(games, line)) {
+        if (line.find("[1.0]") == std::string::npos &&
+            line.find("[0.5]") == std::string::npos &&
+            line.find("[0.0]") == std::string::npos)
+            continue;
         fens.push_back(line);
     }
+    numEntries = fens.size();
+    std::cout << "loaded " << numEntries << " labeled positions\n";
 
 #pragma omp parallel for schedule(dynamic) num_threads(THREADS)
-    for (int i = 0; i < NUM_ENTRIES; i++) {
+    for (int i = 0; i < numEntries; i++) {
         std::string line = fens[i];
 
         if (line.find("[1.0]") != std::string::npos)
             entries[i].result = 1.0;
         else if (line.find("[0.5]") != std::string::npos)
             entries[i].result = 0.5;
-        else if (line.find("[0.0]") != std::string::npos)
+        else
             entries[i].result = 0.0;
 
         Board board;
@@ -71,7 +77,7 @@ TunerEntries::TunerEntries(const std::string &file) {
 
         if (!(i % 5000)) {
             std::cout << "initializing tuner entry #" << i << " of "
-                      << NUM_ENTRIES << "\n";
+                      << numEntries << "\n";
         }
     }
 
@@ -168,12 +174,12 @@ double TunerEntries::staticEvalErrors(double K) {
 
     #pragma omp parallel shared(total)
     {
-        #pragma omp for schedule(static, NUM_ENTRIES / THREADS) reduction(+:total)
-        for (int i = 0; i < NUM_ENTRIES; i++) {
+        #pragma omp for schedule(static) reduction(+:total)
+        for (int i = 0; i < numEntries; i++) {
             total += pow(entries[i].result - sigmoid(K, entries[i].staticEval), 2);
         }
     }
-    return total / (double)NUM_ENTRIES;
+    return total / (double)numEntries;
 }
 
 double TunerEntries::tunedEvalErrors(double params[NUM_FEATURES][2], double K) {
@@ -181,13 +187,13 @@ double TunerEntries::tunedEvalErrors(double params[NUM_FEATURES][2], double K) {
 
     #pragma omp parallel shared(total)
     {
-        #pragma omp for schedule(static, NUM_ENTRIES / THREADS) reduction(+:total)
-        for (int i = 0; i < NUM_ENTRIES; i++) {
+        #pragma omp for schedule(static) reduction(+:total)
+        for (int i = 0; i < numEntries; i++) {
             total += pow(entries[i].result - sigmoid(K, entries[i].linearEval(params)), 2.0);
         }
     }
 
-    return total / (double)NUM_ENTRIES;
+    return total / (double)numEntries;
 }
 // clang-format on
 
@@ -214,14 +220,29 @@ double TEntry::linearEval(double params[NUM_FEATURES][2]) {
 
 // clang-format off
 void TunerEntries::computeGradient(double gradient[NUM_FEATURES][2], double params[NUM_FEATURES][2], double K, int batch) {
-    double local[NUM_FEATURES][2];
+    for (int i = 0; i < NUM_FEATURES; i++) {
+        gradient[i][0] = 0.0;
+        gradient[i][1] = 0.0;
+    }
 
-    for (int i = batch * BATCH_SIZE; i < (batch + 1) * BATCH_SIZE; i++) {
-        updateSingleGradient(entries[i], local, params, K);
+    const int start = batch * BATCH_SIZE;
+    const int end = std::min(numEntries, (batch + 1) * BATCH_SIZE);
 
-        for (int i = 1; i < NUM_FEATURES; i++) {
-            gradient[i][0] += local[i][0];
-            gradient[i][1] += local[i][1];
+    #pragma omp parallel shared(gradient)
+    {
+        double local[NUM_FEATURES][2] = {{0}};
+
+        #pragma omp for schedule(static)
+        for (int i = start; i < end; i++) {
+            updateSingleGradient(entries[i], local, params, K);
+        }
+
+        #pragma omp critical
+        {
+            for (int i = 0; i < NUM_FEATURES; i++) {
+                gradient[i][0] += local[i][0];
+                gradient[i][1] += local[i][1];
+            }
         }
     }
 }
@@ -235,17 +256,16 @@ void TunerEntries::updateSingleGradient(TEntry &entry,
     double S = sigmoid(K, E);
     double X = (entry.result - S) * S * (1 - S);
 
-    double mgBase = X * entry.mgPhase, egBase = X * entry.egPhase;
+    double mgBase = X * ((double)entry.mgPhase / 24.0);
+    double egBase = X * ((double)entry.egPhase / 24.0);
 
     for (int i = 0; i < entry.nTuples; i++) {
         int idx = entry.tuples[i].index;
         int wcoeff = entry.tuples[i].whiteScore;
         int bcoeff = entry.tuples[i].blackScore;
 
-        gradient[idx][0] =
-              (wcoeff - bcoeff) * mgBase * ((double)entry.mgPhase / 24);
-        gradient[idx][1] =
-              (wcoeff - bcoeff) * egBase * ((double)entry.egPhase / 24);
+        gradient[idx][0] += (wcoeff - bcoeff) * mgBase;
+        gradient[idx][1] += (wcoeff - bcoeff) * egBase;
     }
 }
 
@@ -396,8 +416,8 @@ void TunerEntries::runTuner() {
 
     std::ofstream out("new_weights.txt");
     for (int epoch = 0; epoch < MAX_EPOCHS; epoch++) {
-        for (int batch = 0; batch < NUM_ENTRIES / BATCH_SIZE; batch++) {
-            double gradient[NUM_FEATURES][2];
+        for (int batch = 0; batch < (numEntries + BATCH_SIZE - 1) / BATCH_SIZE; batch++) {
+            double gradient[NUM_FEATURES][2] = {{0}};
             computeGradient(gradient, params, K, batch);
 
             for (int i = 1; i < NUM_FEATURES; i++) {
