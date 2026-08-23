@@ -148,7 +148,7 @@ int Search::quiescent(int alpha, int beta) {
     selDepth = std::max(selDepth, ply);
 
     tt.prefetch(board.key);
-    bool pvNode = (beta - alpha) < 1;
+    bool pvNode = (beta - alpha) > 1;
 
     bool nullMove = (board.ply >= 1 && !Hist[ply - 1].move);
     bool ttHit = false;
