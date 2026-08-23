@@ -32,7 +32,7 @@ int TracePeek::calculate(std::tuple<int, int, int> info) {
     const int mgPhase = std::get<1>(info);
     const int egPhase = std::get<2>(info);
 
-    int score     = TEMPO;
+    int score     = (color == BLACK) ? -TEMPO : TEMPO;
     int nFeatures = 0;
     for (int i = 0, w = 0; w < 487; i += 2, w++) {
         if (trace[i] - trace[i + 1]) {

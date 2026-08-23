@@ -1,8 +1,8 @@
 // Finite-difference check of the tuner gradient. Pass = max relative error < 1e-3.
 #define private public
-#include "src/tuner.hpp"
+#include "../src/tuner.hpp"
 #undef private
-#include "src/movegen.hpp"
+#include "../src/movegen.hpp"
 #include <iostream>
 #include <cmath>
 using namespace Yayo;

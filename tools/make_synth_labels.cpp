@@ -1,9 +1,9 @@
 // Build a synthetic labeled dataset for tuner tests.
 // Label = Bernoulli(sigmoid((eval + 60*bishop diff - 40*knight diff + noise)/150)).
 // The tuner must move bishop value up and knight value down.
-#include "src/board.hpp"
-#include "src/movegen.hpp"
-#include "src/eval.hpp"
+#include "../src/board.hpp"
+#include "../src/movegen.hpp"
+#include "../src/eval.hpp"
 #include <fstream>
 #include <iostream>
 #include <random>

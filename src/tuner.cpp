@@ -106,6 +106,7 @@ void TEntry::init(Board &board, std::string fen) {
 
     Eval<TRACE> eval(board, trace);
     staticEval = eval.eval();
+    turn = board.turn;
 
     if (board.turn == BLACK) {
         staticEval *= -1;
@@ -201,7 +202,7 @@ double TEntry::linearEval(double params[NUM_FEATURES][2]) {
     Score *weights = &((Score *)&w)[0];
     int mgScore = 0, egScore = 0;
 
-    double linearEval = TEMPO;
+    double linearEval = (turn == BLACK) ? -TEMPO : TEMPO;
     for (int i = 0; i < nTuples; i++) {
         int Fi = tuples[i].whiteScore - tuples[i].blackScore;
         Score s = weights[tuples[i].index];

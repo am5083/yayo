@@ -181,11 +181,11 @@ template <Tracing T = NO_TRACE> class Eval {
         const int mobilityEval =
               (mgMobility * mgPhase + egMobility * egPhase) / 24;
 
-        auto eval = TEMPO;
-        eval += materialScore + pcSqEval + passedPawnEval + doubledPawnEval +
-                isolatedPawnEval + backwardPawnEval + mobilityEval;
+        int eval = materialScore + pcSqEval + passedPawnEval +
+                   doubledPawnEval + isolatedPawnEval + backwardPawnEval +
+                   mobilityEval;
 
-        return eval * color;
+        return eval * color + TEMPO;
     }
 
   public:
