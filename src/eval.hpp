@@ -473,7 +473,8 @@ constexpr Score Eval<T>::mobilityScore() {
 
     while (bishops) {
         auto bishopSq = Square(lsb_index(bishops));
-        Bitboard bishopMoves = getBishopAttacks(bishopSq, 0) & ~excludedSquares;
+        Bitboard bishopMoves =
+              getBishopAttacks(bishopSq, board.pieces()) & ~excludedSquares;
 
         int numMoves = popcount(bishopMoves);
         if (numMoves < 0)
@@ -491,7 +492,8 @@ constexpr Score Eval<T>::mobilityScore() {
 
     while (rooks) {
         auto rookSq = Square(lsb_index(rooks));
-        Bitboard rookMoves = getRookAttacks(rookSq, 0) & ~excludedSquares;
+        Bitboard rookMoves =
+              getRookAttacks(rookSq, board.pieces()) & ~excludedSquares;
 
         int numMoves = popcount(rookMoves);
         if (numMoves < 0)
@@ -509,9 +511,10 @@ constexpr Score Eval<T>::mobilityScore() {
 
     while (queens) {
         auto queenSq = Square(lsb_index(queens));
-        Bitboard rookMoves = getRookAttacks(queenSq, 0) & ~excludedSquares;
-        Bitboard bishopMoves = getBishopAttacks(queenSq, secondThirdRankPawns) &
-                               ~excludedSquares;
+        Bitboard rookMoves =
+              getRookAttacks(queenSq, board.pieces()) & ~excludedSquares;
+        Bitboard bishopMoves =
+              getBishopAttacks(queenSq, board.pieces()) & ~excludedSquares;
         Bitboard queenMoves = rookMoves | bishopMoves;
 
         int numMoves = popcount(queenMoves);
@@ -519,9 +522,6 @@ constexpr Score Eval<T>::mobilityScore() {
             numMoves = 0;
 
         if (T) {
-            if (numMoves == 0) {
-                trace.queenMobility[0][C]++;
-            }
             trace.queenMobility[numMoves][C]++;
         }
 
