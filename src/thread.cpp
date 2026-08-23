@@ -554,45 +554,54 @@ int Search::search() {
     int alphaWindow = alphaWindowInit;
     int betaWindow = betaWindowInit;
     int numFailed = 0;
-    int failDepth = -1;
+    int lastScore = 0;
     for (int i = 1; i <= depth; i++) {
         double start = get_time();
 
-        score = negaMax(alpha, beta, i, false);
+        if (i >= aspDepth) {
+            alphaWindow = alphaWindowInit;
+            betaWindow = betaWindowInit;
+            numFailed = 0;
+            alpha = std::max(-INF, lastScore + alphaWindow);
+            beta = std::min(INF, lastScore + betaWindow);
+        } else {
+            alpha = -INF;
+            beta = INF;
+        }
 
-        if (score <= alpha) {
-            if (numFailed > maxNumFailed) {
-                alpha = -INF;
+        while (true) {
+            score = negaMax(alpha, beta, i, false);
+
+            if (stopFlag || info->uciStop)
+                break;
+
+            if (score <= alpha) {
+                numFailed++;
+                beta = (alpha + beta) / 2;
+                alphaWindow *= alphaWindowMultiplier;
+                alpha = (numFailed > maxNumFailed)
+                              ? -INF
+                              : std::max(-INF, score + alphaWindow);
+                continue;
             }
 
-            beta = (alpha + beta) / 2;
-            alphaWindow *= alphaWindowMultiplier;
-            alpha += alphaWindow + 1;
-            numFailed++;
-            i--;
-            continue;
-        }
-
-        if (score >= beta) {
-            if (numFailed > maxNumFailed) {
-                beta = INF;
+            if (score >= beta) {
+                numFailed++;
+                betaWindow *= betaWindowMultiplier;
+                beta = (numFailed > maxNumFailed)
+                             ? INF
+                             : std::min(INF, score + betaWindow);
+                continue;
             }
 
-            betaWindow *= betaWindowMultiplier;
-            beta += betaWindow + 1;
-            numFailed++;
-            i--;
-            continue;
-        }
-
-        if (i >= 3) {
-            alpha = score + alphaWindow;
-            beta = score + betaWindow;
-        }
-
-        if (info->uciStop) {
             break;
         }
+
+        if (stopFlag || info->uciStop) {
+            break;
+        }
+
+        lastScore = score;
 
         if (pvTableLen[0])
             bestMove = pvTable[0][0];
@@ -615,11 +624,6 @@ int Search::search() {
             std::cout << " mate " << tscore * ((INF - std::abs(score)) / 2);
         } else {
             std::cout << " cp " << score;
-
-            if (score >= beta)
-                std::cout << "lowerbound";
-            if (score <= alpha)
-                std::cout << "upperbound";
         }
 
         std::cout << " nodes " << nodes;
@@ -632,6 +636,11 @@ int Search::search() {
     if (!bestMove) {
         moveList mList;
         generate(board, &mList);
+        TTHash entry;
+        unsigned ttMove = 0;
+        if (tt.probe(board.key, entry))
+            ttMove = entry.move();
+        scoreMoves(&mList, ttMove);
         mList.swapBest(0);
         bestMove = mList.moves[0].move;
     }
@@ -670,15 +679,7 @@ std::vector<int> Search::getPv() {
     return x;
 }
 
-void Search::isReady() {
-    if (searched) {
-        info->uciStop = true;
-        searchThread->join();
-        searched = 0;
-    }
-
-    std::cout << "readyok" << std::endl;
-}
+void Search::isReady() { std::cout << "readyok" << std::endl; }
 
 void Search::wait() {
     if (searched) {
@@ -709,6 +710,7 @@ void Search::stopSearch() {
 void Search::joinThread() {
     if (searched) {
         searchThread->join();
+        searched = false;
     }
 }
 

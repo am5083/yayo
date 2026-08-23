@@ -21,6 +21,7 @@
 
 #include "bitboard.hpp"
 #include "util.hpp"
+#include <atomic>
 
 namespace Yayo {
 
@@ -50,8 +51,8 @@ struct Info {
     int movestogo              = -1;
 
     bool timeGiven             = false;
-    bool uciQuit               = false;
-    bool uciStop = false;
+    std::atomic<bool> uciQuit{false};
+    std::atomic<bool> uciStop{false};
 };
 
 enum CastleRights : int {

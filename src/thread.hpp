@@ -24,6 +24,7 @@
 #include <cmath>
 #include <cstring>
 #include <memory>
+#include <atomic>
 #include <thread>
 #include <vector>
 
@@ -154,7 +155,7 @@ class Search {
     int quiescentDepth;
     bool searched = false;
 
-    mutable int stopFlag = 0;
+    mutable std::atomic<int> stopFlag{0};
     mutable std::uint64_t stopCount = 0;
 
     std::unique_ptr<std::thread> searchThread;

@@ -411,6 +411,7 @@ void UCI::Main() {
             Go(info);
         } else if (cmd == "quit") {
             Stop();
+            search.joinThread();
             break;
         } else if (cmd == "stop") {
             Stop();
