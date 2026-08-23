@@ -317,7 +317,7 @@ void make(Board &board, unsigned short move) {
     } break;
     }
 
-    int temp = board.castleRights ^ board.hist[board.ply].castleStatus;
+    int temp = board.castleRights ^ board.hist[board.gamePly].castleStatus;
     board.key ^= zobristCastleRights[temp];
 
     board.turn = ~board.turn;
